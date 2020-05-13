@@ -1,0 +1,14 @@
+{
+  "name": "bal-liquidity-mining",
+  "version": "1.0.0",
+  "main": "index.js",
+  "scripts": {
+    "start": "node index.js"
+  },
+  "dependencies": {
+    "bignumber.js": "^9.0.0",
+    "dotenv": "^8.2.0",
+    "isomorphic-fetch": "^2.2.1",
+    "web3": "^1.2.7"
+  }
+}

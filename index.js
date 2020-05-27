@@ -10,7 +10,7 @@ const END_BLOCK = 10000065; // Closest block to reference time at end of week
 const START_BLOCK = 10000000; // Closest block to reference time at beginning of week
 const TOTAL_BAL_DISTRIBUTED_PER_WEEK = 145000;
 const NUMBER_BLOCKS_PER_SNAPSHOT = 64;
-const TOTAL_BAL_DISTRIBUTED_PER_SNAPSHOT_BLOCK = Math.ceil((END_BLOCK - START_BLOCK)/64) // Ceiling because it includes end block
+const TOTAL_BAL_DISTRIBUTED_PER_SNAPSHOT_BLOCK = TOTAL_BAL_DISTRIBUTED_PER_WEEK / Math.ceil((END_BLOCK - START_BLOCK)/64); // Ceiling because it includes end block
 
 async function getRewardsAtBlock(i) {
     let totalBalancerLiquidity = 0;

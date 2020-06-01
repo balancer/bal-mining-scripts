@@ -17,7 +17,7 @@ async function getRewardsAtBlock(i) {
     // const pools = await utils.fetchPublicSwapPools(); 
 
     let pools = await utils.fetchPublicSwapPools(); 
-    pools = pools.slice(0, 10); // Slicing just for testing;
+    pools = pools.slice(0, 60); // Slicing just for testing;
 
     console.log(pools);
 
@@ -25,6 +25,8 @@ async function getRewardsAtBlock(i) {
 
 
     const prices = await utils.fetchTokenPrices(allTokens)
+
+    console.log('prices' +JSON.stringify(prices));    
 
     let userPools = {};
     let userLiquidity = {};
@@ -34,13 +36,19 @@ async function getRewardsAtBlock(i) {
         let poolAddress = pool.id;
         console.log(`pool ${poolAddress}`)
 
-        let allTokensHavePrice = true;
-        pool.tokensList.forEach(t => {
-            if (prices[t] === undefined) {
-                allTokensHavePrice = false;
-            }
-        });
-        if (!allTokensHavePrice) {
+        // Check if at least two tokens have a price
+        let atLeastTwoTokensHavePrice = false;
+        let nTokensHavePrice = 0;
+        for (const t of pool.tokensList) {
+            if (prices[t] !== undefined) {
+                nTokensHavePrice ++;
+                if(nTokensHavePrice>1){
+                    atLeastTwoTokensHavePrice = true;
+                    break;
+                }
+            }    
+        }
+        if (!atLeastTwoTokensHavePrice) {
             continue;
         }
 
@@ -54,6 +62,11 @@ async function getRewardsAtBlock(i) {
         if (pool.createTime > block.timestamp) continue;
 
         for (const t of pool.tokensList) {
+            // Skip token if it doesn't have a price
+            if (prices[t] === undefined){
+                console.log("skipping token because no price: "+t)
+                continue;
+            }
             let bToken = new web3.eth.Contract(tokenAbi, t);
             let tokenBalanceWei = await bPool.methods.getBalance(t).call(undefined, i);
             let tokenDecimals = await bToken.methods.decimals().call();

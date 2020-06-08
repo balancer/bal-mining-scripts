@@ -1,5 +1,6 @@
 require('dotenv').config()
 const fs = require('fs');
+const cliProgress = require('cli-progress');
 const fetch = require('isomorphic-fetch');
 const BigNumber = require('bignumber.js');
 
@@ -9,7 +10,7 @@ const MARKET_API_URL = process.env.MARKET_API_URL || 'https://api.coingecko.com/
 const scale = (input, decimalPlaces) => {
     const scalePow = new BigNumber(decimalPlaces);
     const scaleMul = new BigNumber(10).pow(scalePow);
-    return new BigNumber(input).times(scaleMul).toNumber();
+    return new BigNumber(input).times(scaleMul);
 }
 
 const writeData = (data, path) => {
@@ -23,7 +24,7 @@ const writeData = (data, path) => {
 async function fetchPublicSwapPools() {
     const query = `
         {
-          pools (where: {publicSwap: true}) {
+          pools (first: 1000) {
             id
             publicSwap
             swapFee
@@ -56,30 +57,29 @@ async function fetchPublicSwapPools() {
     return data.pools;
 }
 
-async function fetchTokenPrices(allTokens) {
-    let idQueryString = '';
-    allTokens.forEach((address, index) => {
-        if (index === allTokens.length - 1) {
-            idQueryString += `${address}`;
-        } else {
-            idQueryString += `${address}%2C`;
-        }
-    });
+function sleep(ms) {
+    return new Promise(resolve => setTimeout(resolve, ms));
+}
 
-    const query = `simple/token_price/ethereum?contract_addresses=${idQueryString}&vs_currencies=usd`;
-
-    const response = await fetch(`${MARKET_API_URL}/${query}`, {
-        headers: {
-            Accept: 'application/json',
-            'Content-Type': 'application/json',
-        },
-    });
-
-    let priceResponse = await response.json();
+async function fetchTokenPrices(allTokens, startTime, endTime, priceProgress) {
     let prices = {}
-    Object.keys(priceResponse).forEach(address => {
-        prices[address] = priceResponse[address].usd;
-    });
+    for (j in allTokens) {
+        const address = allTokens[j];
+        const query = `coins/ethereum/contract/${address}/market_chart/range?&vs_currency=usd&from=${startTime}&to=${endTime}`;
+
+        const response = await fetch(`${MARKET_API_URL}/${query}`, {
+            headers: {
+                Accept: 'application/json',
+                'Content-Type': 'application/json',
+            },
+        });
+
+        let priceResponse = await response.json();
+        prices[address] = priceResponse.prices;
+        priceProgress.increment();
+        await sleep(500)
+    };
+    priceProgress.stop();
 
     return prices;
 }

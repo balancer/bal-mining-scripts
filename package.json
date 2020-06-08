@@ -4,12 +4,15 @@
   "main": "index.js",
   "scripts": {
     "start": "node index.js",
+    "sum": "node sum.js",
     "timestamps": "node timestamps.js"
   },
   "dependencies": {
     "bignumber.js": "^9.0.0",
+    "cli-progress": "^3.8.2",
     "dotenv": "^8.2.0",
     "isomorphic-fetch": "^2.2.1",
-    "web3": "^1.2.7"
+    "web3": "^1.2.7",
+    "yargs": "^15.3.1"
   }
 }

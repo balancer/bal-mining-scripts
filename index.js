@@ -8,7 +8,8 @@ const utils = require('./utils');
 const poolAbi = require('./abi/BPool.json');
 const tokenAbi = require('./abi/BToken.json');
 
-const web3 = new Web3(new Web3.providers.WebsocketProvider(`wss://mainnet.infura.io/ws/v3/${process.env.INFURA_ID}`));
+const web3 = new Web3(new Web3.providers.WebsocketProvider(`ws://localhost:8546`));
+
 BigNumber.config({
     EXPONENTIAL_AT: [-100, 100],
     ROUNDING_MODE: BigNumber.ROUND_DOWN,
@@ -86,7 +87,6 @@ async function getRewardsAtBlock(i, pools, prices, poolProgress) {
         for (const t of pool.tokensList) {
             // Skip token if it doesn't have a price
             if (prices[t] === undefined || prices[t].length === 0) {
-                poolProgress.increment(1);
                 continue;
             }
             let bToken = new web3.eth.Contract(tokenAbi, t);
@@ -186,10 +186,6 @@ async function getRewardsAtBlock(i, pools, prices, poolProgress) {
     
 
     for (i = END_BLOCK; i > START_BLOCK; i -= BLOCKS_PER_SNAPSHOT) {
-
-        if (i >= 10201345) {
-            continue;
-        }
 
         let blockRewards = await getRewardsAtBlock(i, pools, prices, poolProgress);
         let path = `/${WEEK}/${i}`;

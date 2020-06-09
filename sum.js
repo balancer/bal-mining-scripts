@@ -1,7 +1,7 @@
+const BigNumber = require('bignumber.js');
 const Web3 = require('web3');
 const fs = require('fs');
-const utils = require('./lib/utils');
-const BigNumber = require('bignumber.js');
+const fileService = require('./lib/fileService');
 const { argv } = require('yargs');
 
 BigNumber.config({
@@ -72,7 +72,7 @@ const BLOCKS_PER_SNAPSHOT = 256;
                 sortedUserTotal[key] = val;
             });
         console.log(`Total BAL distributed ${balTotal.toString()}`);
-        utils.writeData(sortedUserTotal, `${WEEK}/_totals`);
+        fileService.writeData(sortedUserTotal, `${WEEK}/_totals`);
     } catch (e) {
         console.error('Error reading reports', e);
     }

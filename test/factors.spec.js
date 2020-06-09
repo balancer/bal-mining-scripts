@@ -1,8 +1,8 @@
 const { expect, assert } = require('chai');
 const {
     getFeeFactor,
-    getBalFactor,
-    getRatioFactor,
+    getStakingBoostOfPair,
+    getBalAndRatioFactor,
     getWrapFactor,
 } = require('../lib/factors');
 const { BAL_TOKEN } = require('../lib/tokens');
@@ -35,7 +35,7 @@ describe('bal factor', () => {
         let weight1 = 0.75;
         let weight2 = 0.25;
         const expectedResult = 1;
-        const result = getBalFactor(
+        const result = getStakingBoostOfPair(
             balMultiplier,
             token1,
             weight1,
@@ -56,7 +56,7 @@ describe('bal factor', () => {
         let weight1 = bnum(0.75);
         let weight2 = bnum(0.25);
         const expectedResult = 1;
-        const result = getBalFactor(
+        const result = getStakingBoostOfPair(
             balMultiplier,
             token1,
             weight1,
@@ -77,7 +77,7 @@ describe('bal factor', () => {
         let weight1 = bnum(0.75);
         let weight2 = bnum(0.25);
         const expectedResult = 1.25;
-        const result = getBalFactor(
+        const result = getStakingBoostOfPair(
             balMultiplier,
             token1,
             weight1,
@@ -98,7 +98,7 @@ describe('ratio factor', () => {
         let tokens = [SNX_TOKEN, BAL_TOKEN];
         let weights = [bnum(0.75), bnum(0.25)];
         const expectedResult = 0.75;
-        const result = getRatioFactor(tokens, weights);
+        const result = getBalAndRatioFactor(tokens, weights);
 
         assert.equal(
             result.toNumber(),

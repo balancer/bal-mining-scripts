@@ -30,3 +30,4 @@ report.2020*
 *.njsproj
 *.sln
 *.sw?
+/lib

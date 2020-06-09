@@ -1,18 +1,26 @@
 {
-  "name": "bal-liquidity-mining",
-  "version": "1.0.0",
-  "main": "index.js",
-  "scripts": {
-    "start": "node index.js",
-    "sum": "node sum.js",
-    "timestamps": "node timestamps.js"
-  },
-  "dependencies": {
-    "bignumber.js": "^9.0.0",
-    "cli-progress": "^3.8.2",
-    "dotenv": "^8.2.0",
-    "isomorphic-fetch": "^2.2.1",
-    "web3": "^1.2.7",
-    "yargs": "^15.3.1"
-  }
+    "name": "bal-liquidity-mining",
+    "version": "1.0.0",
+    "main": "index.js",
+    "scripts": {
+        "start": "node index.js",
+        "sum": "node sum.js",
+        "timestamps": "node timestamps.js"
+    },
+    "husky": {
+        "hooks": {
+            "pre-commit": "pretty-quick --staged"
+        }
+    },
+    "dependencies": {
+        "bignumber.js": "^9.0.0",
+        "cli-progress": "^3.8.2",
+        "dotenv": "^8.2.0",
+        "husky": "^4.2.5",
+        "isomorphic-fetch": "^2.2.1",
+        "prettier": "^2.0.5",
+        "pretty-quick": "^2.0.1",
+        "web3": "^1.2.7",
+        "yargs": "^15.3.1"
+    }
 }

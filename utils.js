@@ -1,25 +1,31 @@
-require('dotenv').config()
+require('dotenv').config();
 const fs = require('fs');
 const cliProgress = require('cli-progress');
 const fetch = require('isomorphic-fetch');
 const BigNumber = require('bignumber.js');
 
-const SUBGRAPH_URL = process.env.SUBGRAPH_URL || 'https://api.thegraph.com/subgraphs/name/balancer-labs/balancer';
-const MARKET_API_URL = process.env.MARKET_API_URL || 'https://api.coingecko.com/api/v3';
+const SUBGRAPH_URL =
+    process.env.SUBGRAPH_URL ||
+    'https://api.thegraph.com/subgraphs/name/balancer-labs/balancer';
+const MARKET_API_URL =
+    process.env.MARKET_API_URL || 'https://api.coingecko.com/api/v3';
 
 const scale = (input, decimalPlaces) => {
     const scalePow = new BigNumber(decimalPlaces);
     const scaleMul = new BigNumber(10).pow(scalePow);
     return new BigNumber(input).times(scaleMul);
-}
+};
 
 const writeData = (data, path) => {
     try {
-      fs.writeFileSync(`./reports/${path}.json`, JSON.stringify(data, null, 4))
+        fs.writeFileSync(
+            `./reports/${path}.json`,
+            JSON.stringify(data, null, 4)
+        );
     } catch (err) {
-      console.error(err)
+        console.error(err);
     }
-}
+};
 
 async function fetchPublicSwapPools() {
     const query = `
@@ -32,7 +38,7 @@ async function fetchPublicSwapPools() {
             createTime
             tokensList
             totalShares
-            shares {
+            shares (first: 1000) {
               userAddress {
                 id
               }
@@ -58,11 +64,11 @@ async function fetchPublicSwapPools() {
 }
 
 function sleep(ms) {
-    return new Promise(resolve => setTimeout(resolve, ms));
+    return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
 async function fetchTokenPrices(allTokens, startTime, endTime, priceProgress) {
-    let prices = {}
+    let prices = {};
     for (j in allTokens) {
         const address = allTokens[j];
         const query = `coins/ethereum/contract/${address}/market_chart/range?&vs_currency=usd&from=${startTime}&to=${endTime}`;
@@ -77,8 +83,9 @@ async function fetchTokenPrices(allTokens, startTime, endTime, priceProgress) {
         let priceResponse = await response.json();
         prices[address] = priceResponse.prices;
         priceProgress.increment();
-        await sleep(500)
-    };
+        // Sleep half a second between requests to prevent rate-limiting
+        await sleep(500);
+    }
     priceProgress.stop();
 
     return prices;

@@ -22,7 +22,7 @@ const BLOCKS_PER_SNAPSHOT = 64;
     try {
         // Get all files in report directory
         for (i = END_BLOCK; i > START_BLOCK; i -= BLOCKS_PER_SNAPSHOT) {
-            const jsonString = fs.readFileSync(`./reports/1/${i}.json`);
+            const jsonString = fs.readFileSync(`./reports/${WEEK}/${i}.json`);
             const report = JSON.parse(jsonString)[1];
 
             Object.keys(report).forEach((user) => {

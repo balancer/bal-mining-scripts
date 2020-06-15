@@ -26,6 +26,36 @@ function getFeeFactor(feePercentage) {
     return Math.exp(-Math.pow(feePercentage / 2, 2));
 }
 
+function getRatioFactor(weights) {
+    let ratioFactorSum = bnum(0);
+    let pairWeightSum = bnum(0);
+    let n = weights.length;
+    for (j = 0; j < n; j++) {
+        if (!weights[j].eq(bnum(0))) {
+            for (k = j + 1; k < n; k++) {
+                let pairWeight = weights[j].times(weights[k]);
+                let normalizedWeight1 = weights[j].div(
+                    weights[j].plus(weights[k])
+                );
+                let normalizedWeight2 = weights[k].div(
+                    weights[j].plus(weights[k])
+                );
+                ratioFactorSum = ratioFactorSum.plus(
+                    bnum(4)
+                        .times(normalizedWeight1)
+                        .times(normalizedWeight2)
+                        .times(pairWeight)
+                );
+                pairWeightSum = pairWeightSum.plus(pairWeight);
+            }
+        }
+    }
+
+    ratioFactor = ratioFactorSum.div(pairWeightSum);
+
+    return ratioFactor;
+}
+
 if (!argv.startBlock || !argv.endBlock || !argv.week) {
     console.log(
         'Usage: node index.js --week 1 --startBlock 10131642 --endBlock 10156690'
@@ -65,7 +95,8 @@ async function getRewardsAtBlock(i, pools, prices, poolProgress) {
         }
 
         for (const t of pool.tokensList) {
-            if (prices[t] !== undefined && prices[t].length > 0) {
+            let token = web3.utils.toChecksumAddress(t);
+            if (prices[token] !== undefined && prices[token].length > 0) {
                 nTokensHavePrice++;
                 if (nTokensHavePrice > 1) {
                     atLeastTwoTokensHavePrice = true;
@@ -92,18 +123,27 @@ async function getRewardsAtBlock(i, pools, prices, poolProgress) {
         let poolMarketCap = bnum(0);
         let poolMarketCapFactor = bnum(0);
 
-        for (const t of pool.tokensList) {
+        let currentTokens = await bPool.methods
+            .getCurrentTokens()
+            .call(undefined, i);
+        let poolRatios = [];
+
+        for (const t of currentTokens) {
             // Skip token if it doesn't have a price
-            if (prices[t] === undefined || prices[t].length === 0) {
+            let token = web3.utils.toChecksumAddress(t);
+            if (prices[token] === undefined || prices[token].length === 0) {
                 continue;
             }
-            let bToken = new web3.eth.Contract(tokenAbi, t);
+            let bToken = new web3.eth.Contract(tokenAbi, token);
             let tokenBalanceWei = await bPool.methods
-                .getBalance(t)
+                .getBalance(token)
                 .call(undefined, i);
             let tokenDecimals = await bToken.methods.decimals().call();
+            let normWeight = await bPool.methods
+                .getNormalizedWeight(token)
+                .call(undefined, i);
 
-            let closestPrice = prices[t].reduce((a, b) => {
+            let closestPrice = prices[token].reduce((a, b) => {
                 return Math.abs(b[0] - block.timestamp * 1000) <
                     Math.abs(a[0] - block.timestamp * 1000)
                     ? b
@@ -112,13 +152,18 @@ async function getRewardsAtBlock(i, pools, prices, poolProgress) {
 
             let tokenBalance = utils.scale(tokenBalanceWei, -tokenDecimals);
             let tokenMarketCap = tokenBalance.times(bnum(closestPrice)).dp(18);
+            poolRatios.push(utils.scale(normWeight, -18));
             poolMarketCap = poolMarketCap.plus(tokenMarketCap);
         }
 
+        let ratioFactor = getRatioFactor(poolRatios);
+
         let poolFee = await bPool.methods.getSwapFee().call(undefined, i);
         poolFee = utils.scale(poolFee, -16); // -16 = -18 * 100 since it's in percentage terms
+        let feeFactor = bnum(getFeeFactor(poolFee));
 
-        poolMarketCapFactor = bnum(getFeeFactor(poolFee))
+        poolMarketCapFactor = feeFactor
+            .times(ratioFactor)
             .times(poolMarketCap)
             .dp(18);
         totalBalancerLiquidity = totalBalancerLiquidity.plus(
@@ -133,6 +178,8 @@ async function getRewardsAtBlock(i, pools, prices, poolProgress) {
             if (userPools[pool.controller]) {
                 userPools[pool.controller].push({
                     pool: poolAddress,
+                    feeFactor: feeFactor.toString(),
+                    ratioFactor: ratioFactor.toString(),
                     valueUSD: poolMarketCap.toString(),
                     factorUSD: poolMarketCapFactor.toString(),
                 });
@@ -140,6 +187,8 @@ async function getRewardsAtBlock(i, pools, prices, poolProgress) {
                 userPools[pool.controller] = [
                     {
                         pool: poolAddress,
+                        feeFactor: feeFactor.toString(),
+                        ratioFactor: ratioFactor.toString(),
                         valueUSD: poolMarketCap.toString(),
                         factorUSD: poolMarketCapFactor.toString(),
                     },
@@ -175,6 +224,8 @@ async function getRewardsAtBlock(i, pools, prices, poolProgress) {
                 if (userPools[holder]) {
                     userPools[holder].push({
                         pool: poolAddress,
+                        feeFactor: feeFactor.toString(),
+                        ratioFactor: ratioFactor.toString(),
                         valueUSD: userPoolValue.toString(),
                         factorUSD: userPoolValueFactor.toString(),
                     });
@@ -182,6 +233,8 @@ async function getRewardsAtBlock(i, pools, prices, poolProgress) {
                     userPools[holder] = [
                         {
                             pool: poolAddress,
+                            feeFactor: feeFactor.toString(),
+                            ratioFactor: ratioFactor.toString(),
                             valueUSD: userPoolValue.toString(),
                             factorUSD: userPoolValueFactor.toString(),
                         },
@@ -235,12 +288,22 @@ async function getRewardsAtBlock(i, pools, prices, poolProgress) {
     const priceProgress = multibar.create(allTokens.length, 0, {
         task: 'Fetching Prices',
     });
-    const prices = await utils.fetchTokenPrices(
-        allTokens,
-        startBlockTimestamp,
-        endBlockTimestamp,
-        priceProgress
-    );
+
+    let prices = {};
+
+    if (fs.existsSync(`./reports/${WEEK}/_prices.json`)) {
+        const jsonString = fs.readFileSync(`./reports/${WEEK}/_prices.json`);
+        prices = JSON.parse(jsonString);
+    } else {
+        prices = await utils.fetchTokenPrices(
+            allTokens,
+            startBlockTimestamp,
+            endBlockTimestamp,
+            priceProgress
+        );
+        let path = `/${WEEK}/_prices`;
+        utils.writeData(prices, path);
+    }
 
     const poolProgress = multibar.create(pools.length, 0, {
         task: 'Block Progress',
@@ -250,6 +313,10 @@ async function getRewardsAtBlock(i, pools, prices, poolProgress) {
     });
 
     for (i = END_BLOCK; i > START_BLOCK; i -= BLOCKS_PER_SNAPSHOT) {
+        if (i >= 10238971) {
+            blockProgress.increment(BLOCKS_PER_SNAPSHOT);
+            continue;
+        }
         let blockRewards = await getRewardsAtBlock(
             i,
             pools,

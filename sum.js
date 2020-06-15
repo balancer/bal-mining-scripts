@@ -36,6 +36,21 @@ const BLOCKS_PER_SNAPSHOT = 64;
                 }
             });
         }
+
+        const jsonRedirect = fs.readFileSync(`./redirect.json`);
+        const redirects = JSON.parse(jsonRedirect);
+
+        Object.keys(userTotals).forEach((user) => {
+            if (userTotals[user] == 0) {
+                delete userTotals[user];
+            }
+
+            if (redirects[user]) {
+                let newAddress = redirects[user];
+                userTotals[newAddress] = userTotals[user];
+                delete userTotals[user];
+            }
+        });
         console.log(`Total BAL distributed ${balTotal.toString()}`);
         utils.writeData(userTotals, `${WEEK}/_totals`);
     } catch (e) {

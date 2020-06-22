@@ -10,6 +10,7 @@ An archive node is needed to run the scripts because historical balance snapshot
 
 ```
 node index.js --week 1 --startBlock 10176690 --endBlock 10221761
+node index.js --week 2 --startBlock 10221761 --endBlock 10267003
 ```
 
 This will run run all historical calculations by block. Using an infura endpoint this may take upwards of 18 hours. For a local archive node, the sync time is roughly 10 minutes. Progress bars with estimates are shown during the sync. Reports will be saved in the folder for the given week specified

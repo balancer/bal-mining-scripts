@@ -56,6 +56,68 @@ function getRatioFactor(weights) {
     return ratioFactor;
 }
 
+const equivalentSets = [
+    [
+        '0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2',
+        '0x3a3A65aAb0dd2A17E3F1947bA16138cd37d08c04',
+        '0x4Ddc2D193948926D02f9B1fE9e1daa0718270ED5',
+        '0x77f973FCaF871459aa58cd81881Ce453759281bC',
+        '0xf53AD2c6851052A81B42133467480961B2321C09',
+    ],
+    [
+        '0x6B175474E89094C44Da98b954EedeAC495271d0F',
+        '0xfC1E690f61EFd961294b3e1Ce3313fBD8aa4f85d',
+        '0x5d3a536E4D6DbD6114cc1Ead35777bAB948E3643',
+        '0x493C57C4763932315A328269E1ADaD09653B9081',
+        '0x16de59092dAE5CcF4A1E6439D611fd0653f0Bd01',
+        'rDAI',
+        '0x06AF07097C9Eeb7fD685c692751D5C66dB49c215',
+    ],
+    [
+        '0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48',
+        '0x9bA00D6856a4eDF4665BcA2C2309936572473B7E',
+        '0x39AA39c021dfbaE8faC545936693aC917d5E7563',
+        '0xF013406A0B1d544238083DF0B93ad0d2cBE0f65f',
+        '0xd6aD7a6750A7593E092a9B218d66C0A814a3436e',
+    ],
+];
+
+function isWrapPair(tokenA, tokenB) {
+    for (set in equivalentSets) {
+        if (
+            equivalentSets[set].includes(tokenA) &&
+            equivalentSets[set].includes(tokenB)
+        ) {
+            return true;
+        }
+    }
+    return false;
+}
+
+function getWrapFactor(tokens, weights) {
+    let ratioFactorSum = bnum(0);
+    let wrapFactorSum = bnum(0);
+    let pairWeightSum = bnum(0);
+    let n = weights.length;
+    for (x = 0; x < n; x++) {
+        if (!weights[x].eq(bnum(0))) {
+            for (y = x + 1; y < n; y++) {
+                let pairWeight = weights[x].times(weights[y]);
+                let isWrapped = isWrapPair(tokens[x], tokens[y]);
+                let wrapFactorPair = isWrapped ? bnum(0.1) : bnum(1);
+                wrapFactorSum = wrapFactorSum.plus(
+                    wrapFactorPair.times(pairWeight)
+                );
+                pairWeightSum = pairWeightSum.plus(pairWeight);
+            }
+        }
+    }
+
+    wrapFactor = wrapFactorSum.div(pairWeightSum);
+
+    return wrapFactor;
+}
+
 if (!argv.startBlock || !argv.endBlock || !argv.week) {
     console.log(
         'Usage: node index.js --week 1 --startBlock 10131642 --endBlock 10156690'
@@ -157,6 +219,7 @@ async function getRewardsAtBlock(i, pools, prices, poolProgress) {
         }
 
         let ratioFactor = getRatioFactor(poolRatios);
+        let wrapFactor = getWrapFactor(currentTokens, poolRatios);
 
         let poolFee = await bPool.methods.getSwapFee().call(undefined, i);
         poolFee = utils.scale(poolFee, -16); // -16 = -18 * 100 since it's in percentage terms
@@ -164,6 +227,7 @@ async function getRewardsAtBlock(i, pools, prices, poolProgress) {
 
         poolMarketCapFactor = feeFactor
             .times(ratioFactor)
+            .times(wrapFactor)
             .times(poolMarketCap)
             .dp(18);
         totalBalancerLiquidity = totalBalancerLiquidity.plus(
@@ -180,6 +244,7 @@ async function getRewardsAtBlock(i, pools, prices, poolProgress) {
                     pool: poolAddress,
                     feeFactor: feeFactor.toString(),
                     ratioFactor: ratioFactor.toString(),
+                    wrapFactor: wrapFactor.toString(),
                     valueUSD: poolMarketCap.toString(),
                     factorUSD: poolMarketCapFactor.toString(),
                 });
@@ -189,6 +254,7 @@ async function getRewardsAtBlock(i, pools, prices, poolProgress) {
                         pool: poolAddress,
                         feeFactor: feeFactor.toString(),
                         ratioFactor: ratioFactor.toString(),
+                        wrapFactor: wrapFactor.toString(),
                         valueUSD: poolMarketCap.toString(),
                         factorUSD: poolMarketCapFactor.toString(),
                     },
@@ -226,6 +292,7 @@ async function getRewardsAtBlock(i, pools, prices, poolProgress) {
                         pool: poolAddress,
                         feeFactor: feeFactor.toString(),
                         ratioFactor: ratioFactor.toString(),
+                        wrapFactor: wrapFactor.toString(),
                         valueUSD: userPoolValue.toString(),
                         factorUSD: userPoolValueFactor.toString(),
                     });
@@ -235,6 +302,7 @@ async function getRewardsAtBlock(i, pools, prices, poolProgress) {
                             pool: poolAddress,
                             feeFactor: feeFactor.toString(),
                             ratioFactor: ratioFactor.toString(),
+                            wrapFactor: wrapFactor.toString(),
                             valueUSD: userPoolValue.toString(),
                             factorUSD: userPoolValueFactor.toString(),
                         },
@@ -313,10 +381,6 @@ async function getRewardsAtBlock(i, pools, prices, poolProgress) {
     });
 
     for (i = END_BLOCK; i > START_BLOCK; i -= BLOCKS_PER_SNAPSHOT) {
-        if (i >= 10238971) {
-            blockProgress.increment(BLOCKS_PER_SNAPSHOT);
-            continue;
-        }
         let blockRewards = await getRewardsAtBlock(
             i,
             pools,

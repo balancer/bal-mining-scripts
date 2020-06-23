@@ -156,7 +156,19 @@ async function getRewardsAtBlock(i, pools, prices, poolProgress) {
             continue;
         }
 
-        for (const t of pool.tokensList) {
+        let bPool = new web3.eth.Contract(poolAbi, poolAddress);
+
+        let publicSwap = await bPool.methods.isPublicSwap().call(undefined, i);
+        if (!publicSwap) {
+            poolProgress.increment(1);
+            continue;
+        }
+
+        let currentTokens = await bPool.methods
+            .getCurrentTokens()
+            .call(undefined, i);
+
+        for (const t of currentTokens) {
             let token = web3.utils.toChecksumAddress(t);
             if (prices[token] !== undefined && prices[token].length > 0) {
                 nTokensHavePrice++;
@@ -172,22 +184,11 @@ async function getRewardsAtBlock(i, pools, prices, poolProgress) {
             continue;
         }
 
-        let bPool = new web3.eth.Contract(poolAbi, poolAddress);
-
-        let publicSwap = await bPool.methods.isPublicSwap().call(undefined, i);
-        if (!publicSwap) {
-            poolProgress.increment(1);
-            continue;
-        }
-
         let shareHolders = pool.shares.flatMap((a) => a.userAddress.id);
 
         let poolMarketCap = bnum(0);
         let poolMarketCapFactor = bnum(0);
 
-        let currentTokens = await bPool.methods
-            .getCurrentTokens()
-            .call(undefined, i);
         let poolRatios = [];
 
         for (const t of currentTokens) {

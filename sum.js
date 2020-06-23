@@ -4,6 +4,12 @@ const utils = require('./utils');
 const BigNumber = require('bignumber.js');
 const { argv } = require('yargs');
 
+BigNumber.config({
+    EXPONENTIAL_AT: [-100, 100],
+    ROUNDING_MODE: BigNumber.ROUND_DOWN,
+    DECIMAL_PLACES: 18,
+});
+
 function bnum(val) {
     return new BigNumber(val.toString());
 }
@@ -14,8 +20,9 @@ const WEEK = argv.week;
 const BLOCKS_PER_SNAPSHOT = 64;
 
 (async function () {
-    const userTotals = {};
-    const userBal = {};
+    let userTotals = {};
+    let sortedUserTotal = {};
+    let userBal = {};
 
     let balTotal = bnum(0);
 
@@ -51,8 +58,14 @@ const BLOCKS_PER_SNAPSHOT = 64;
                 delete userTotals[user];
             }
         });
+
+        Object.entries(userTotals)
+            .sort((a, b) => a[0] - b[0])
+            .forEach(([key, val]) => {
+                sortedUserTotal[key] = val;
+            });
         console.log(`Total BAL distributed ${balTotal.toString()}`);
-        utils.writeData(userTotals, `${WEEK}/_totals`);
+        utils.writeData(sortedUserTotal, `${WEEK}/_totals`);
     } catch (e) {
         console.error('Error reading reports', e);
     }

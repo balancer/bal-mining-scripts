@@ -72,6 +72,25 @@ function sleep(ms) {
     return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
+async function fetchWhitelist() {
+    const response = await fetch(
+        `https://raw.githubusercontent.com/balancer-labs/pool-management/master/src/deployed.json`,
+        {
+            headers: {
+                Accept: 'application/json',
+                'Content-Type': 'application/json',
+            },
+        }
+    );
+
+    let whitelistResponse = await response.json();
+    whitelist = whitelistResponse.mainnet.tokens
+        .slice(1)
+        .flatMap((a) => a.address);
+
+    return whitelist;
+}
+
 async function fetchTokenPrices(allTokens, startTime, endTime, priceProgress) {
     let prices = {};
     for (j in allTokens) {
@@ -98,4 +117,10 @@ async function fetchTokenPrices(allTokens, startTime, endTime, priceProgress) {
     return prices;
 }
 
-module.exports = { scale, writeData, fetchPublicSwapPools, fetchTokenPrices };
+module.exports = {
+    scale,
+    writeData,
+    fetchPublicSwapPools,
+    fetchWhitelist,
+    fetchTokenPrices,
+};

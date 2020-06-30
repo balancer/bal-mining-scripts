@@ -354,22 +354,38 @@ async function getRewardsAtBlock(i, pools, prices, poolProgress) {
     let pools = await utils.fetchPublicSwapPools();
     const allTokens = pools.flatMap((a) => a.tokensList);
 
-    const priceProgress = multibar.create(allTokens.length, 0, {
-        task: 'Fetching Prices',
-    });
-
     let prices = {};
 
     if (fs.existsSync(`./reports/${WEEK}/_prices.json`)) {
         const jsonString = fs.readFileSync(`./reports/${WEEK}/_prices.json`);
         prices = JSON.parse(jsonString);
     } else {
-        prices = await utils.fetchTokenPrices(
-            allTokens,
-            startBlockTimestamp,
-            endBlockTimestamp,
-            priceProgress
-        );
+        if (argv.whitelist) {
+            const whitelist = await utils.fetchWhitelist();
+
+            let priceProgress = multibar.create(whitelist.length, 0, {
+                task: 'Fetching Prices',
+            });
+
+            prices = await utils.fetchTokenPrices(
+                whitelist,
+                startBlockTimestamp,
+                endBlockTimestamp,
+                priceProgress
+            );
+        } else {
+            let priceProgress = multibar.create(allTokens.length, 0, {
+                task: 'Fetching Prices',
+            });
+
+            prices = await utils.fetchTokenPrices(
+                allTokens,
+                startBlockTimestamp,
+                endBlockTimestamp,
+                priceProgress
+            );
+        }
+
         let path = `/${WEEK}/_prices`;
         utils.writeData(prices, path);
     }
@@ -382,6 +398,10 @@ async function getRewardsAtBlock(i, pools, prices, poolProgress) {
     });
 
     for (i = END_BLOCK; i > START_BLOCK; i -= BLOCKS_PER_SNAPSHOT) {
+        if (i <= 10331138 || i >= 10336538) {
+            blockProgress.increment(BLOCKS_PER_SNAPSHOT);
+            continue;
+        }
         let blockRewards = await getRewardsAtBlock(
             i,
             pools,

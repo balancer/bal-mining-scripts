@@ -398,10 +398,6 @@ async function getRewardsAtBlock(i, pools, prices, poolProgress) {
     });
 
     for (i = END_BLOCK; i > START_BLOCK; i -= BLOCKS_PER_SNAPSHOT) {
-        if (i <= 10331138 || i >= 10336538) {
-            blockProgress.increment(BLOCKS_PER_SNAPSHOT);
-            continue;
-        }
         let blockRewards = await getRewardsAtBlock(
             i,
             pools,

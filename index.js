@@ -88,6 +88,10 @@ const equivalentSets = [
         '0x57Ab1ec28D129707052df4dF418D58a2D46d5f51',
         '0x625aE63000f46200499120B906716420bd059240',
     ],
+    [
+        '0x0000000000085d4780B73119b644AE5ecd22b376',
+        '0x4DA9b813057D04BAef4e5800E36083717b4a0341',
+    ],
 ];
 
 function isWrapPair(tokenA, tokenB) {

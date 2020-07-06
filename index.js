@@ -56,6 +56,13 @@ function getRatioFactor(weights) {
     return ratioFactor;
 }
 
+const uncappedTokens = [
+    '0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2',
+    '0x6B175474E89094C44Da98b954EedeAC495271d0F',
+    '0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48',
+    '0x2260FAC5E5542a773Aa44fBCfeDf7C193bc2C599',
+];
+
 const equivalentSets = [
     [
         '0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2',
@@ -142,8 +149,55 @@ async function getRewardsAtBlock(i, pools, prices, poolProgress) {
 
     let userPools = {};
     let userLiquidity = {};
+    let tokenTotalMarketCaps = {};
 
     poolProgress.update(0, { task: `Block ${i} Progress` });
+
+    for (const pool of pools) {
+        let poolAddress = pool.id;
+
+        if (pool.createTime > block.timestamp || !pool.tokensList) {
+            continue;
+        }
+
+        let bPool = new web3.eth.Contract(poolAbi, poolAddress);
+
+        let currentTokens = await bPool.methods
+            .getCurrentTokens()
+            .call(undefined, i);
+
+        for (const t of currentTokens) {
+            // Skip token if it doesn't have a price
+            let token = web3.utils.toChecksumAddress(t);
+            if (prices[token] === undefined || prices[token].length === 0) {
+                continue;
+            }
+            let bToken = new web3.eth.Contract(tokenAbi, token);
+            let tokenBalanceWei = await bPool.methods
+                .getBalance(token)
+                .call(undefined, i);
+            let tokenDecimals = await bToken.methods.decimals().call();
+
+            let closestPrice = prices[token].reduce((a, b) => {
+                return Math.abs(b[0] - block.timestamp * 1000) <
+                    Math.abs(a[0] - block.timestamp * 1000)
+                    ? b
+                    : a;
+            })[1];
+
+            let tokenBalance = utils.scale(tokenBalanceWei, -tokenDecimals);
+            let tokenMarketCap = tokenBalance.times(bnum(closestPrice)).dp(18);
+
+            if (tokenTotalMarketCaps[token]) {
+                tokenTotalMarketCaps[token] = bnum(tokenTotalMarketCaps[token])
+                    .plus(tokenMarketCap)
+                    .toString();
+            } else {
+                tokenTotalMarketCaps[token] = tokenMarketCap.toString();
+            }
+        }
+    }
+
     for (const pool of pools) {
         let poolAddress = pool.id;
 
@@ -215,8 +269,21 @@ async function getRewardsAtBlock(i, pools, prices, poolProgress) {
 
             let tokenBalance = utils.scale(tokenBalanceWei, -tokenDecimals);
             let tokenMarketCap = tokenBalance.times(bnum(closestPrice)).dp(18);
+            if (
+                !uncappedTokens.includes(token) &&
+                bnum(tokenTotalMarketCaps[token]).isGreaterThan(bnum(10000000))
+            ) {
+                let tokenMarketCapFactor = bnum(10000000).div(
+                    tokenTotalMarketCaps[token]
+                );
+                adjustedTokenMarketCap = tokenMarketCap
+                    .times(tokenMarketCapFactor)
+                    .dp(18);
+            } else {
+                adjustedTokenMarketCap = tokenMarketCap;
+            }
             poolRatios.push(utils.scale(normWeight, -18));
-            poolMarketCap = poolMarketCap.plus(tokenMarketCap);
+            poolMarketCap = poolMarketCap.plus(adjustedTokenMarketCap);
         }
 
         let ratioFactor = getRatioFactor(poolRatios);
@@ -333,7 +400,7 @@ async function getRewardsAtBlock(i, pools, prices, poolProgress) {
             .div(totalBalancerLiquidity);
     }
 
-    return [userPools, userBalReceived];
+    return [userPools, userBalReceived, tokenTotalMarketCaps];
 }
 
 (async function () {
@@ -351,8 +418,7 @@ async function getRewardsAtBlock(i, pools, prices, poolProgress) {
     let startBlockTimestamp = (await web3.eth.getBlock(START_BLOCK)).timestamp;
     let endBlockTimestamp = (await web3.eth.getBlock(END_BLOCK)).timestamp;
 
-    let pools = await utils.fetchPublicSwapPools();
-    const allTokens = pools.flatMap((a) => a.tokensList);
+    let pools = await utils.fetchAllPools();
 
     let prices = {};
 
@@ -360,31 +426,18 @@ async function getRewardsAtBlock(i, pools, prices, poolProgress) {
         const jsonString = fs.readFileSync(`./reports/${WEEK}/_prices.json`);
         prices = JSON.parse(jsonString);
     } else {
-        if (argv.whitelist) {
-            const whitelist = await utils.fetchWhitelist();
+        const whitelist = await utils.fetchWhitelist();
 
-            let priceProgress = multibar.create(whitelist.length, 0, {
-                task: 'Fetching Prices',
-            });
+        let priceProgress = multibar.create(whitelist.length, 0, {
+            task: 'Fetching Prices',
+        });
 
-            prices = await utils.fetchTokenPrices(
-                whitelist,
-                startBlockTimestamp,
-                endBlockTimestamp,
-                priceProgress
-            );
-        } else {
-            let priceProgress = multibar.create(allTokens.length, 0, {
-                task: 'Fetching Prices',
-            });
-
-            prices = await utils.fetchTokenPrices(
-                allTokens,
-                startBlockTimestamp,
-                endBlockTimestamp,
-                priceProgress
-            );
-        }
+        prices = await utils.fetchTokenPrices(
+            whitelist,
+            startBlockTimestamp,
+            endBlockTimestamp,
+            priceProgress
+        );
 
         let path = `/${WEEK}/_prices`;
         utils.writeData(prices, path);
@@ -398,6 +451,11 @@ async function getRewardsAtBlock(i, pools, prices, poolProgress) {
     });
 
     for (i = END_BLOCK; i > START_BLOCK; i -= BLOCKS_PER_SNAPSHOT) {
+        if (argv.skipBlock && i >= argv.skipBlock) {
+            blockProgress.increment(BLOCKS_PER_SNAPSHOT);
+            continue;
+        }
+
         let blockRewards = await getRewardsAtBlock(
             i,
             pools,

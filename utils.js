@@ -32,7 +32,7 @@ const writeData = (data, path) => {
     }
 };
 
-async function fetchPublicSwapPools() {
+async function fetchAllPools() {
     const query = `
         {
           pools (first: 1000) {
@@ -120,7 +120,7 @@ async function fetchTokenPrices(allTokens, startTime, endTime, priceProgress) {
 module.exports = {
     scale,
     writeData,
-    fetchPublicSwapPools,
+    fetchAllPools,
     fetchWhitelist,
     fetchTokenPrices,
 };

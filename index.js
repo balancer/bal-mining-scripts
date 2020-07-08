@@ -61,6 +61,7 @@ const uncappedTokens = [
     '0x6B175474E89094C44Da98b954EedeAC495271d0F',
     '0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48',
     '0x2260FAC5E5542a773Aa44fBCfeDf7C193bc2C599',
+    '0xba100000625a3754423978a60c9317c58a424e3D',
 ];
 
 const equivalentSets = [
@@ -147,6 +148,7 @@ async function getRewardsAtBlock(i, pools, prices, poolProgress) {
 
     let block = await web3.eth.getBlock(i);
 
+    let allPoolData = [];
     let userPools = {};
     let userLiquidity = {};
     let tokenTotalMarketCaps = {};
@@ -154,67 +156,21 @@ async function getRewardsAtBlock(i, pools, prices, poolProgress) {
     poolProgress.update(0, { task: `Block ${i} Progress` });
 
     for (const pool of pools) {
-        let poolAddress = pool.id;
-
-        if (pool.createTime > block.timestamp || !pool.tokensList) {
-            continue;
-        }
-
-        let bPool = new web3.eth.Contract(poolAbi, poolAddress);
-
-        let currentTokens = await bPool.methods
-            .getCurrentTokens()
-            .call(undefined, i);
-
-        for (const t of currentTokens) {
-            // Skip token if it doesn't have a price
-            let token = web3.utils.toChecksumAddress(t);
-            if (prices[token] === undefined || prices[token].length === 0) {
-                continue;
-            }
-            let bToken = new web3.eth.Contract(tokenAbi, token);
-            let tokenBalanceWei = await bPool.methods
-                .getBalance(token)
-                .call(undefined, i);
-            let tokenDecimals = await bToken.methods.decimals().call();
-
-            let closestPrice = prices[token].reduce((a, b) => {
-                return Math.abs(b[0] - block.timestamp * 1000) <
-                    Math.abs(a[0] - block.timestamp * 1000)
-                    ? b
-                    : a;
-            })[1];
-
-            let tokenBalance = utils.scale(tokenBalanceWei, -tokenDecimals);
-            let tokenMarketCap = tokenBalance.times(bnum(closestPrice)).dp(18);
-
-            if (tokenTotalMarketCaps[token]) {
-                tokenTotalMarketCaps[token] = bnum(tokenTotalMarketCaps[token])
-                    .plus(tokenMarketCap)
-                    .toString();
-            } else {
-                tokenTotalMarketCaps[token] = tokenMarketCap.toString();
-            }
-        }
-    }
-
-    for (const pool of pools) {
-        let poolAddress = pool.id;
+        let poolData = {};
+        poolData.poolAddress = pool.id;
 
         // Check if at least two tokens have a price
         let atLeastTwoTokensHavePrice = false;
         let nTokensHavePrice = 0;
 
         if (pool.createTime > block.timestamp || !pool.tokensList) {
-            poolProgress.increment(1);
             continue;
         }
 
-        let bPool = new web3.eth.Contract(poolAbi, poolAddress);
+        let bPool = new web3.eth.Contract(poolAbi, poolData.poolAddress);
 
         let publicSwap = await bPool.methods.isPublicSwap().call(undefined, i);
         if (!publicSwap) {
-            poolProgress.increment(1);
             continue;
         }
 
@@ -234,15 +190,12 @@ async function getRewardsAtBlock(i, pools, prices, poolProgress) {
         }
 
         if (!atLeastTwoTokensHavePrice) {
-            poolProgress.increment(1);
             continue;
         }
 
-        let shareHolders = pool.shares.flatMap((a) => a.userAddress.id);
-
         let poolMarketCap = bnum(0);
-        let poolMarketCapFactor = bnum(0);
-
+        let originalPoolMarketCapFactor = bnum(0);
+        let eligibleTotalWeight = bnum(0);
         let poolRatios = [];
 
         for (const t of currentTokens) {
@@ -260,6 +213,10 @@ async function getRewardsAtBlock(i, pools, prices, poolProgress) {
                 .getNormalizedWeight(token)
                 .call(undefined, i);
 
+            eligibleTotalWeight = eligibleTotalWeight.plus(
+                utils.scale(normWeight, -18)
+            );
+
             let closestPrice = prices[token].reduce((a, b) => {
                 return Math.abs(b[0] - block.timestamp * 1000) <
                     Math.abs(a[0] - block.timestamp * 1000)
@@ -269,22 +226,30 @@ async function getRewardsAtBlock(i, pools, prices, poolProgress) {
 
             let tokenBalance = utils.scale(tokenBalanceWei, -tokenDecimals);
             let tokenMarketCap = tokenBalance.times(bnum(closestPrice)).dp(18);
-            if (
-                !uncappedTokens.includes(token) &&
-                bnum(tokenTotalMarketCaps[token]).isGreaterThan(bnum(10000000))
-            ) {
-                let tokenMarketCapFactor = bnum(10000000).div(
-                    tokenTotalMarketCaps[token]
-                );
-                adjustedTokenMarketCap = tokenMarketCap
-                    .times(tokenMarketCapFactor)
-                    .dp(18);
+
+            if (poolData.tokens) {
+                let obj = {
+                    token: t,
+                    origMarketCap: tokenMarketCap,
+                    normWeight: utils.scale(normWeight, -18),
+                };
+                poolData.tokens.push(obj);
             } else {
-                adjustedTokenMarketCap = tokenMarketCap;
+                poolData.tokens = [
+                    {
+                        token: t,
+                        origMarketCap: tokenMarketCap,
+                        normWeight: utils.scale(normWeight, -18),
+                    },
+                ];
             }
+
             poolRatios.push(utils.scale(normWeight, -18));
-            poolMarketCap = poolMarketCap.plus(adjustedTokenMarketCap);
+            poolMarketCap = poolMarketCap.plus(tokenMarketCap);
         }
+
+        poolData.marketCap = poolMarketCap;
+        poolData.eligibleTotalWeight = eligibleTotalWeight;
 
         let ratioFactor = getRatioFactor(poolRatios);
         let wrapFactor = getWrapFactor(currentTokens, poolRatios);
@@ -293,14 +258,73 @@ async function getRewardsAtBlock(i, pools, prices, poolProgress) {
         poolFee = utils.scale(poolFee, -16); // -16 = -18 * 100 since it's in percentage terms
         let feeFactor = bnum(getFeeFactor(poolFee));
 
-        poolMarketCapFactor = feeFactor
+        originalPoolMarketCapFactor = feeFactor
             .times(ratioFactor)
             .times(wrapFactor)
             .times(poolMarketCap)
             .dp(18);
+
+        poolData.ratioFactor = ratioFactor;
+        poolData.wrapFactor = wrapFactor;
+        poolData.feeFactor = feeFactor;
+        poolData.originalPoolMarketCapFactor = originalPoolMarketCapFactor;
+
+        for (const t in poolData.tokens) {
+            let r = poolData.tokens[t];
+            let tokenMarketCapWithCap = r.normWeight
+                .div(eligibleTotalWeight)
+                .times(originalPoolMarketCapFactor);
+            if (tokenTotalMarketCaps[r.token]) {
+                tokenTotalMarketCaps[r.token] = bnum(
+                    tokenTotalMarketCaps[r.token]
+                ).plus(tokenMarketCapWithCap);
+            } else {
+                tokenTotalMarketCaps[r.token] = tokenMarketCapWithCap;
+            }
+        }
+
+        let shareHolders = pool.shares.flatMap((a) => a.userAddress.id);
+        poolData.shareHolders = shareHolders;
+
+        allPoolData.push(poolData);
+    }
+
+    for (const pool of allPoolData) {
+        let finalPoolMarketCap = bnum(0);
+        let finalPoolMarketCapFactor = bnum(0);
+
+        for (const t of pool.tokens) {
+            if (
+                !uncappedTokens.includes(t.token) &&
+                bnum(tokenTotalMarketCaps[t.token]).isGreaterThan(
+                    bnum(10000000)
+                )
+            ) {
+                let tokenMarketCapFactor = bnum(10000000).div(
+                    tokenTotalMarketCaps[t.token]
+                );
+                adjustedTokenMarketCap = t.origMarketCap
+                    .times(tokenMarketCapFactor)
+                    .dp(18);
+            } else {
+                adjustedTokenMarketCap = t.origMarketCap;
+            }
+            finalPoolMarketCap = finalPoolMarketCap.plus(
+                adjustedTokenMarketCap
+            );
+        }
+
+        finalPoolMarketCapFactor = pool.feeFactor
+            .times(pool.ratioFactor)
+            .times(pool.wrapFactor)
+            .times(finalPoolMarketCap)
+            .dp(18);
+
         totalBalancerLiquidity = totalBalancerLiquidity.plus(
-            poolMarketCapFactor
+            finalPoolMarketCapFactor
         );
+
+        let bPool = new web3.eth.Contract(poolAbi, pool.poolAddress);
 
         let bptSupplyWei = await bPool.methods.totalSupply().call(undefined, i);
         let bptSupply = utils.scale(bptSupplyWei, -18);
@@ -309,22 +333,22 @@ async function getRewardsAtBlock(i, pools, prices, poolProgress) {
             // Private pool
             if (userPools[pool.controller]) {
                 userPools[pool.controller].push({
-                    pool: poolAddress,
-                    feeFactor: feeFactor.toString(),
-                    ratioFactor: ratioFactor.toString(),
-                    wrapFactor: wrapFactor.toString(),
-                    valueUSD: poolMarketCap.toString(),
-                    factorUSD: poolMarketCapFactor.toString(),
+                    pool: pool.poolAddress,
+                    feeFactor: pool.feeFactor.toString(),
+                    ratioFactor: pool.ratioFactor.toString(),
+                    wrapFactor: pool.wrapFactor.toString(),
+                    valueUSD: finalPoolMarketCap.toString(),
+                    factorUSD: finalPoolMarketCapFactor.toString(),
                 });
             } else {
                 userPools[pool.controller] = [
                     {
-                        pool: poolAddress,
-                        feeFactor: feeFactor.toString(),
-                        ratioFactor: ratioFactor.toString(),
-                        wrapFactor: wrapFactor.toString(),
-                        valueUSD: poolMarketCap.toString(),
-                        factorUSD: poolMarketCapFactor.toString(),
+                        pool: pool.poolAddress,
+                        feeFactor: pool.feeFactor.toString(),
+                        ratioFactor: pool.ratioFactor.toString(),
+                        wrapFactor: pool.wrapFactor.toString(),
+                        valueUSD: finalPoolMarketCap.toString(),
+                        factorUSD: finalPoolMarketCapFactor.toString(),
                     },
                 ];
             }
@@ -334,43 +358,46 @@ async function getRewardsAtBlock(i, pools, prices, poolProgress) {
                 userLiquidity[pool.controller] = bnum(
                     userLiquidity[pool.controller]
                 )
-                    .plus(poolMarketCapFactor)
+                    .plus(finalPoolMarketCapFactor)
                     .toString();
             } else {
-                userLiquidity[pool.controller] = poolMarketCapFactor.toString();
+                userLiquidity[
+                    pool.controller
+                ] = finalPoolMarketCapFactor.toString();
             }
         } else {
             // Shared pool
-            for (const holder of shareHolders) {
+            for (const holder of pool.shareHolders) {
                 let userBalanceWei = await bPool.methods
                     .balanceOf(holder)
                     .call(undefined, i);
                 let userBalance = utils.scale(userBalanceWei, -18);
                 let userPoolValue = userBalance
                     .div(bptSupply)
-                    .times(poolMarketCap)
+                    .times(finalPoolMarketCap)
                     .dp(18);
+
                 let userPoolValueFactor = userBalance
                     .div(bptSupply)
-                    .times(poolMarketCapFactor)
+                    .times(finalPoolMarketCapFactor)
                     .dp(18);
 
                 if (userPools[holder]) {
                     userPools[holder].push({
-                        pool: poolAddress,
-                        feeFactor: feeFactor.toString(),
-                        ratioFactor: ratioFactor.toString(),
-                        wrapFactor: wrapFactor.toString(),
+                        pool: pool.poolAddress,
+                        feeFactor: pool.feeFactor.toString(),
+                        ratioFactor: pool.ratioFactor.toString(),
+                        wrapFactor: pool.wrapFactor.toString(),
                         valueUSD: userPoolValue.toString(),
                         factorUSD: userPoolValueFactor.toString(),
                     });
                 } else {
                     userPools[holder] = [
                         {
-                            pool: poolAddress,
-                            feeFactor: feeFactor.toString(),
-                            ratioFactor: ratioFactor.toString(),
-                            wrapFactor: wrapFactor.toString(),
+                            pool: pool.poolAddress,
+                            feeFactor: pool.feeFactor.toString(),
+                            ratioFactor: pool.ratioFactor.toString(),
+                            wrapFactor: pool.wrapFactor.toString(),
                             valueUSD: userPoolValue.toString(),
                             factorUSD: userPoolValueFactor.toString(),
                         },

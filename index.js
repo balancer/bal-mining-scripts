@@ -367,13 +367,8 @@ async function getRewardsAtBlock(i, pools, prices, poolProgress) {
             }
         } else {
             // Shared pool
+
             for (const holder of pool.shareHolders) {
-                if (holder == undefined) {
-                    console.log('BAD POOL');
-                    console.log('BAD POOL');
-                    console.log(holder);
-                    console.log(pool.poolAddress);
-                }
                 let userBalanceWei = await bPool.methods
                     .balanceOf(holder)
                     .call(undefined, i);

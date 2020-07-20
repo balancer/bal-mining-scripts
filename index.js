@@ -284,6 +284,7 @@ async function getRewardsAtBlock(i, pools, prices, poolProgress) {
         }
 
         let shareHolders = pool.shares.flatMap((a) => a.userAddress.id);
+
         poolData.shareHolders = shareHolders;
         poolData.controller = pool.controller;
         allPoolData.push(poolData);
@@ -446,7 +447,7 @@ async function getRewardsAtBlock(i, pools, prices, poolProgress) {
     let startBlockTimestamp = (await web3.eth.getBlock(START_BLOCK)).timestamp;
     let endBlockTimestamp = (await web3.eth.getBlock(END_BLOCK)).timestamp;
 
-    let pools = await utils.fetchAllPools();
+    let pools = await utils.fetchAllPools(END_BLOCK);
 
     let prices = {};
 

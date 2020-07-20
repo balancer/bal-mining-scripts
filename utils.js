@@ -32,10 +32,10 @@ const writeData = (data, path) => {
     }
 };
 
-async function fetchAllPools() {
+async function fetchAllPools(block) {
     const query = `
         {
-          pools (first: 1000) {
+          pools (first: 1000, block: { number: ${block} }) {
             id
             publicSwap
             swapFee

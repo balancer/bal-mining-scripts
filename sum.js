@@ -17,7 +17,7 @@ function bnum(val) {
 const END_BLOCK = argv.endBlock; // Closest block to reference time at end of week
 const START_BLOCK = argv.startBlock; // Closest block to reference time at beginning of week
 const WEEK = argv.week;
-const BLOCKS_PER_SNAPSHOT = 64;
+const BLOCKS_PER_SNAPSHOT = 256;
 
 (async function () {
     let userTotals = {};

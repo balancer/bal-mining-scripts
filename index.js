@@ -29,17 +29,22 @@ function getFeeFactor(feePercentage) {
     return Math.exp(-Math.pow(feePercentage * 0.25, 2));
 }
 
-function getBalFactor(token1, weight1, token2, weight2) {
+function getBalFactor(balMultiplier, token1, weight1, token2, weight2) {
     if (
         token1 == '0xba100000625a3754423978a60c9317c58a424e3D' &&
         uncappedTokens.includes(token2)
     ) {
-        return bnum(2).times(weight1).plus(weight2).div(weight1.plus(weight2));
+        return balMultiplier
+            .times(weight1)
+            .plus(weight2)
+            .div(weight1.plus(weight2));
     } else if (
         token2 == '0xba100000625a3754423978a60c9317c58a424e3D' &&
         uncappedTokens.includes(token1)
     ) {
-        return weight1.plus(bnum(2).times(weight2)).div(weight1.plus(weight2));
+        return weight1
+            .plus(balMultiplier.times(weight2))
+            .div(weight1.plus(weight2));
     } else {
         return bnum(1);
     }
@@ -48,6 +53,7 @@ function getBalFactor(token1, weight1, token2, weight2) {
 function getRatioFactor(tokens, weights) {
     let ratioFactorSum = bnum(0);
     let pairWeightSum = bnum(0);
+    let balMultiplier = bnum(2);
     let n = weights.length;
     for (j = 0; j < n; j++) {
         if (!weights[j].eq(bnum(0))) {
@@ -59,14 +65,16 @@ function getRatioFactor(tokens, weights) {
                 let normalizedWeight2 = weights[k].div(
                     weights[j].plus(weights[k])
                 );
-                let balMultiplier = getBalFactor(
+                let balFactor = getBalFactor(
+                    balMultiplier,
                     tokens[j],
                     weights[j],
                     tokens[k],
                     weights[k]
                 );
+
                 ratioFactorSum = ratioFactorSum.plus(
-                    balMultiplier
+                    balFactor
                         .times(bnum(4))
                         .times(normalizedWeight1)
                         .times(normalizedWeight2)

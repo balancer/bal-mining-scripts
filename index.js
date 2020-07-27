@@ -467,6 +467,20 @@ async function getRewardsAtBlock(i, pools, prices, poolProgress) {
 
         let shareHolders = pool.shares.flatMap((a) => a.userAddress.id);
 
+        // if (pool.id == '0x60626db611a9957c1ae4ac5b7ede69e24a3b76c5') {
+        //     let jsonString = fs.readFileSync(`./reports/${WEEK}/0x6062.json`);
+        //     shares = JSON.parse(jsonString);
+        //     shareHolders = shares.flatMap((a) => a.userAddress.id);
+        // } else if (pool.id == '0x72cd8f4504941bf8c5a21d1fd83a96499fd71d2c') {
+        //     let jsonString = fs.readFileSync(`./reports/${WEEK}/0x72cd.json`);
+        //     shares = JSON.parse(jsonString);
+        //     shareHolders = shares.flatMap((a) => a.userAddress.id);
+        // } else if (pool.id == '0x95c4b6c7cff608c0ca048df8b81a484aa377172b') {
+        //     let jsonString = fs.readFileSync(`./reports/${WEEK}/0x95c4.json`);
+        //     shares = JSON.parse(jsonString);
+        //     shareHolders = shares.flatMap((a) => a.userAddress.id);
+        // }
+
         poolData.shareHolders = shareHolders;
         poolData.controller = pool.controller;
         allPoolData.push(poolData);
@@ -630,6 +644,8 @@ async function getRewardsAtBlock(i, pools, prices, poolProgress) {
     let endBlockTimestamp = (await web3.eth.getBlock(END_BLOCK)).timestamp;
 
     let pools = await utils.fetchAllPools(END_BLOCK);
+    // const jsonString = fs.readFileSync(`./reports/${WEEK}/_pools.json`);
+    // let pools = JSON.parse(jsonString);
 
     let prices = {};
 

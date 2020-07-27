@@ -26,10 +26,26 @@ function bnum(val) {
 }
 
 function getFeeFactor(feePercentage) {
-    return Math.exp(-Math.pow(feePercentage / 2, 2));
+    return Math.exp(-Math.pow(feePercentage * 0.25, 2));
 }
 
-function getRatioFactor(weights) {
+function getBalFactor(token1, weight1, token2, weight2) {
+    if (
+        token1 == '0xba100000625a3754423978a60c9317c58a424e3D' &&
+        uncappedTokens.includes(token2)
+    ) {
+        return bnum(2).times(weight1).plus(weight2).div(weight1.plus(weight2));
+    } else if (
+        token2 == '0xba100000625a3754423978a60c9317c58a424e3D' &&
+        uncappedTokens.includes(token1)
+    ) {
+        return weight1.plus(bnum(2).times(weight2)).div(weight1.plus(weight2));
+    } else {
+        return bnum(1);
+    }
+}
+
+function getRatioFactor(tokens, weights) {
     let ratioFactorSum = bnum(0);
     let pairWeightSum = bnum(0);
     let n = weights.length;
@@ -43,8 +59,15 @@ function getRatioFactor(weights) {
                 let normalizedWeight2 = weights[k].div(
                     weights[j].plus(weights[k])
                 );
+                let balMultiplier = getBalFactor(
+                    tokens[j],
+                    weights[j],
+                    tokens[k],
+                    weights[k]
+                );
                 ratioFactorSum = ratioFactorSum.plus(
-                    bnum(4)
+                    balMultiplier
+                        .times(bnum(4))
                         .times(normalizedWeight1)
                         .times(normalizedWeight2)
                         .times(pairWeight)
@@ -234,27 +257,20 @@ function getWrapFactorForPair(tokenA, tokenB) {
         for (set2 in equivalentSets[set1]) {
             let includesTokenA = equivalentSets[set1][set2].includes(tokenA);
             let includesTokenB = equivalentSets[set1][set2].includes(tokenB);
-            if (includesTokenA && includesTokenB)
-            {
+            if (includesTokenA && includesTokenB) {
                 return WRAP_FACTOR_HARD;
-            }
-            else if (
+            } else if (
                 (includesTokenA && foundTokenB) ||
                 (includesTokenB && foundTokenA)
             ) {
                 return WRAP_FACTOR_SOFT;
-            }
-            else if (includesTokenA)
-            {
+            } else if (includesTokenA) {
                 foundTokenA = true;
-            }
-            else if (includesTokenB)
-            {
+            } else if (includesTokenB) {
                 foundTokenB = true;
             }
         }
-        if (foundTokenA || foundTokenB)
-        {
+        if (foundTokenA || foundTokenB) {
             break;
         }
     }
@@ -272,7 +288,7 @@ function getWrapFactor(tokens, weights) {
                 let pairWeight = weights[x].times(weights[y]);
                 let wrapFactorPair = getWrapFactorForPair(tokens[x], tokens[y]);
                 wrapFactorSum = wrapFactorSum.plus(
-                    wrapFactorPair.times(pairWeight)
+                    bnum(wrapFactorPair).times(pairWeight)
                 );
                 pairWeightSum = pairWeightSum.plus(pairWeight);
             }
@@ -296,9 +312,9 @@ const START_BLOCK = argv.startBlock; // Closest block to reference time at begin
 const WEEK = argv.week; // Week for mining distributions. Ex: 1
 
 const BAL_PER_WEEK = bnum(145000);
-const BLOCKS_PER_SNAPSHOT = 64;
+const BLOCKS_PER_SNAPSHOT = 256;
 const BAL_PER_SNAPSHOT = BAL_PER_WEEK.div(
-    bnum(Math.ceil((END_BLOCK - START_BLOCK) / 64))
+    bnum(Math.ceil((END_BLOCK - START_BLOCK) / BLOCKS_PER_SNAPSHOT))
 ); // Ceiling because it includes end block
 
 async function getRewardsAtBlock(i, pools, prices, poolProgress) {
@@ -409,7 +425,7 @@ async function getRewardsAtBlock(i, pools, prices, poolProgress) {
         poolData.marketCap = poolMarketCap;
         poolData.eligibleTotalWeight = eligibleTotalWeight;
 
-        let ratioFactor = getRatioFactor(poolRatios);
+        let ratioFactor = getRatioFactor(currentTokens, poolRatios);
         let wrapFactor = getWrapFactor(currentTokens, poolRatios);
 
         let poolFee = await bPool.methods.getSwapFee().call(undefined, i);

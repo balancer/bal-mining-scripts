@@ -14,6 +14,7 @@ Set of scripts to calculate weekly BAL liquidity mining distributions
 | [6](/reports/6/_totals.json) |    10402520 |  10447836 |
 | [7](/reports/7/_totals.json) |    10447836 |  10493044 |
 | [8](/reports/8/_totals.json) |    10493044 |  10538187 |
+| [9](/reports/9/_totals.json) |    10538187 |  10583488 |
 
 ## Requirements
 

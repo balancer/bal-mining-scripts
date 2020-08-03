@@ -128,6 +128,12 @@ const equivalentSets = [
             '0xe2f2a5C287993345a840Db3B0845fbC70f5935a5', // mUSD
         ],
         [
+            '0x81ab848898b5ffD3354dbbEfb333D5D183eEDcB5', // yUSD-SEP20
+        ],
+        [
+            '0xdF5e0e81Dff6FAF3A7e52BA697820c5e32D806A8', // yCRV
+        ],
+        [
             '0x8E870D67F660D95d5be530380D0eC0bd388289E1', // PAX
         ],
         [

@@ -33,39 +33,113 @@ const writeData = (data, path) => {
 };
 
 async function fetchAllPools(block) {
-    const query = `
-        {
-          pools (first: 1000, block: { number: ${block} }) {
-            id
-            publicSwap
-            swapFee
-            controller
-            createTime
-            tokensList
-            totalShares
-            shares (first: 1000) {
-              userAddress {
-                id
-              }
+    let poolResults = [];
+    let skip = 0;
+    let paginatePools = true;
+    while (paginatePools) {
+        let query = `
+            {
+                pools (first: 1000, skip: ${skip}, block: { number: ${block} }) {
+                    id
+                    publicSwap
+                    swapFee
+                    controller
+                    createTime
+                    tokensList
+                    totalShares
+                    shares (first: 1000) {
+                        userAddress {
+                            id
+                        }
+                    }
+                }
             }
-          }
+        `;
+
+        let response = await fetch(SUBGRAPH_URL, {
+            method: 'POST',
+            headers: {
+                Accept: 'application/json',
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                query,
+            }),
+        });
+
+        let { data } = await response.json();
+
+        poolResults = poolResults.concat(data.pools);
+
+        if (data.pools.length < 1000) {
+            paginatePools = false;
+        } else {
+            skip += 1000;
+            continue;
         }
-    `;
+    }
 
-    const response = await fetch(SUBGRAPH_URL, {
-        method: 'POST',
-        headers: {
-            Accept: 'application/json',
-            'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-            query,
-        }),
-    });
+    let finalResults = [];
 
-    const { data } = await response.json();
+    for (i in poolResults) {
+        let pool = poolResults[i];
+        pool.shareHolders = pool.shares.flatMap((a) => a.userAddress.id);
+        if (pool.shareHolders.length == 1000) {
+            let paginateShares = true;
+            let shareSkip = 0;
+            let shareResults = [];
 
-    return data.pools;
+            while (paginateShares) {
+                let query = `
+                    {
+                        pools (where: { id: "${pool.id}"}, block: { number: ${block} }) {
+                            shares (first: 1000, skip: ${shareSkip}) {
+                                userAddress {
+                                    id
+                                }
+                            }
+                        }
+                    }
+                `;
+
+                let response = await fetch(SUBGRAPH_URL, {
+                    method: 'POST',
+                    headers: {
+                        Accept: 'application/json',
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        query,
+                    }),
+                });
+
+                let { data } = await response.json();
+
+                let newShareHolders = data.pools[0].shares.flatMap(
+                    (a) => a.userAddress.id
+                );
+
+                shareResults = shareResults.concat(newShareHolders);
+
+                if (newShareHolders.length < 1000) {
+                    paginateShares = false;
+                } else {
+                    shareSkip += 1000;
+                    continue;
+                }
+            }
+
+            pool.shareHolders = shareResults;
+            delete pool.shares;
+
+            finalResults.push(pool);
+        } else {
+            delete pool.shares;
+            finalResults.push(pool);
+        }
+    }
+
+    return finalResults;
 }
 
 function sleep(ms) {

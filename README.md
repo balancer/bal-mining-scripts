@@ -2,6 +2,19 @@
 
 Set of scripts to calculate weekly BAL liquidity mining distributions
 
+## Historical Runs
+
+| Week                         | Start Block | End Block |
+| :--------------------------- | ----------: | --------: |
+| [1](/reports/1/_totals.json) |    10176690 |  10221761 |
+| [2](/reports/2/_totals.json) |    10221761 |  10267003 |
+| [3](/reports/3/_totals.json) |    10267003 |  10312236 |
+| [4](/reports/4/_totals.json) |    10312236 |  10357402 |
+| [5](/reports/5/_totals.json) |    10357402 |  10402520 |
+| [6](/reports/6/_totals.json) |    10402520 |  10447836 |
+| [7](/reports/7/_totals.json) |    10447836 |  10493044 |
+| [8](/reports/8/_totals.json) |    10493044 |  10538187 |
+
 ## Requirements
 
 An archive node is needed to run the scripts because historical balance snapshots are needed. A "starting-point" archive node can also be used that will only archive at x block onwards. Note this still probably requires 750G+ of disk space.

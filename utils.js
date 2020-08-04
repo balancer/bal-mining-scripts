@@ -167,6 +167,7 @@ async function fetchWhitelist() {
 
 async function fetchTokenPrices(allTokens, startTime, endTime, priceProgress) {
     let prices = {};
+
     for (j in allTokens) {
         const address = allTokens[j]
             ? web3.utils.toChecksumAddress(allTokens[j])

@@ -55,7 +55,13 @@ const BLOCKS_PER_SNAPSHOT = 256;
 
             if (redirects[user]) {
                 let newAddress = redirects[user];
-                userTotals[newAddress] = userTotals[user];
+                if (userTotals[newAddress]) {
+                    userTotals[newAddress] = bnum(userTotals[newAddress])
+                        .plus(bnum(userTotals[user]))
+                        .toString();
+                } else {
+                    userTotals[newAddress] = userTotals[user];
+                }
                 delete userTotals[user];
             }
         });

@@ -4,7 +4,7 @@ const cliProgress = require('cli-progress');
 const fs = require('fs');
 const { argv } = require('yargs');
 
-const utils = require('./utils');
+const utils = require('./lib/utils');
 const poolAbi = require('./abi/BPool.json');
 const tokenAbi = require('./abi/BToken.json');
 

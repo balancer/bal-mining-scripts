@@ -5,7 +5,8 @@
     "scripts": {
         "start": "node index.js",
         "sum": "node sum.js",
-        "timestamps": "node timestamps.js"
+        "timestamps": "node timestamps.js",
+        "test": "mocha test/*"
     },
     "husky": {
         "hooks": {
@@ -22,5 +23,9 @@
         "pretty-quick": "^2.0.1",
         "web3": "^1.2.7",
         "yargs": "^15.3.1"
+    },
+    "devDependencies": {
+        "mocha": "^8.1.1",
+        "chai": "^4.2.0"
     }
 }

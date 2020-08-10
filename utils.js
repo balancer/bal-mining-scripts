@@ -148,7 +148,7 @@ function sleep(ms) {
 
 async function fetchWhitelist() {
     const response = await fetch(
-        `https://raw.githubusercontent.com/balancer-labs/pool-management/master/src/deployed.json`,
+        `https://raw.githubusercontent.com/balancer-labs/assets/master/lists/eligible.json`,
         {
             headers: {
                 Accept: 'application/json',
@@ -158,9 +158,7 @@ async function fetchWhitelist() {
     );
 
     let whitelistResponse = await response.json();
-    whitelist = whitelistResponse.mainnet.tokens
-        .slice(1)
-        .flatMap((a) => a.address);
+    whitelist = whitelistResponse.homestead;
 
     return whitelist;
 }

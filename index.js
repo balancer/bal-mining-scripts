@@ -19,7 +19,7 @@ BigNumber.config({
 });
 
 const WRAP_FACTOR_HARD = 0.1;
-const WRAP_FACTOR_SOFT = 0.7;
+const WRAP_FACTOR_SOFT = 0.2;
 
 function bnum(val) {
     return new BigNumber(val.toString());
@@ -655,7 +655,8 @@ async function getRewardsAtBlock(i, pools, prices, poolProgress) {
             priceProgress
         );
 
-        // prices['0x1985365e9f78359a9B6AD760e32412f4a445E862'] = prices['0x221657776846890989a759BA2973e427DfF5C9bB']
+        prices['0x1985365e9f78359a9B6AD760e32412f4a445E862'] =
+            prices['0x221657776846890989a759BA2973e427DfF5C9bB'];
 
         let path = `/${WEEK}/_prices`;
         utils.writeData(prices, path);

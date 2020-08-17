@@ -1,6 +1,6 @@
 const Web3 = require('web3');
 const fs = require('fs');
-const utils = require('./utils');
+const utils = require('./lib/utils');
 const BigNumber = require('bignumber.js');
 const { argv } = require('yargs');
 

@@ -8,7 +8,7 @@ const utils = require('./lib/utils');
 const poolAbi = require('./abi/BPool.json');
 const tokenAbi = require('./abi/BToken.json');
 
-const { REP_TOKEN, REP_TOKEN_V2, uncappedTokens } = require('./lib/tokens');
+const { uncappedTokens } = require('./lib/tokens');
 const {
     getFeeFactor,
     getBalFactor,
@@ -370,8 +370,6 @@ async function getRewardsAtBlock(i, pools, prices, poolProgress) {
             endBlockTimestamp,
             priceProgress
         );
-
-        prices[REP_TOKEN] = prices[REP_TOKEN_V2];
 
         let path = `/${WEEK}/_prices`;
         utils.writeData(prices, path);

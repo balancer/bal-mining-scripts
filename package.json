@@ -6,7 +6,8 @@
         "start": "node index.js",
         "sum": "node sum.js",
         "timestamps": "node timestamps.js",
-        "test": "mocha test/*"
+        "test": "mocha test/*",
+        "ipfs-publish": "node publish.js"
     },
     "husky": {
         "hooks": {
@@ -14,6 +15,7 @@
         }
     },
     "dependencies": {
+        "@fleekhq/fleek-storage-js": "^1.0.2",
         "bignumber.js": "^9.0.0",
         "cli-progress": "^3.8.2",
         "dotenv": "^8.2.0",
@@ -21,11 +23,12 @@
         "isomorphic-fetch": "^2.2.1",
         "prettier": "^2.0.5",
         "pretty-quick": "^2.0.1",
+        "require-context": "^1.1.0",
         "web3": "^1.2.7",
         "yargs": "^15.3.1"
     },
     "devDependencies": {
-        "mocha": "^8.1.1",
-        "chai": "^4.2.0"
+        "chai": "^4.2.0",
+        "mocha": "^8.1.1"
     }
 }

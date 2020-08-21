@@ -8,8 +8,8 @@ const utils = require('./lib/utils');
 const poolAbi = require('./abi/BPool.json');
 const tokenAbi = require('./abi/BToken.json');
 
-const { uncappedTokens } = require('./lib/tokens');
 const {
+    getCapFactor,
     getFeeFactor,
     getBalFactor,
     getRatioFactor,
@@ -47,7 +47,7 @@ const BAL_PER_SNAPSHOT = BAL_PER_WEEK.div(
     bnum(Math.ceil((END_BLOCK - START_BLOCK) / BLOCKS_PER_SNAPSHOT))
 ); // Ceiling because it includes end block
 
-async function getRewardsAtBlock(i, pools, prices, poolProgress) {
+async function getRewardsAtBlock(i, pools, prices, capTiers, poolProgress) {
     let totalBalancerLiquidity = bnum(0);
 
     let block = await web3.eth.getBlock(i);
@@ -197,21 +197,14 @@ async function getRewardsAtBlock(i, pools, prices, poolProgress) {
         let finalPoolMarketCapFactor = bnum(0);
 
         for (const t of pool.tokens) {
-            if (
-                !uncappedTokens.includes(t.token) &&
-                bnum(tokenTotalMarketCaps[t.token]).isGreaterThan(
-                    bnum(10000000)
-                )
-            ) {
-                let tokenMarketCapFactor = bnum(10000000).div(
-                    tokenTotalMarketCaps[t.token]
-                );
-                adjustedTokenMarketCap = t.origMarketCap
-                    .times(tokenMarketCapFactor)
-                    .dp(18);
-            } else {
-                adjustedTokenMarketCap = t.origMarketCap;
-            }
+            let capFactor = getCapFactor(
+                t.token,
+                tokenTotalMarketCaps[t.token],
+                capTiers[t.token]
+            );
+            adjustedTokenMarketCap = t.origMarketCap
+                .times(capFactor)
+                .dp(18);
             finalPoolMarketCap = finalPoolMarketCap.plus(
                 adjustedTokenMarketCap
             );
@@ -354,18 +347,20 @@ async function getRewardsAtBlock(i, pools, prices, poolProgress) {
 
     let prices = {};
 
+    const whitelist = await utils.fetchWhitelist();
+
     if (fs.existsSync(`./reports/${WEEK}/_prices.json`)) {
         const jsonString = fs.readFileSync(`./reports/${WEEK}/_prices.json`);
         prices = JSON.parse(jsonString);
     } else {
-        const whitelist = await utils.fetchWhitelist();
+        const tokens = Object.keys(whitelist);
 
-        let priceProgress = multibar.create(whitelist.length, 0, {
+        let priceProgress = multibar.create(tokens.length, 0, {
             task: 'Fetching Prices',
         });
 
         prices = await utils.fetchTokenPrices(
-            whitelist,
+            tokens,
             startBlockTimestamp,
             endBlockTimestamp,
             priceProgress
@@ -392,6 +387,7 @@ async function getRewardsAtBlock(i, pools, prices, poolProgress) {
             i,
             pools,
             prices,
+            whitelist,
             poolProgress
         );
         let path = `/${WEEK}/${i}`;

@@ -162,7 +162,7 @@ async function getRewardsAtBlock(i, pools, prices, capTiers, poolProgress) {
 
         let poolFee = await bPool.methods.getSwapFee().call(undefined, i);
         poolFee = utils.scale(poolFee, -16); // -16 = -18 * 100 since it's in percentage terms
-        let feeFactor = bnum(getFeeFactor(poolFee));
+        let feeFactor = getFeeFactor(poolFee);
 
         originalPoolMarketCapFactor = feeFactor
             .times(ratioFactor)

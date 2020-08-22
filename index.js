@@ -102,6 +102,7 @@ async function getRewardsAtBlock(i, pools, prices, capTiers, poolProgress) {
         let eligibleTotalWeight = bnum(0);
         let poolCapTiers = [];
         let poolRatios = [];
+        let poolTokens = [];
 
         for (const t of currentTokens) {
             // Skip token if it doesn't have a price
@@ -149,16 +150,17 @@ async function getRewardsAtBlock(i, pools, prices, capTiers, poolProgress) {
                 ];
             }
 
-            poolCapTiers.push(capTiers[t]);
+            poolCapTiers.push(capTiers[token]);
             poolRatios.push(utils.scale(normWeight, -18));
+            poolTokens.push(token);
             poolMarketCap = poolMarketCap.plus(tokenMarketCap);
         }
 
         poolData.marketCap = poolMarketCap;
         poolData.eligibleTotalWeight = eligibleTotalWeight;
 
-        let ratioFactor = getRatioFactor(currentTokens, poolRatios, poolCapTiers);
-        let wrapFactor = getWrapFactor(currentTokens, poolRatios);
+        let ratioFactor = getRatioFactor(poolTokens, poolRatios, poolCapTiers);
+        let wrapFactor = getWrapFactor(poolTokens, poolRatios);
 
         let poolFee = await bPool.methods.getSwapFee().call(undefined, i);
         poolFee = utils.scale(poolFee, -16); // -16 = -18 * 100 since it's in percentage terms

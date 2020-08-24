@@ -8,8 +8,8 @@ const utils = require('./lib/utils');
 const poolAbi = require('./abi/BPool.json');
 const tokenAbi = require('./abi/BToken.json');
 
-const { uncappedTokens } = require('./lib/tokens');
 const {
+    getCapFactor,
     getFeeFactor,
     getBalFactor,
     getRatioFactor,
@@ -47,7 +47,7 @@ const BAL_PER_SNAPSHOT = BAL_PER_WEEK.div(
     bnum(Math.ceil((END_BLOCK - START_BLOCK) / BLOCKS_PER_SNAPSHOT))
 ); // Ceiling because it includes end block
 
-async function getRewardsAtBlock(i, pools, prices, poolProgress) {
+async function getRewardsAtBlock(i, pools, prices, capTiers, poolProgress) {
     let totalBalancerLiquidity = bnum(0);
 
     let block = await web3.eth.getBlock(i);
@@ -100,7 +100,9 @@ async function getRewardsAtBlock(i, pools, prices, poolProgress) {
         let poolMarketCap = bnum(0);
         let originalPoolMarketCapFactor = bnum(0);
         let eligibleTotalWeight = bnum(0);
+        let poolCapTiers = [];
         let poolRatios = [];
+        let poolTokens = [];
 
         for (const t of currentTokens) {
             // Skip token if it doesn't have a price
@@ -148,19 +150,21 @@ async function getRewardsAtBlock(i, pools, prices, poolProgress) {
                 ];
             }
 
+            poolCapTiers.push(capTiers[token]);
             poolRatios.push(utils.scale(normWeight, -18));
+            poolTokens.push(token);
             poolMarketCap = poolMarketCap.plus(tokenMarketCap);
         }
 
         poolData.marketCap = poolMarketCap;
         poolData.eligibleTotalWeight = eligibleTotalWeight;
 
-        let ratioFactor = getRatioFactor(currentTokens, poolRatios);
-        let wrapFactor = getWrapFactor(currentTokens, poolRatios);
+        let ratioFactor = getRatioFactor(poolTokens, poolRatios, poolCapTiers);
+        let wrapFactor = getWrapFactor(poolTokens, poolRatios);
 
         let poolFee = await bPool.methods.getSwapFee().call(undefined, i);
         poolFee = utils.scale(poolFee, -16); // -16 = -18 * 100 since it's in percentage terms
-        let feeFactor = bnum(getFeeFactor(poolFee));
+        let feeFactor = getFeeFactor(poolFee);
 
         originalPoolMarketCapFactor = feeFactor
             .times(ratioFactor)
@@ -197,21 +201,14 @@ async function getRewardsAtBlock(i, pools, prices, poolProgress) {
         let finalPoolMarketCapFactor = bnum(0);
 
         for (const t of pool.tokens) {
-            if (
-                !uncappedTokens.includes(t.token) &&
-                bnum(tokenTotalMarketCaps[t.token]).isGreaterThan(
-                    bnum(10000000)
-                )
-            ) {
-                let tokenMarketCapFactor = bnum(10000000).div(
-                    tokenTotalMarketCaps[t.token]
-                );
-                adjustedTokenMarketCap = t.origMarketCap
-                    .times(tokenMarketCapFactor)
-                    .dp(18);
-            } else {
-                adjustedTokenMarketCap = t.origMarketCap;
-            }
+            let capFactor = getCapFactor(
+                t.token,
+                tokenTotalMarketCaps[t.token],
+                capTiers[t.token]
+            );
+            adjustedTokenMarketCap = t.origMarketCap
+                .times(capFactor)
+                .dp(18);
             finalPoolMarketCap = finalPoolMarketCap.plus(
                 adjustedTokenMarketCap
             );
@@ -354,18 +351,20 @@ async function getRewardsAtBlock(i, pools, prices, poolProgress) {
 
     let prices = {};
 
+    const whitelist = await utils.fetchWhitelist();
+
     if (fs.existsSync(`./reports/${WEEK}/_prices.json`)) {
         const jsonString = fs.readFileSync(`./reports/${WEEK}/_prices.json`);
         prices = JSON.parse(jsonString);
     } else {
-        const whitelist = await utils.fetchWhitelist();
+        const tokens = Object.keys(whitelist);
 
-        let priceProgress = multibar.create(whitelist.length, 0, {
+        let priceProgress = multibar.create(tokens.length, 0, {
             task: 'Fetching Prices',
         });
 
         prices = await utils.fetchTokenPrices(
-            whitelist,
+            tokens,
             startBlockTimestamp,
             endBlockTimestamp,
             priceProgress
@@ -392,6 +391,7 @@ async function getRewardsAtBlock(i, pools, prices, poolProgress) {
             i,
             pools,
             prices,
+            whitelist,
             poolProgress
         );
         let path = `/${WEEK}/${i}`;

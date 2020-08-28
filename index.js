@@ -110,7 +110,7 @@ const BAL_PER_SNAPSHOT = BAL_PER_WEEK.div(bnum(NUM_SNAPSHOTS)); // Ceiling becau
     if (pricesAvailable(WEEK)) {
         prices = readPrices(WEEK);
     } else {
-        let priceProgress = multibar.create(tokens.length, 0, {
+        let priceProgress = multibar.create(whitelist.length, 0, {
             task: 'Fetching Prices',
         });
 

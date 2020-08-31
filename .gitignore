@@ -1,3 +1,6 @@
+# reports
+reports/*/1*.json
+
 # dependencies
 /node_modules
 /.pnp

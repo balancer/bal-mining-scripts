@@ -224,8 +224,8 @@ export async function getPoolInvariantData(
 
     let bptSupply: BigNumber = scale(bptSupplyWei, -18);
 
-    const poolTokens: string[] = currentTokens.map(
-        web3.utils.toChecksumAddress
+    const poolTokens: string[] = currentTokens.map((pt) =>
+        web3.utils.toChecksumAddress(pt)
     );
 
     // If the pool is unpriceable, we cannot calculate any rewards
@@ -301,7 +301,6 @@ export async function getPoolInvariantData(
         feeFactor,
         eligibleTotalWeight,
         normWeights,
-        bptSupply,
     };
     if (subpoolLiquidityProviders.length == 1) {
         // single pool
@@ -313,6 +312,7 @@ export async function getPoolInvariantData(
             liquidityProviders: pool.shareHolders,
             liquidity: originalPoolLiquidity,
             eligibleTotalWeight,
+            bptSupply,
             lpBalances,
         };
         return { pools: [nonstakingPool] };
@@ -324,12 +324,14 @@ export async function getPoolInvariantData(
             subpoolLiquidityProviders[0].length > 0;
         if (hasNonshareholderPool) {
             const liquidity = originalPoolLiquidity.times(subpoolWeights[0]);
+            const bptSupplySubpool = bptSupply.times(subpoolWeights[0]);
             pools.push({
                 ...commonFactors,
                 canReceiveBoost: true,
                 liquidityProviders: subpoolLiquidityProviders[0],
                 lpBalances: subpoolBalances[0],
                 liquidity,
+                bptSupply: bptSupplySubpool,
             });
         }
 
@@ -337,12 +339,14 @@ export async function getPoolInvariantData(
             subpoolLiquidityProviders[1].length > 0;
         if (hasShareholderPool) {
             const liquidity = originalPoolLiquidity.times(subpoolWeights[1]);
+            const bptSupplySubpool = bptSupply.times(subpoolWeights[0]);
             pools.push({
                 ...commonFactors,
                 canReceiveBoost: false,
                 liquidityProviders: subpoolLiquidityProviders[1],
                 lpBalances: subpoolBalances[1],
                 liquidity,
+                bptSupply: bptSupplySubpool,
             });
         }
 

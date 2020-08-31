@@ -43,6 +43,7 @@ export const equivalentSets = [
             '0x4Ddc2D193948926D02f9B1fE9e1daa0718270ED5', // cETH
             '0x77f973FCaF871459aa58cd81881Ce453759281bC', // iETH
             '0xf53AD2c6851052A81B42133467480961B2321C09', // PETH
+            '0x89d24A6b4CcB1B6fAA2625fE562bDD9a23260359', // SAI
         ],
         [
             '0x5e74C9036fb86BD7eCdcb084a0673EFc32eA31cb', // sETH
@@ -98,6 +99,9 @@ export const equivalentSets = [
         ],
         [
             '0x9A48BD0EC040ea4f1D3147C025cd4076A2e71e3e', // USD++
+        ],
+        [
+            '0x4954Db6391F4feB5468b6B943D4935353596aEC9', // USDQ
         ],
     ],
     [

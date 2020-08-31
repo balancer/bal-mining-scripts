@@ -98,5 +98,11 @@ export function sumUserLiquidity(tokenCapFactors, pools, bal_per_snapshot) {
             .div(finalBalancerLiquidity);
     }
 
+    let totalUserBal = Object.values(userBalReceived).reduce(
+        (a, bal) => a.plus(bal),
+        bnum(0)
+    );
+    console.log('Total Bal distributed', totalUserBal);
+
     return { userPools, userBalReceived };
 }

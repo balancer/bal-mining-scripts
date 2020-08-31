@@ -14,10 +14,11 @@ interface Share {
 interface PoolResult {
     shareHolders?: any[];
     shares: Share[];
+    controller: string;
     id?: string;
 }
 
-export const fetchAllPools = async function (block) {
+export const fetchAllPools = async function (web3Utils, block) {
     let poolResults: PoolResult[] = [];
     let skip: number = 0;
     let paginatePools: boolean = true;
@@ -67,7 +68,9 @@ export const fetchAllPools = async function (block) {
     let finalResults: PoolResult[] = [];
 
     for (let pool of poolResults) {
-        pool.shareHolders = pool.shares.map((a) => a.userAddress.id);
+        pool.shareHolders = pool.shares.map((a) =>
+            web3Utils.toChecksumAddress(a.userAddress.id)
+        );
         if (pool.shareHolders.length == 1000) {
             let paginateShares = true;
             let shareSkip = 0;
@@ -99,8 +102,8 @@ export const fetchAllPools = async function (block) {
 
                 let { data } = await response.json();
 
-                let newShareHolders = data.pools[0].shares.map(
-                    (a) => a.userAddress.id
+                let newShareHolders = data.pools[0].shares.map((a) =>
+                    web3Utils.toChecksumAddress(a.userAddress.id)
                 );
 
                 shareResults = shareResults.concat(newShareHolders);
@@ -114,11 +117,13 @@ export const fetchAllPools = async function (block) {
             }
 
             pool.shareHolders = shareResults;
+            pool.controller = web3Utils.toChecksumAddress(pool.controller);
             delete pool.shares;
 
             finalResults.push(pool);
         } else {
             delete pool.shares;
+            pool.controller = web3Utils.toChecksumAddress(pool.controller);
             finalResults.push(pool);
         }
     }

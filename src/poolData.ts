@@ -224,8 +224,8 @@ export async function getPoolInvariantData(
 
     let bptSupply: BigNumber = scale(bptSupplyWei, -18);
 
-    const poolTokens: string[] = currentTokens.map(
-        web3.utils.toChecksumAddress
+    const poolTokens: string[] = currentTokens.map((pt) =>
+        web3.utils.toChecksumAddress(pt)
     );
 
     // If the pool is unpriceable, we cannot calculate any rewards

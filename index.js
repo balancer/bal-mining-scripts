@@ -77,11 +77,12 @@ const BAL_PER_SNAPSHOT = BAL_PER_WEEK.div(bnum(NUM_SNAPSHOTS)); // Ceiling becau
             startBlockTimestamp +
             ' to ' +
             endBlockTimestamp +
-            ')'
+            ')\nBal Per snapshot ' +
+            BAL_PER_SNAPSHOT
     );
 
     // fetch the pools existing at the last block
-    let pools = await fetchAllPools(END_BLOCK);
+    let pools = await fetchAllPools(web3.utils, END_BLOCK);
     writePools(WEEK, pools);
     //pools = pools.filter(p =>
     //p.tokensList.includes(BAL_TOKEN) ||
@@ -158,7 +159,6 @@ const BAL_PER_SNAPSHOT = BAL_PER_WEEK.div(bnum(NUM_SNAPSHOTS)); // Ceiling becau
         } = processPoolData(poolData);
 
         const { userPools, userBalReceived } = sumUserLiquidity(
-            tokenCapFactors,
             finalPoolsWithBalMultiplier,
             BAL_PER_SNAPSHOT
         );

@@ -10,7 +10,7 @@ interface UserPoolData {
     factorUSD: string;
 }
 
-export function sumUserLiquidity(tokenCapFactors, pools, bal_per_snapshot) {
+export function sumUserLiquidity(pools, bal_per_snapshot) {
     let finalBalancerLiquidity = pools.reduce((aggregator, pool) => {
         return aggregator.plus(pool.adjustedPoolLiquidity);
     }, bnum(0));
@@ -52,6 +52,18 @@ export function sumUserLiquidity(tokenCapFactors, pools, bal_per_snapshot) {
             );
         } else {
             // Shared pool
+            let totalLPBal = pool.lpBalances.reduce(
+                (a, b) => a.plus(b),
+                bnum(0)
+            );
+            //console.log(
+            //"\nSHARED POOL",
+            //bptSupply.toNumber(),
+            //pool.lpBalances.map((a) => a.toNumber()),
+            //totalLPBal.toNumber(),
+            //pool.adjustedPoolLiquidity.toNumber(),
+            //"\n"
+            //);
 
             for (const i in pool.liquidityProviders) {
                 let lp = pool.liquidityProviders[i];
@@ -63,6 +75,7 @@ export function sumUserLiquidity(tokenCapFactors, pools, bal_per_snapshot) {
                     .times(pool.liquidity)
                     .dp(18);
 
+                // the value of the user's share of the pool's adjusted liquidity
                 let lpPoolValueFactor = userBalance
                     .div(bptSupply)
                     .times(pool.adjustedPoolLiquidity)
@@ -94,15 +107,24 @@ export function sumUserLiquidity(tokenCapFactors, pools, bal_per_snapshot) {
     let userBalReceived: { [key: string]: BigNumber } = {};
     for (const user in userLiquidity) {
         userBalReceived[user] = userLiquidity[user]
-            .times(bal_per_snapshot)
-            .div(finalBalancerLiquidity);
+            .div(finalBalancerLiquidity)
+            .times(bal_per_snapshot);
     }
 
     let totalUserBal = Object.values(userBalReceived).reduce(
         (a, bal) => a.plus(bal),
         bnum(0)
     );
-    console.log('Total Bal distributed', totalUserBal);
+    if (totalUserBal.minus(bal_per_snapshot).abs().gt(0.1)) {
+        console.log(
+            'TOTAL USER BAL',
+            totalUserBal,
+            'BAL PER SNAPSHOT',
+            bal_per_snapshot
+        );
+        throw 'Wrong amount of user Bal has been assigned to users';
+    }
+    console.log('\nTotal Bal distributed', totalUserBal.toNumber(), '\n');
 
     return { userPools, userBalReceived };
 }

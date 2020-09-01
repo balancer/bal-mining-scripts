@@ -339,7 +339,7 @@ export async function getPoolInvariantData(
             subpoolLiquidityProviders[1].length > 0;
         if (hasShareholderPool) {
             const liquidity = originalPoolLiquidity.times(subpoolWeights[1]);
-            const bptSupplySubpool = bptSupply.times(subpoolWeights[0]);
+            const bptSupplySubpool = bptSupply.times(subpoolWeights[1]);
             pools.push({
                 ...commonFactors,
                 canReceiveBoost: false,

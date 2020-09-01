@@ -22,6 +22,7 @@ const BLOCKS_PER_SNAPSHOT = 256;
 (async function () {
     let userTotals = {};
     let sortedUserTotal = {};
+    let sortedUserTotalPreRedirect = {};
     let userBal = {};
 
     let balTotal = bnum(0);
@@ -44,6 +45,18 @@ const BLOCKS_PER_SNAPSHOT = 256;
                 }
             });
         }
+
+        Object.entries(userTotals)
+            .sort((a, b) => a[0] - b[0])
+            .forEach(([key, val]) => {
+                if (val > 0) {
+                    sortedUserTotalPreRedirect[key] = val;
+                }
+            });
+        utils.writeData(
+            sortedUserTotalPreRedirect,
+            `${WEEK}/_totalsPreRedirect`
+        );
 
         const jsonRedirect = fs.readFileSync(`./redirect.json`);
         const redirects = JSON.parse(jsonRedirect);

@@ -216,11 +216,12 @@ export function processPoolData(poolDatas) {
         bnum(0)
     );
 
-    if (
-        finalBalancerLiquidity.minus(targetFinalLiquidity).abs().gt(bnum(0.01))
-    ) {
-        throw 'Final Balancer Liquidity does not match target';
-    }
+    //if (
+    //finalBalancerLiquidity.minus(targetFinalLiquidity).abs().gt(bnum(0.01))
+    //) {
+    //// Note that this can happen if no pools are boostable
+    //throw 'Final Balancer Liquidity does not match target';
+    //}
 
     return {
         tokenTotalLiquidities,

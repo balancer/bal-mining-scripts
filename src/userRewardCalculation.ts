@@ -108,7 +108,8 @@ export function sumUserLiquidity(pools, bal_per_snapshot) {
     for (const user in userLiquidity) {
         userBalReceived[user] = userLiquidity[user]
             .div(finalBalancerLiquidity)
-            .times(bal_per_snapshot);
+            .times(bal_per_snapshot)
+            .dp(18);
     }
 
     let totalUserBal = Object.values(userBalReceived).reduce(

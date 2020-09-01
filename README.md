@@ -4,19 +4,21 @@ Set of scripts to calculate weekly BAL liquidity mining distributions
 
 ## Historical Runs
 
-| Week                           | Start Block | End Block |
-| :----------------------------- | ----------: | --------: |
-| [1](/reports/1/_totals.json)   |    10176690 |  10221761 |
-| [2](/reports/2/_totals.json)   |    10221761 |  10267003 |
-| [3](/reports/3/_totals.json)   |    10267003 |  10312236 |
-| [4](/reports/4/_totals.json)   |    10312236 |  10357402 |
-| [5](/reports/5/_totals.json)   |    10357402 |  10402520 |
-| [6](/reports/6/_totals.json)   |    10402520 |  10447836 |
-| [7](/reports/7/_totals.json)   |    10447836 |  10493044 |
-| [8](/reports/8/_totals.json)   |    10493044 |  10538187 |
-| [9](/reports/9/_totals.json)   |    10538187 |  10583488 |
-| [10](/reports/10/_totals.json) |    10583488 |  10628811 |
-| [11](/reports/11/_totals.json) |    10628811 |  10674230 |
+| Week                           | Start Block | End Block | Blocks Zip                                                                                                 |
+| :----------------------------- | ----------: | --------: | :--------------------------------------------------------------------------------------------------------- |
+| [1](/reports/1/_totals.json)   |    10176690 |  10221761 |                                                                                                            |
+| [2](/reports/2/_totals.json)   |    10221761 |  10267003 |                                                                                                            |
+| [3](/reports/3/_totals.json)   |    10267003 |  10312236 |                                                                                                            |
+| [4](/reports/4/_totals.json)   |    10312236 |  10357402 |                                                                                                            |
+| [5](/reports/5/_totals.json)   |    10357402 |  10402520 |                                                                                                            |
+| [6](/reports/6/_totals.json)   |    10402520 |  10447836 |                                                                                                            |
+| [7](/reports/7/_totals.json)   |    10447836 |  10493044 |                                                                                                            |
+| [8](/reports/8/_totals.json)   |    10493044 |  10538187 |                                                                                                            |
+| [9](/reports/9/_totals.json)   |    10538187 |  10583488 |                                                                                                            |
+| [10](/reports/10/_totals.json) |    10583488 |  10628811 |                                                                                                            |
+| [11](/reports/11/_totals.json) |    10628811 |  10674230 |                                                                                                            |
+| [12](/reports/12/_totals.json) |    10674230 |  10719753 |                                                                                                            |
+| [13](/reports/13/_totals.json) |    10719753 |  10765333 | [bal_mining_week_13.zip](https://gateway.pinata.cloud/ipfs/QmPesaMi42qo18ecpQMyVuE6uKLYr8hLE7h9fqd6oyzjTc) |
 
 ## Requirements
 

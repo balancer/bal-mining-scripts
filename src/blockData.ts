@@ -123,7 +123,6 @@ export function processPoolData(poolDatas) {
         const tokenCap = tokenCaps[tokenAddress];
         if (!uncapped && totalLiquidity.gt(tokenCap)) {
             const tokenCapFactor = tokenCap.div(totalLiquidity);
-            console.log('\nTOKEN CAP FACTOR', tokenAddress, tokenCapFactor);
             tokenCapFactors[tokenAddress] = tokenCapFactor;
         } else {
             tokenCapFactors[tokenAddress] = bnum(1);
@@ -209,6 +208,20 @@ export function processPoolData(poolDatas) {
         );
         return { ...p, ...variantFactors };
     });
+
+    let finalBalancerLiquidity = finalPoolsWithBalMultiplier.reduce(
+        (aggregator, pool) => {
+            return aggregator.plus(pool.adjustedPoolLiquidity);
+        },
+        bnum(0)
+    );
+
+    //if (
+    //finalBalancerLiquidity.minus(targetFinalLiquidity).abs().gt(bnum(0.01))
+    //) {
+    //// Note that this can happen if no pools are boostable
+    //throw 'Final Balancer Liquidity does not match target';
+    //}
 
     return {
         tokenTotalLiquidities,

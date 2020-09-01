@@ -53,7 +53,7 @@ const BLOCKS_PER_SNAPSHOT = 256;
                     sortedUserTotalPreRedirect[key] = val;
                 }
             });
-        utils.writeData(
+        fileService.writeData(
             sortedUserTotalPreRedirect,
             `${WEEK}/_totalsPreRedirect`
         );

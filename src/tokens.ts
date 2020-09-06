@@ -73,6 +73,7 @@ export const equivalentSets = [
         ],
         [
             '0xdF5e0e81Dff6FAF3A7e52BA697820c5e32D806A8', // yCRV
+            '0x5dbcF33D8c2E976c6b560249878e6F1491Bca25c', // yyCRV
         ],
         [
             '0x8E870D67F660D95d5be530380D0eC0bd388289E1', // PAX

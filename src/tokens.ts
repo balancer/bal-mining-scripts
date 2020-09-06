@@ -69,6 +69,9 @@ export const equivalentSets = [
             '0x81ab848898b5ffD3354dbbEfb333D5D183eEDcB5', // yUSD-SEP20
         ],
         [
+            '0xB2FdD60AD80ca7bA89B9BAb3b5336c2601C020b4', // yUSD-OCT20
+        ],
+        [
             '0xdF5e0e81Dff6FAF3A7e52BA697820c5e32D806A8', // yCRV
         ],
         [

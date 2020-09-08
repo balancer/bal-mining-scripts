@@ -19,6 +19,7 @@ Set of scripts to calculate weekly BAL liquidity mining distributions
 | [11](/reports/11/_totals.json) |    10628811 |  10674230 |                                                                                                            |
 | [12](/reports/12/_totals.json) |    10674230 |  10719753 |                                                                                                            |
 | [13](/reports/13/_totals.json) |    10719753 |  10765333 | [bal_mining_week_13.zip](https://gateway.pinata.cloud/ipfs/QmPesaMi42qo18ecpQMyVuE6uKLYr8hLE7h9fqd6oyzjTc) |
+| [14](/reports/14/_totals.json) |    10765333 |  10811169 | [bal_mining_week_14.zip](https://gateway.pinata.cloud/ipfs/QmaqhW8YWgdTwAVagiah4j6BnmHW91Zc81gww4adDgjWcU) |
 
 ## Requirements
 

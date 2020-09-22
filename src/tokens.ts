@@ -64,6 +64,9 @@ export const equivalentSets = [
             '0x06AF07097C9Eeb7fD685c692751D5C66dB49c215', // CHAI
         ],
         [
+            '0x5BC25f649fc4e26069dDF4cF4010F9f706c23831', // DUSD
+        ],
+        [
             '0xe2f2a5C287993345a840Db3B0845fbC70f5935a5', // mUSD
         ],
         [

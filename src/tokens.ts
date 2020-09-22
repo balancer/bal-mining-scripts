@@ -51,6 +51,7 @@ export const equivalentSets = [
     ],
     [
         [
+            '0x4Fabb145d64652a948d72533023f6E7A623C7C53', // BUSD
             '0x6Ee0f7BB50a54AB5253dA0667B0Dc2ee526C30a8', // aBUSD
         ],
         [

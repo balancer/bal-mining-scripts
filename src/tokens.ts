@@ -51,6 +51,7 @@ export const equivalentSets = [
     ],
     [
         [
+            '0x4Fabb145d64652a948d72533023f6E7A623C7C53', // BUSD
             '0x6Ee0f7BB50a54AB5253dA0667B0Dc2ee526C30a8', // aBUSD
         ],
         [
@@ -61,6 +62,9 @@ export const equivalentSets = [
             '0x261b45D85cCFeAbb11F022eBa346ee8D1cd488c0', // rDAI
             '0x16de59092dAE5CcF4A1E6439D611fd0653f0Bd01', // yDAI
             '0x06AF07097C9Eeb7fD685c692751D5C66dB49c215', // CHAI
+        ],
+        [
+            '0x5BC25f649fc4e26069dDF4cF4010F9f706c23831', // DUSD
         ],
         [
             '0xe2f2a5C287993345a840Db3B0845fbC70f5935a5', // mUSD

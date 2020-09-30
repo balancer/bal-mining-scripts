@@ -67,7 +67,19 @@ export const equivalentSets = [
             '0x5BC25f649fc4e26069dDF4cF4010F9f706c23831', // DUSD
         ],
         [
+            '0x056Fd409E1d7A124BD7017459dFEa2F387b6d5Cd', // GUSD
+        ],
+        [
             '0xe2f2a5C287993345a840Db3B0845fbC70f5935a5', // mUSD
+        ],
+        [
+            '0xDaFF85B6f5787b2d9eE11CCDf5e852816063326A', // pxUSD-OCT2020
+        ],
+        [
+            '0xF06DdacF71e2992E2122A1a0168C6967aFdf63ce', // uUSDrBTC-DEC
+        ],
+        [
+            '0xD16c79c8A39D44B2F3eB45D2019cd6A42B03E2A9', // uUSDwETH-DEC
         ],
         [
             '0x81ab848898b5ffD3354dbbEfb333D5D183eEDcB5', // yUSD-SEP20
@@ -133,6 +145,9 @@ export const equivalentSets = [
         ],
         [
             '0xfE18be6b3Bd88A2D2A7f928d00292E7a9963CfC6', // sBTC
+        ],
+        [
+            '0x8dAEBADE922dF735c38C80C7eBD708Af50815fAa', // TBTC
         ],
     ],
     [

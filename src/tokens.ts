@@ -140,6 +140,9 @@ export const equivalentSets = [
         [
             '0xfE18be6b3Bd88A2D2A7f928d00292E7a9963CfC6', // sBTC
         ],
+        [
+            '0x8dAEBADE922dF735c38C80C7eBD708Af50815fAa', // TBTC
+        ],
     ],
     [
         [

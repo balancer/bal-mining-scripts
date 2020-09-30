@@ -73,6 +73,9 @@ export const equivalentSets = [
             '0xe2f2a5C287993345a840Db3B0845fbC70f5935a5', // mUSD
         ],
         [
+            '0xDaFF85B6f5787b2d9eE11CCDf5e852816063326A', // pxUSD-OCT2020
+        ],
+        [
             '0x81ab848898b5ffD3354dbbEfb333D5D183eEDcB5', // yUSD-SEP20
         ],
         [

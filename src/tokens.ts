@@ -67,6 +67,9 @@ export const equivalentSets = [
             '0x5BC25f649fc4e26069dDF4cF4010F9f706c23831', // DUSD
         ],
         [
+            '0x056Fd409E1d7A124BD7017459dFEa2F387b6d5Cd', // GUSD
+        ],
+        [
             '0xe2f2a5C287993345a840Db3B0845fbC70f5935a5', // mUSD
         ],
         [

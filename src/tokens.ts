@@ -79,6 +79,9 @@ export const equivalentSets = [
             '0xF06DdacF71e2992E2122A1a0168C6967aFdf63ce', // uUSDrBTC-DEC
         ],
         [
+            '0xD16c79c8A39D44B2F3eB45D2019cd6A42B03E2A9', // uUSDwETH-DEC
+        ],
+        [
             '0x81ab848898b5ffD3354dbbEfb333D5D183eEDcB5', // yUSD-SEP20
         ],
         [

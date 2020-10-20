@@ -34,3 +34,7 @@ report.2020*
 *.sln
 *.sw?
 /lib
+
+# Jupyter Notebook Checkpoints
+.ipynb_checkpoints
+redistribute/explore.ipynb

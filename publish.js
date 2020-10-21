@@ -1,12 +1,15 @@
 const fleek = require('@fleekhq/fleek-storage-js');
 const requireContext = require('require-context');
 
-const NAMESPACE = 'balancer-claim';
-const SNAPSHOT_KEY = `${NAMESPACE}/snapshot`;
+const network = 42;
 const config = {
   apiKey: process.env.FLEEK_API_KEY,
   apiSecret: process.env.FLEEK_API_SECRET
 };
+
+const networkStr = network === 42 ? '-kovan' : '';
+const NAMESPACE = `balancer-claim${networkStr}`;
+const SNAPSHOT_KEY = `${NAMESPACE}/snapshot`;
 
 async function getSnapshot() {
   const input = config;
@@ -27,7 +30,7 @@ async function uploadJson(key, body) {
   };
 }
 
-const requireFile = requireContext(`${__dirname}/reports`, true, /_totals.json$/);
+const requireFile = requireContext(`${__dirname}/reports${networkStr}`, true, /_totals.json$/);
 const files = Object.fromEntries(requireFile.keys().map(
   (fileName) => [fileName.replace('/_totals.json', ''), requireFile(fileName)]
 ));

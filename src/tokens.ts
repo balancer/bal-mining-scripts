@@ -43,6 +43,7 @@ export const equivalentSets = [
             '0x4Ddc2D193948926D02f9B1fE9e1daa0718270ED5', // cETH
             '0x77f973FCaF871459aa58cd81881Ce453759281bC', // iETH
             '0xf53AD2c6851052A81B42133467480961B2321C09', // PETH
+            '0xE0B7927c4aF23765Cb51314A0E0521A9645F0E2A', // DGD
             '0x89d24A6b4CcB1B6fAA2625fE562bDD9a23260359', // SAI
         ],
         [

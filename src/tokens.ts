@@ -220,6 +220,12 @@ export const equivalentSets = [
     ],
     [
         [
+            '0x1f9840a85d5aF5bf1D1762F925BDADdC4201F984', // UNI
+            '0x35A18000230DA775CAc24873d00Ff85BccdeD550', // cUNI
+        ],
+    ],
+    [
+        [
             '0xE41d2489571d322189246DaFA5ebDe1F4699F498', // ZRX
             '0x6Fb0855c404E09c47C3fBCA25f08d4E41f9F062f', // aZRX
             '0xB3319f5D18Bc0D84dD1b4825Dcde5d5f7266d407', // cZRX

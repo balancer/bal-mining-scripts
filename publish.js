@@ -1,13 +1,14 @@
 const fleek = require('@fleekhq/fleek-storage-js');
 const requireContext = require('require-context');
 
-const network = 42;
+const network = process.env.NETWORK || 'kovan';
+
 const config = {
   apiKey: process.env.FLEEK_API_KEY,
   apiSecret: process.env.FLEEK_API_SECRET
 };
 
-const networkStr = network === 42 ? '-kovan' : '';
+const networkStr = network === 'kovan' ? '-kovan' : '';
 const NAMESPACE = `balancer-claim${networkStr}`;
 const SNAPSHOT_KEY = `${NAMESPACE}/snapshot`;
 

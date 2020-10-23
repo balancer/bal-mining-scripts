@@ -173,7 +173,7 @@ export const equivalentSets = [
     ],
     [
         [
-            '0x80fB784B7eD66730e8b1DBd9820aFD29931aab03', // LEND
+            '0x7Fc66500c84A76Ad7e9c93437bFc5Ac33E2DDaE9', // AAVE
             '0x7D2D3688Df45Ce7C552E19c27e007673da9204B8', // aLEND
         ],
     ],

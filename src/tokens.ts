@@ -43,6 +43,7 @@ export const equivalentSets = [
             '0x4Ddc2D193948926D02f9B1fE9e1daa0718270ED5', // cETH
             '0x77f973FCaF871459aa58cd81881Ce453759281bC', // iETH
             '0xf53AD2c6851052A81B42133467480961B2321C09', // PETH
+            '0xE0B7927c4aF23765Cb51314A0E0521A9645F0E2A', // DGD
             '0x89d24A6b4CcB1B6fAA2625fE562bDD9a23260359', // SAI
         ],
         [
@@ -172,7 +173,7 @@ export const equivalentSets = [
     ],
     [
         [
-            '0x80fB784B7eD66730e8b1DBd9820aFD29931aab03', // LEND
+            '0x7Fc66500c84A76Ad7e9c93437bFc5Ac33E2DDaE9', // AAVE
             '0x7D2D3688Df45Ce7C552E19c27e007673da9204B8', // aLEND
         ],
     ],
@@ -216,6 +217,12 @@ export const equivalentSets = [
         [
             '0xC011a73ee8576Fb46F5E1c5751cA3B9Fe0af2a6F', // SNX
             '0x328C4c80BC7aCa0834Db37e6600A6c49E12Da4DE', // aSNX
+        ],
+    ],
+    [
+        [
+            '0x1f9840a85d5aF5bf1D1762F925BDADdC4201F984', // UNI
+            '0x35A18000230DA775CAc24873d00Ff85BccdeD550', // cUNI
         ],
     ],
     [

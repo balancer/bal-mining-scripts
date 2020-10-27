@@ -31,10 +31,19 @@ async function uploadJson(key, body) {
   };
 }
 
+const offsetMainnet = 20;
 const requireFile = requireContext(`${__dirname}/reports${networkStr}`, true, /_totals.json$/);
-const files = Object.fromEntries(requireFile.keys().map(
-  (fileName) => [fileName.replace('/_totals.json', ''), requireFile(fileName)]
-));
+const files = Object.fromEntries(
+  requireFile.keys()
+    .map((fileName) => [fileName.replace('/_totals.json', ''), requireFile(fileName)])
+    .filter(file => network === 'mainnet' && parseInt(file[0]) > offsetMainnet)
+    .map(file => network === 'mainnet' ?
+      [(parseInt(file[0]) - offsetMainnet).toString(), file[1]]
+      : file
+    )
+);
+
+console.log(Object.keys(files));
 
 (async () => {
   const snapshot = await getSnapshot();

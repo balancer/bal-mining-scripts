@@ -4,6 +4,9 @@ import { hexToBytes, toWei, soliditySha3 } from 'web3-utils';
 
 // Merkle tree called with 32 byte hex values
 export class MerkleTree {
+    elements: any;
+    layers: any;
+
     constructor(elements) {
         this.elements = elements
             .filter(el => el)
@@ -23,7 +26,7 @@ export class MerkleTree {
             return [['']];
         }
 
-        const layers = [];
+        const layers: any = [];
         layers.push(elements);
 
         // Get next layer until we reach the root
@@ -142,7 +145,7 @@ export class MerkleTree {
 }
 
 export function loadTree(balances) {
-    const elements = [];
+    const elements: any = [];
     Object.keys(balances).forEach(address => {
         const balance = toWei(balances[address]);
         const leaf = soliditySha3(address, balance);

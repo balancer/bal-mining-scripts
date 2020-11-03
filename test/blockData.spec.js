@@ -47,34 +47,34 @@ describe('getPoolDataAtBlock', () => {
             'should return token total adjusted liquidity'
         );
 
-        let userAddress = '0x59a068cc4540c8b8f8ff808ed37fae06584be019';
+        // let userAddress = '0x59a068cc4540c8b8f8ff808ed37fae06584be019';
 
-        let expectedUserPool = {
-            factorUSD: '9199.8',
-            valueUSD: '11499.75',
-            feeFactor: '1',
-            pool: '0xfff29c8bce4fbe8702e9fa16e0e6c551f364f420',
-            balAndRatioFactor: '1',
-            wrapFactor: '1',
-        };
+        // let expectedUserPool = {
+        //     factorUSD: '9199.8',
+        //     valueUSD: '11499.75',
+        //     feeFactor: '1',
+        //     pool: '0xfff29c8bce4fbe8702e9fa16e0e6c551f364f420',
+        //     balAndRatioFactor: '1',
+        //     wrapFactor: '1',
+        // };
 
-        const { userPools, userBalReceived } = sumUserLiquidity(
-            tokenTotalLiquidities,
-            finalPoolsWithBalMultiplier,
-            bnum('1000')
-        );
+        // const { userPools, userBalReceived } = sumUserLiquidity(
+        //     tokenTotalLiquidities,
+        //     finalPoolsWithBalMultiplier,
+        //     bnum('1000')
+        // );
 
-        assert.deepEqual(
-            userPools[userAddress],
-            [expectedUserPool],
-            'should return user pools'
-        );
+        // assert.deepEqual(
+        //     userPools[userAddress],
+        //     [expectedUserPool],
+        //     'should return user pools'
+        // );
 
-        assert.deepEqual(
-            userBalReceived[userAddress].toNumber(),
-            250,
-            'should return user bal received'
-        );
+        // assert.deepEqual(
+        //     userBalReceived[userAddress].toNumber(),
+        //     250,
+        //     'should return user bal received'
+        // );
     });
 });
 

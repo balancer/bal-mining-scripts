@@ -1,7 +1,7 @@
 import { loadTree } from './merkle';
 import requireContext from 'require-context';
 
-const network = process.env.NETWORK || 'kovan';
+const network = process.env.NETWORK || 'mainnet';
 const networkStr = network === 'kovan' ? '-kovan' : '';
 const requireFile = requireContext(`../../reports${networkStr}`, true, /_totals.json$/);
 const reports = Object.fromEntries(

@@ -69,36 +69,38 @@ export function sumUserLiquidity(pools, bal_per_snapshot) {
                 let lp = pool.liquidityProviders[i];
                 let userBalance = pool.lpBalances[i];
 
-                // the value of the user's share of the pool's liquidity
-                let lpPoolValue = userBalance
-                    .div(bptSupply)
-                    .times(pool.liquidity)
-                    .dp(18);
+                if (userBalance.gt(bnum(0))) {
+                    // the value of the user's share of the pool's liquidity
+                    let lpPoolValue = userBalance
+                        .div(bptSupply)
+                        .times(pool.liquidity)
+                        .dp(18);
 
-                // the value of the user's share of the pool's adjusted liquidity
-                let lpPoolValueFactor = userBalance
-                    .div(bptSupply)
-                    .times(pool.adjustedPoolLiquidity)
-                    .dp(18);
+                    // the value of the user's share of the pool's adjusted liquidity
+                    let lpPoolValueFactor = userBalance
+                        .div(bptSupply)
+                        .times(pool.adjustedPoolLiquidity)
+                        .dp(18);
 
-                let sharedPool: UserPoolData = {
-                    pool: pool.poolAddress,
-                    feeFactor: pool.feeFactor.toString(),
-                    balAndRatioFactor: pool.balAndRatioFactor.toString(),
-                    wrapFactor: pool.wrapFactor.toString(),
-                    valueUSD: lpPoolValue.toString(),
-                    factorUSD: lpPoolValueFactor.toString(),
-                };
-                if (userPools[lp]) {
-                    userPools[lp].push(sharedPool);
-                } else {
-                    userPools[lp] = [sharedPool];
+                    let sharedPool: UserPoolData = {
+                        pool: pool.poolAddress,
+                        feeFactor: pool.feeFactor.toString(),
+                        balAndRatioFactor: pool.balAndRatioFactor.toString(),
+                        wrapFactor: pool.wrapFactor.toString(),
+                        valueUSD: lpPoolValue.toString(),
+                        factorUSD: lpPoolValueFactor.toString(),
+                    };
+                    if (userPools[lp]) {
+                        userPools[lp].push(sharedPool);
+                    } else {
+                        userPools[lp] = [sharedPool];
+                    }
+
+                    // Add this pool's liquidity to the user's total liquidity
+                    userLiquidity[lp] = (userLiquidity[lp] || bnum(0)).plus(
+                        lpPoolValueFactor
+                    );
                 }
-
-                // Add this pool's liquidity to the user's total liquidity
-                userLiquidity[lp] = (userLiquidity[lp] || bnum(0)).plus(
-                    lpPoolValueFactor
-                );
             }
         }
     }

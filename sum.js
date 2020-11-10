@@ -85,7 +85,7 @@ const BLOCKS_PER_SNAPSHOT = 256;
                 sortedUserTotal[key] = val;
             });
         console.log(`Total BAL distributed ${balTotal.toString()}`);
-        fileService.writeData(sortedUserTotal, `${WEEK}/_totals`);
+        fileService.writeData(sortedUserTotal, `${WEEK}/_totalsPreRedistribute`);
     } catch (e) {
         console.error('Error reading reports', e);
     }

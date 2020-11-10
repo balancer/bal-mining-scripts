@@ -5,7 +5,8 @@ const network = process.env.NETWORK || 'kovan';
 
 const config = {
   apiKey: process.env.FLEEK_API_KEY,
-  apiSecret: process.env.FLEEK_API_SECRET
+  apiSecret: process.env.FLEEK_API_SECRET,
+  bucket: 'balancer-team-bucket'
 };
 
 const networkStr = network === 'kovan' ? '-kovan' : '';

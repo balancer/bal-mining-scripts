@@ -34,3 +34,6 @@ report.2020*
 *.sln
 *.sw?
 /lib
+
+*checkpoint.ipynb
+python/compare-java-python.ipynb

@@ -4,7 +4,7 @@ Python implementation of the BAL liquidity mining distribution, using Google Big
 ## Requirements
 * Python 3 + Jupyter Notebook
 * An ethereum node (for querying blocks timestamps and token decimals) 
-* A service account key with read access to Google BigQuery
+* A [service account key](https://cloud.google.com/iam/docs/creating-managing-service-account-keys#iam-service-account-keys-create-console) with read access to Google BigQuery
 
 ## Setup
 `pip install -r requirements.txt`

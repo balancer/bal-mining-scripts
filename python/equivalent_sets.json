@@ -130,6 +130,12 @@
         ],
         [
             [
+                "0x584bC13c7D411c00c01A62e8019472dE68768430", // HEGIC
+                "0x837010619aeb2AE24141605aFC8f66577f6fb2e7", // zHEGIC
+            ],
+        ],
+        [
+            [
                 "0xdd974D5C2e2928deA5F71b9825b8b646686BD200", // KNC
                 "0x9D91BE44C06d373a8a226E1f3b146956083803eB", // aKNC
                 "0x1cC9567EA2eB740824a45F8026cCF8e46973234D", // iKNC

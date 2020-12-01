@@ -1,6 +1,8 @@
 <h1 align=center><code>BAL Mining</code></h1>
 
-Set of scripts to calculate weekly BAL liquidity mining distributions
+Set of scripts to calculate weekly BAL liquidity mining distributions. 
+
+On week 26, the process was ported over to Python with the [blockchain-etl](https://github.com/blockchain-etl/) project on Google Bigquery as the  source for state data, such as pools' balances, fees, liquidity providers etc. The legacy scripts used up to week 25 can be found in the `_js-scripts-archive` directory.
 
 ## Historical Runs
 
@@ -34,28 +36,30 @@ Set of scripts to calculate weekly BAL liquidity mining distributions
 | [26](/reports/26/_totals.json) |    11311151 |  11356700 |
 
 ## Requirements
+* Python 3 + Jupyter Notebook
+* An ethereum node (for querying blocks timestamps and token decimals) 
+* A [service account key](https://cloud.google.com/iam/docs/creating-managing-service-account-keys#iam-service-account-keys-create-console) with read access to Google BigQuery
 
-An archive node is needed to run the scripts because historical balance snapshots are needed. A "starting-point" archive node can also be used that will only archive at x block onwards. Note this still probably requires 750G+ of disk space.
+## Setup
+* Install required packages: `pip install -r requirements.txt`
+* Configure environment variables:
+  * `ENDPOINT_URL`: URL to an ethereum node that can be queried via Websockets
+  * `GOOGLE_APPLICATION_CREDENTIALS`: path to a JSON file that contains a service account key with read access to Google BigQuery
 
 ## Usage
-
-```
-node index.js --week 1 --startBlock 10176690 --endBlock 10221761
-node index.js --week 2 --startBlock 10221761 --endBlock 10267003
-```
-
-This will run run all historical calculations by block. Using an infura endpoint this may take upwards of 18 hours. For a local archive node, the sync time is roughly 10 minutes. Progress bars with estimates are shown during the sync. Reports will be saved in the folder for the given week specified
-
-```
-node sum.js --week 1 --startBlock 10176690 --endBlock 10221761
-```
-
-After all reports are generated, `sum.js` will create a final tally of user address to BAL received. This is stored in the report week folder at `_totals.json`
+1. Start Jupyter Notebook: `jupyter notebook`  
+1. Open the `bal-mining.ipynb` notebook   
+1. Run all cells
+2. Plots are displayed throughout the notebook. JSON reports are stored in the `reports` directory, with a final tally of user address to BAL received stored in the report week folder at `_totals.json`
 
 ## Weekly distributions
 
-145,000 BAL will be distributed directly to addresses on a weekly basis. Due to block gas limits, the tx's to batch transfer BAL will need to be split up across blocks. In order to prevent favoring certain accounts, the block hash of the `endBlock` will be the starting point and addresses will be ordered alphabetically for distributions.
+145,000 BAL will be distributed on a weekly basis. Liquidity providers must claim their BAL at [claim.balancer.finance](https://claim.balancer.finance/).
 
 ## BAL Redirections
 
 In case smart contracts which cannot receive BAL tokens are specified, owners of those smart contracts can choose to redirect BAL tokens to a new address. In order to submit a redirection request, submit a pull request to update `redirect.json` using `"fromAddress" : "toAddress"` along with some sort of ownership proof. Please reach out to the Balancer team if you need assistance.
+
+## BAL Redistributions
+
+The mining script identifies the liquidity providers of configurable rights pools (CRPs) deployed via the CRPFactory and redistributes BAL earned by those pools appropriately. CRPs deployed via other methods should submit a pull request to update `redistribute.json` using `"controllerAddress" : "poolDescription"` along with some sort of ownership proof. Please reach out to the Balancer team if you need assistance.

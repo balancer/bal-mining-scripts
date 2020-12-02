@@ -3,10 +3,18 @@ import requireContext from 'require-context';
 
 const network = process.env.NETWORK || 'mainnet';
 const networkStr = network === 'kovan' ? '-kovan' : '';
-const requireFile = requireContext(`../../reports${networkStr}`, true, /_totals.json$/);
+const requireFile = requireContext(
+    `../../reports${networkStr}`,
+    true,
+    /_totals.json$/
+);
 const reports = Object.fromEntries(
-    requireFile.keys()
-        .map((fileName) => [fileName.replace('/_totals.json', ''), requireFile(fileName)])
+    requireFile
+        .keys()
+        .map((fileName) => [
+            fileName.replace('/_totals.json', ''),
+            requireFile(fileName),
+        ])
 );
 
 console.log('Merkle roots');

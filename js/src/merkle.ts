@@ -9,8 +9,8 @@ export class MerkleTree {
 
     constructor(elements) {
         this.elements = elements
-            .filter(el => el)
-            .map(el => Buffer.from(hexToBytes(el)));
+            .filter((el) => el)
+            .map((el) => Buffer.from(hexToBytes(el)));
 
         // Sort elements
         this.elements.sort(Buffer.compare);
@@ -132,11 +132,11 @@ export class MerkleTree {
     }
 
     bufArrToHexArr(arr) {
-        if (arr.some(el => !Buffer.isBuffer(el))) {
+        if (arr.some((el) => !Buffer.isBuffer(el))) {
             throw new Error('Array is not an array of buffers');
         }
 
-        return arr.map(el => '0x' + el.toString('hex'));
+        return arr.map((el) => '0x' + el.toString('hex'));
     }
 
     sortAndConcat(...args) {
@@ -146,7 +146,7 @@ export class MerkleTree {
 
 export function loadTree(balances) {
     const elements: any = [];
-    Object.keys(balances).forEach(address => {
+    Object.keys(balances).forEach((address) => {
         const balance = toWei(balances[address]);
         const leaf = soliditySha3(address, balance);
         elements.push(leaf);

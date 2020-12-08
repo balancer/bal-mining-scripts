@@ -35,7 +35,7 @@ async function uploadJson(key, body) {
 
 const offsetMainnet = 20;
 const requireFile = requireContext(
-    `${__dirname}/reports${networkStr}`,
+    `../../reports${networkStr}`,
     true,
     /_totals.json$/
 );

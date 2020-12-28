@@ -36,6 +36,8 @@ On week 26, the process was ported over to Python with the [blockchain-etl](http
 | [26](/reports/26/_totals.json) |    11311151 |  11356700 |
 | [27](/reports/27/_totals.json) |    11356700 |  11402291 |
 | [28](/reports/28/_totals.json) |    11402291 |  11447731 |
+| [29](/reports/29/_totals.json) |    11447731 |  11493367 |
+| [30](/reports/30/_totals.json) |    11493367 |  11538966 |
 
 ## Requirements
 * Python 3 + Jupyter Notebook

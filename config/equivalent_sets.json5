@@ -94,6 +94,12 @@
             [
                 '0x4954Db6391F4feB5468b6B943D4935353596aEC9', // USDQ
             ],
+            [
+                '0x002f0B1A71C5730CF2F4dA1970A889207BdB6D0D', // YD-BTC-MAR21
+            ],
+            [
+                '0x90f802C7E8fb5D40B0De583e34C065A3bd2020D8', // YD-ETH-MAR21
+            ],
         ],
         [
             [

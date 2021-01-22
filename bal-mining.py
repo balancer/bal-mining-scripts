@@ -31,6 +31,7 @@ gov_factor = 1.1
 
 
 import time
+import os
 print(time.strftime("%Y-%m-%d %H:%M:%S", time.localtime()))
 
 
@@ -81,7 +82,7 @@ if REALTIME_ESTIMATOR:
     and timestamp <= TIMESTAMP_ADD(TIMESTAMP_TRUNC(CURRENT_TIMESTAMP(), WEEK(MONDAY)), interval 1 HOUR)
     order by timestamp
     limit 1
-    '''.format(delta_weeks*7)
+    '''
     results = bigquery.Client().query(sql).result()
     for row in results:
         START_BLOCK = row.number

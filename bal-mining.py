@@ -1,33 +1,33 @@
 #!/usr/bin/env python
 # coding: utf-8
 
-# In[ ]:
+# In[1]:
 
 
 # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 # Google BigQuery SQL to get the blocks mined around a timestamp
 # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 # SELECT * FROM `bigquery-public-data.crypto_ethereum.blocks`
-# WHERE timestamp > "2021-01-17 23:59:30"
-# and timestamp < "2021-01-18 00:00:30"
+# WHERE timestamp > "2021-01-24 23:59:30"
+# and timestamp < "2021-01-25 00:00:30"
 # order by timestamp
 
 
-# In[ ]:
+# In[2]:
 
 
 REALTIME_ESTIMATOR = True
 # set the window of blocks, will be overwritten if REALTIME_ESTIMATOR == True
-WEEK = 33
-START_BLOCK = 11630234
-END_BLOCK = 11675866
+WEEK = 34
+START_BLOCK = 11675866
+END_BLOCK = 11721455
 # we can hard code latest gov proposal if we want
 latest_gov_proposal = ''
 latest_gov_proposal_snapshot_block = 11655773
 gov_factor = 1.1
 
 
-# In[ ]:
+# In[3]:
 
 
 import time
@@ -35,7 +35,7 @@ import os
 print(time.strftime("%Y-%m-%d %H:%M:%S", time.localtime()))
 
 
-# In[ ]:
+# In[4]:
 
 
 from google.cloud import bigquery
@@ -95,7 +95,7 @@ if REALTIME_ESTIMATOR:
         END_BLOCK = row.number
 
 
-# In[ ]:
+# In[5]:
 
 
 from web3 import Web3
@@ -106,7 +106,7 @@ start_block_timestamp = w3.eth.getBlock(START_BLOCK).timestamp
 end_block_timestamp = w3.eth.getBlock(END_BLOCK).timestamp
 
 
-# In[ ]:
+# In[6]:
 
 
 import json
@@ -129,17 +129,18 @@ if gov_factor > 1 and not latest_gov_proposal:
     proposals['end'] = proposals['msg'].apply(lambda x: x['payload'].get('end',0))
     # only proposals that ended before the beginning of the current week count
     proposals = proposals[proposals['end'] < start_block_timestamp]
-    latest_gov_proposal = proposals['end'].idxmax()
-    latest_gov_proposal_snapshot_block = proposals.loc[latest_gov_proposal,'msg']['payload'].get('snapshot',0)
-    title = proposals.loc[latest_gov_proposal,'msg']['payload'].get('name',0)
-    print(f'Most recent governance proposal: {latest_gov_proposal}')
-    print(f'Title: {title}')
-    if latest_gov_proposal == 'QmWtk4pJ2CNhmLFK9Nhk5gGD7xr2KbsK4cfpFXyR9YCbYG': # if the latest proposal is the govFactor proposal
-        gov_factor = 1
-        print(f'No proposals since the govFactor proposal until the beginning of the week. Using govFactor=1')
+    latest_gov_proposals = proposals[proposals['end']==proposals['end'].max()]
+#     latest_gov_proposal_snapshot_block = proposals.loc[latest_gov_proposal,'msg']['payload'].get('snapshot',0)
+#     title = proposals.loc[latest_gov_proposal,'msg']['payload'].get('name',0)
+    for i,p in latest_gov_proposals.iterrows():
+        print(f'Most recent governance proposal: {i}')
+        print(f"Title: {p['msg']['payload'].get('name',0)}")
+#     if latest_gov_proposal == 'QmWtk4pJ2CNhmLFK9Nhk5gGD7xr2KbsK4cfpFXyR9YCbYG': # if the latest proposal is the govFactor proposal
+#         gov_factor = 1
+#         print(f'No proposals since the govFactor proposal until the beginning of the week. Using govFactor=1')
 
 
-# In[ ]:
+# In[7]:
 
 
 # get list of tokens eligible for liquidity mining
@@ -149,7 +150,7 @@ else:
     whitelist_df = pd.read_json(f'https://raw.githubusercontent.com/balancer-labs/assets/w{WEEK}/lists/eligible.json')
 
 
-# In[ ]:
+# In[8]:
 
 
 from urllib.request import urlopen
@@ -169,7 +170,7 @@ else:
 BLACKLISTED_SHAREHOLDERS_lower = [x.lower() for x in BLACKLISTED_SHAREHOLDERS]
 
 
-# In[ ]:
+# In[9]:
 
 
 BAL_TOKEN = '0xba100000625a3754423978a60c9317c58a424e3D'
@@ -186,7 +187,7 @@ STAKERS_SHARE = LIQUIDITY_STAKING / WEEKLY_MINED
 reports_dir = f'reports/{WEEK}'
 
 
-# In[ ]:
+# In[10]:
 
 
 import os
@@ -194,7 +195,7 @@ if not os.path.exists(reports_dir):
     os.mkdir(reports_dir)
 
 
-# In[ ]:
+# In[11]:
 
 
 import numpy as np
@@ -234,7 +235,7 @@ def get_wrap_factor(tokens_weights):
     return element_wise_product.sum()/np.triu(weights_matrix, k=1).sum()
 
 
-# In[ ]:
+# In[12]:
 
 
 def get_staking_boosts_of_pair(a, b, bal_multiplier=1):
@@ -293,14 +294,14 @@ def get_BRF(tokens_weights, bal_multiplier=1):
     return numerator/denominator
 
 
-# In[ ]:
+# In[13]:
 
 
 import matplotlib.pyplot as plt
 plt.rcParams['figure.facecolor'] = 'white'
 
 
-# In[ ]:
+# In[14]:
 
 
 from tqdm.auto import tqdm
@@ -319,7 +320,7 @@ print('week {}: first snapshot block: {} ({}...)'.format(WEEK, min(snapshot_bloc
 print('week {}: last snapshot block: {} (...{})'.format(WEEK, max(snapshot_blocks), snapshot_blocks[-3:]))
 
 
-# In[ ]:
+# In[15]:
 
 
 # remove kovan
@@ -344,7 +345,7 @@ whitelist_df.set_index(whitelist_df['checksum_token_address'].str.lower(), inpla
 whitelist_df.index.name = 'token_address'
 
 
-# In[ ]:
+# In[16]:
 
 
 # get decimals of whitelisted tokens
@@ -370,7 +371,7 @@ whitelist_df['decimals'] = whitelist_df['checksum_token_address'].apply(get_toke
 print(time.strftime("%Y-%m-%d %H:%M:%S", time.localtime()) + ' - Done!')
 
 
-# In[ ]:
+# In[17]:
 
 
 # get USD prices of whitelist tokens
@@ -419,7 +420,7 @@ for i in tqdm(whitelist_df.index, 'Getting prices'):
     whitelist_df.loc[i,'prices_dict'] = [prices_dict]
 
 
-# In[ ]:
+# In[18]:
 
 
 import json
@@ -450,7 +451,7 @@ if not REALTIME_ESTIMATOR:
 prices_df['timestamp'] = prices_df['timestamp']//1000
 
 
-# In[ ]:
+# In[19]:
 
 
 # get eligible token balances of every balancer pool at every snapshot block from Big Query
@@ -480,7 +481,7 @@ and balance > 0
 # print(sql)
 
 
-# In[ ]:
+# In[20]:
 
 
 from google.cloud import bigquery
@@ -500,14 +501,14 @@ n = len(pools_balances)
 print(time.strftime("%Y-%m-%d %H:%M:%S", time.localtime()) + f' - Done ({n} records)')
 
 
-# In[ ]:
+# In[21]:
 
 
 pools_balances['scaled_balance'] = pools_balances['balance'] * pools_balances.join(whitelist_df['decimals'], on='token_address')['decimals'].apply(lambda x: 10**(-x))
 pools_balances['timestamp'] = pools_balances['block_number'].apply(lambda x: snapshot_blocks_timestamps[x])
 
 
-# In[ ]:
+# In[22]:
 
 
 pools_balances.set_index(['address','block_number','token_address'], inplace=True)
@@ -518,7 +519,7 @@ eligible_pools_balances = pools_balances[pools_balances['number_of_liquid_eligib
 eligible_pools_balances.reset_index(inplace=True)
 
 
-# In[ ]:
+# In[23]:
 
 
 # merge balances and prices datasets on nearest timestamp, and compute USD balance of each token in each pool at each block
@@ -528,7 +529,7 @@ usd_pools_balances = pd.merge_asof(eligible_pools_balances.sort_values(by='times
 usd_pools_balances['usd_balance'] = usd_pools_balances['scaled_balance'] * usd_pools_balances['price']
 
 
-# In[ ]:
+# In[24]:
 
 
 # get token weights and swap fees of pools with public swap enabled
@@ -550,7 +551,7 @@ and W.block_number in ({})
 # print(sql)
 
 
-# In[ ]:
+# In[25]:
 
 
 from google.cloud import bigquery
@@ -570,7 +571,7 @@ n = len(pools_weights)
 print(time.strftime("%Y-%m-%d %H:%M:%S", time.localtime()) + f' - Done ({n} records)')
 
 
-# In[ ]:
+# In[26]:
 
 
 # the merge removes records associated with balances of tokens that are not part of the pool
@@ -587,7 +588,7 @@ pools_weights_balances = pools_weights_balances.join(norm_weights)
 pools_weights_balances = pools_weights_balances[pools_weights_balances['norm_weights']<1]
 
 
-# In[ ]:
+# In[27]:
 
 
 print(time.strftime("%Y-%m-%d %H:%M:%S", time.localtime()) + ' - Computing wrap factor...')
@@ -597,7 +598,7 @@ pools_weights_balances = pools_weights_balances.join(wrap_factor)
 print(time.strftime("%Y-%m-%d %H:%M:%S", time.localtime()) + ' - Done')
 
 
-# In[ ]:
+# In[28]:
 
 
 print(time.strftime("%Y-%m-%d %H:%M:%S", time.localtime()) + ' - Computing BRF (first pass)...')
@@ -607,7 +608,7 @@ pools_weights_balances = pools_weights_balances.join(brf)
 print(time.strftime("%Y-%m-%d %H:%M:%S", time.localtime()) + ' - Done')
 
 
-# In[ ]:
+# In[29]:
 
 
 # compute the fee factor
@@ -617,13 +618,13 @@ print(time.strftime("%Y-%m-%d %H:%M:%S", time.localtime()) + ' - Done')
 pools_weights_balances['fee_factor'] = np.exp(-(0.25 *                                                 (100 *                                                  (pools_weights_balances['swapfee'].astype(float) / 1E18)))**2)
 
 
-# In[ ]:
+# In[30]:
 
 
 pools_weights_balances['adjustedLiquidityPreTokenCap'] = pools_weights_balances['usd_balance'] *                                                             pools_weights_balances['fee_factor'] *                                                             pools_weights_balances['wrap_factor'] *                                                             pools_weights_balances['first_pass_brf']
 
 
-# In[ ]:
+# In[31]:
 
 
 # compute the tokenCapFactor for each token_address at each block_number
@@ -632,13 +633,13 @@ tokenCapFactor.name = 'tokenCapFactor'
 pools_weights_balances = pools_weights_balances.join(tokenCapFactor)
 
 
-# In[ ]:
+# In[32]:
 
 
 pools_weights_balances['token_capped_usd_balance'] = pools_weights_balances['usd_balance'] *                                                         pools_weights_balances['tokenCapFactor']
 
 
-# In[ ]:
+# In[33]:
 
 
 # get liquidity providers and the amount of BPT each has
@@ -664,7 +665,7 @@ select * from private_pools
 # print(sql)
 
 
-# In[ ]:
+# In[34]:
 
 
 from google.cloud import bigquery
@@ -684,7 +685,7 @@ n = len(bpt_balances)
 print(time.strftime("%Y-%m-%d %H:%M:%S", time.localtime()) + f' - Done ({n} records)')
 
 
-# In[ ]:
+# In[35]:
 
 
 is_shareholder = bpt_balances['bpt_holder'].isin(BLACKLISTED_SHAREHOLDERS_lower)
@@ -693,7 +694,7 @@ bpt_balances.set_index(['address','block_number','is_shareholder','bpt_holder'],
 bpt_balances.rename_axis(index={'is_shareholder': 'shareholders_subpool'}, inplace=True)
 
 
-# In[ ]:
+# In[36]:
 
 
 # split pools that have a blacklisted shareholder as one of their LPs
@@ -710,7 +711,7 @@ for c in splitable_cols:
     subpools[c] = subpools[c] * subpools['relative_size_of_subpool']
 
 
-# In[ ]:
+# In[37]:
 
 
 TEMP_BAL_MULTIPLIER = 3
@@ -728,7 +729,7 @@ subpools = subpools.join(brf)
 print(time.strftime("%Y-%m-%d %H:%M:%S", time.localtime()) + ' - Done')
 
 
-# In[ ]:
+# In[38]:
 
 
 subpools['adjustedLiquidityPreStaking'] = subpools['token_capped_usd_balance'] *                                             subpools['fee_factor'] *                                             subpools['wrap_factor'] *                                             subpools['second_pass_brf_mult1']
@@ -736,7 +737,7 @@ subpools['adjustedLiquidityPreStaking'] = subpools['token_capped_usd_balance'] *
 subpools['adjustedLiquidityWithTempStakingMult'] = subpools['token_capped_usd_balance'] *                                             subpools['fee_factor'] *                                             subpools['wrap_factor'] *                                             subpools['second_pass_brf_with_temp_mult']
 
 
-# In[ ]:
+# In[39]:
 
 
 # compute final BAL multiplier
@@ -747,7 +748,7 @@ stretch = (final_desired_adjusted_liquidity - total_adjustedLiquidityPreStaking)
 final_bal_multiplier = 1 + stretch * (TEMP_BAL_MULTIPLIER - 1)
 
 
-# In[ ]:
+# In[40]:
 
 
 print(time.strftime("%Y-%m-%d %H:%M:%S", time.localtime()) + ' - Third BRF - with final BAL multiplier...')
@@ -757,14 +758,14 @@ subpools = subpools.join(brf)
 print(time.strftime("%Y-%m-%d %H:%M:%S", time.localtime()) + ' - Done')
 
 
-# In[ ]:
+# In[41]:
 
 
 # compute the final adjusted liquidity of each token in each subpool at each block
 subpools['finalAdjustedLiquidity'] = subpools['token_capped_usd_balance'] *                                             subpools['fee_factor'] *                                             subpools['wrap_factor'] *                                             subpools['third_pass_brf_with_final_mult']
 
 
-# In[ ]:
+# In[42]:
 
 
 # compute the total final adjusted liquidity at each block
@@ -779,7 +780,7 @@ subpools = subpools.join(share_of_liquidity)
 subpools['BAL_mined'] = subpools['share_of_liquidity'] * WEEKLY_MINED / len(snapshot_blocks)
 
 
-# In[ ]:
+# In[43]:
 
 
 # compute the BAL mined by each LP proportional to their share of the pool
@@ -796,64 +797,54 @@ bal_mined['chksum_bpt_holder'] = bal_mined['bpt_holder'].apply(lambda x: chksums
 bal_mined.set_index(['address', 'block_number', 'shareholders_subpool', 'chksum_bpt_holder'], inplace=True)
 
 
-# In[ ]:
+# In[44]:
 
 
 totals = bal_mined['bal_mined'].groupby('chksum_bpt_holder').sum()
 
-
-# In[ ]:
-
-
-totals[totals>=CLAIM_THRESHOLD].apply(lambda x: format(x, f'.{CLAIM_PRECISION}f')).to_json(reports_dir+'/_totalsPreRedirect.json',
+if not REALTIME_ESTIMATOR:
+    totals[totals>=CLAIM_THRESHOLD].apply(lambda x: format(x, f'.{CLAIM_PRECISION}f')).to_json(reports_dir+'/_totalsPreRedirect.json',
                                                   indent=4)
 
 
-# In[ ]:
+# In[45]:
 
 
-# save pools time series
-mined_by_pools = subpools['BAL_mined'].groupby(['address','block_number']).sum()
-mined_by_pools = mined_by_pools[mined_by_pools>=CLAIM_THRESHOLD].apply(lambda x: format(x, f'.{CLAIM_PRECISION}f'))
-mined_by_pools = pd.DataFrame(mined_by_pools).reset_index()
-mined_by_pools = mined_by_pools.pivot(index='address', columns='block_number', values='BAL_mined')
-mined_by_pools.to_json(reports_dir+'/_poolsSeries.json.zip',
-                       orient='index',
-                       indent=4)
+if not REALTIME_ESTIMATOR:
+    # save pools time series
+    mined_by_pools = subpools['BAL_mined'].groupby(['address','block_number']).sum()
+    mined_by_pools = mined_by_pools[mined_by_pools>=CLAIM_THRESHOLD].apply(lambda x: format(x, f'.{CLAIM_PRECISION}f'))
+    mined_by_pools = pd.DataFrame(mined_by_pools).reset_index()
+    mined_by_pools = mined_by_pools.pivot(index='address', columns='block_number', values='BAL_mined')
+    mined_by_pools.to_json(reports_dir+'/_poolsSeries.json.zip',
+                           orient='index',
+                           indent=4)
 
 
-# In[ ]:
+# # Redirect and Redistribute
+# Recursively:
+# * redirects BAL earned by one address to another
+# * redistributes BAL earned by a smart contract to its token holders
+#   * a smart contract can earn BAL if it is the controller of a private pool (eg smart pools) or if it holds BPT of finalized pools (eg staking contracts)
+#   * by doing this recursively we also account for staking contracts that hold BPTs of smart pools (BAL earned by the CRP is redistributed to its token holders; then the subset of BAL that goes to the staking contract is redistributed to its holders)
+#   * all CRPs created via the CRPFactory are redistributers by default. Other contracts can PR into `config/redistribute.json`
+
+# In[46]:
 
 
-print(time.strftime("%Y-%m-%d %H:%M:%S", time.localtime()))
-
-
-# # Redirect
-# This redirects BAL earned by one address to another
-
-# In[ ]:
-
-
+# get addresses that redirect
 if REALTIME_ESTIMATOR:
     url = 'https://raw.githubusercontent.com/balancer-labs/bal-mining-scripts/master/config/redirect.json'
     jsonurl = urlopen(url)
     redirects = json.loads(jsonurl.read())
 else:
     redirects = json.load(open('config/redirect.json'))
-redirection = bal_mined.reset_index()
-redirection['redirect_to'] = redirection['chksum_bpt_holder'].apply(lambda x: redirects.get(x,x))
-redirected_totals = redirection.set_index('redirect_to')['bal_mined'].groupby('redirect_to').sum()
-redirected_totals[redirected_totals>=CLAIM_THRESHOLD].apply(   lambda x: format(x, f'.{CLAIM_PRECISION}f')).to_json(reports_dir+'/_totalsPreRedistribute.json',
-   indent=4)
 
 
-# # Redistribute
-# This redistributes BAL earned by a controller to the token holders of that controller
-
-# In[ ]:
+# In[47]:
 
 
-# get receivers to redistribute
+# get addresses that redistribute
 if REALTIME_ESTIMATOR:
     url = 'https://raw.githubusercontent.com/balancer-labs/bal-mining-scripts/master/config/redistribute.json'
     jsonurl = urlopen(url)
@@ -877,46 +868,26 @@ crps = (
 )
 
 redistributers_list.extend(crps['pool'].drop_duplicates().apply(Web3.toChecksumAddress))
-print('Redistributers: {}'.format(redistributers_list))
+# print('Redistributers: {}'.format(redistributers_list))
 
 
-# In[ ]:
-
-
-rewards_to_redistribute_df = bal_mined.reset_index()[['chksum_bpt_holder','block_number','bal_mined']]
-rewards_to_redistribute_df.dropna(inplace=True)
-mask = rewards_to_redistribute_df['chksum_bpt_holder'].isin(redistributers_list)
-rewards_to_redistribute_df = rewards_to_redistribute_df[mask].reset_index(drop=True)
-rewards_to_redistribute_df['redistributer'] = rewards_to_redistribute_df['chksum_bpt_holder'].apply(lambda x: x.lower())
-rewards_to_redistribute_df['value'] = rewards_to_redistribute_df['bal_mined'].astype(float)
-rewards_to_redistribute_df = rewards_to_redistribute_df[['redistributer','block_number','value']]
-# rewards_to_redistribute_df
-
-
-# In[ ]:
+# In[48]:
 
 
 # get redistributers' token holders
-tokens = list(rewards_to_redistribute_df.redistributer.drop_duplicates())
-snapshot_block_numbers = list(rewards_to_redistribute_df.block_number.drop_duplicates())
-snapshot_block_numbers = [str(b) for b in snapshot_block_numbers]
 sql = """
 select * from `blockchain-etl.ethereum_balancer.view_token_balances_subset`
 where token_address in ({})
 and block_number in ({})
-and balance <> 0
-""".format('\''+'\',\''.join(tokens)+'\'', 
-           ','.join(snapshot_block_numbers))
+and balance > 0
+""".format('\''+'\',\''.join(map(lambda x: x.lower(), redistributers_list))+'\'', 
+           ','.join(snapshot_blocks_as_str))
 # print(sql)
-
-
-# In[ ]:
-
 
 # Requires setting the environment variable GOOGLE_APPLICATION_CREDENTIALS 
 # to the file path of the JSON file that contains a service account key 
 
-print(time.strftime("%Y-%m-%d %H:%M:%S", time.localtime()) + ' - Querying Bigquery for the token holders of the controllers ...')
+print(time.strftime("%Y-%m-%d %H:%M:%S", time.localtime()) + ' - Querying Bigquery for the token holders of the redistributers ...')
 
 client = bigquery.Client()
 
@@ -927,149 +898,131 @@ running_balances = (
     .to_dataframe(bqstorage_client=bqstorageclient)
 )
 running_balances['balance'] = running_balances['balance'].astype(float)
+running_balances['address'] = running_balances['address'].apply(Web3.toChecksumAddress)
+running_balances['token_address'] = running_balances['token_address'].apply(Web3.toChecksumAddress)
 running_balances = running_balances.rename(columns={"token_address": "redistributer", "address": "share_holder"})
 running_balances.set_index(['block_number','redistributer','share_holder'], inplace=True)
-print(time.strftime("%Y-%m-%d %H:%M:%S", time.localtime()) + ' - Done!')
-
-
-# In[ ]:
-
 
 shares = pd.DataFrame(running_balances['balance'])/pd.DataFrame(running_balances.groupby(['block_number','redistributer']).sum()['balance'])
 shares.columns = ['perc_share']
-rewards_to_redistribute_df.set_index(['block_number', 'redistributer'], inplace=True)
-rewards_to_redistribute_df.fillna(0, inplace=True)
-rewards_to_redistribute_df.head()
-redistribution_df = pd.DataFrame(rewards_to_redistribute_df['value']*shares['perc_share']).dropna().reset_index()
-redistribution_df.rename(columns={0: 'reward'}, inplace=True)
-redistribution_df['share_holder'] = redistribution_df['share_holder'].apply(Web3.toChecksumAddress)
-redistribution_df['redistributer'] = redistribution_df['redistributer'].apply(Web3.toChecksumAddress)
-redistribution_df.loc[redistribution_df['reward']<0,'reward'] = 0
+print(time.strftime("%Y-%m-%d %H:%M:%S", time.localtime()) + ' - Done!')
 
 
-# In[ ]:
+# In[49]:
 
 
-# # Uncomment to plot redistributions
-# actual_redistributers = list(redistribution_df.redistributer.drop_duplicates())
-# fig, axs = plt.subplots(ncols=2, nrows=len(actual_redistributers), figsize=(15, 5*len(actual_redistributers)))
-# for i,t in enumerate(actual_redistributers):
-#     areaplot = redistribution_df[redistribution_df.redistributer==t].pivot(index='block_number', 
-#                                                                            columns='share_holder', 
-#                                                                            values='reward')
-#     areaplot.plot.area(legend=False, ax=axs.flat[2*i],
-#                        title='Redistributed rewards and holders ({})'.format(t[:8]));
-#     areaplot.divide(areaplot.sum(axis=1), axis=0).plot.area(legend=False, ax=axs.flat[2*i+1],
-#                                                             title='Share of redistributed rewards and holders ({})'.format(t[:8]));
-#     axs.flat[2*i].ticklabel_format(axis='x', style='plain')
-#     axs.flat[2*i+1].ticklabel_format(axis='x', style='plain')
+miners = bal_mined['bal_mined'].groupby(['block_number', 'chksum_bpt_holder']).sum().reset_index()
+miners = miners[miners['bal_mined']>0]
+miners.rename(columns={'chksum_bpt_holder':'miner'}, inplace=True)
+
+for i in range(3):
+
+    n = len(miners['miner'].drop_duplicates()[miners['miner'].drop_duplicates().isin(redirects.keys())])
+    print(f'Redirect #{i+1}: {n} redirectors found')
+    # redirect
+    miners['miner'] = miners['miner'].apply(lambda x: redirects.get(x,x))
+
+    n = len(miners['miner'].drop_duplicates()[miners['miner'].drop_duplicates().isin(redistributers_list)])
+    print(f'Redistribute #{i+1}: {n} Redistributors found')
+    # redistribute
+    # first assume all miners are redistributing
+    miners.rename(columns={'miner':'redistributer'}, inplace=True)
+    miners.set_index(['block_number', 'redistributer'], inplace=True)
+    # join with shares of redistributing contracts
+    miners = miners.join(shares, how='left').reset_index()
+    # miners are the shareholders of the redistributing contracts; or the original redistributer if NA
+    miners['miner'] = miners['share_holder'].fillna(miners['redistributer'])
+    # the share of BAL for each miner is the share of the redistribution contract they own; or 1 if NA
+    miners['perc_share'] = miners['perc_share'].fillna(1)
+    # compute BAL earned by each miner
+    miners['bal_mined'] = miners['bal_mined'] * miners['perc_share']
+    # at this point, same miner might earn BAL from different sources, so we need to aggregate again
+    miners = miners[['block_number', 'miner', 'bal_mined']].groupby(['block_number', 'miner']).sum().reset_index()
+    
+    redirecters_remain = miners['miner'].drop_duplicates().isin(redirects.keys()).any()
+    redistributers_remain = miners['miner'].drop_duplicates().isin(redistributers_list).any()
+    if not redirecters_remain and not redistributers_remain:
+        break
+
+totals = miners[['miner','bal_mined']].groupby('miner').sum()['bal_mined']
+
+if not REALTIME_ESTIMATOR:
+    if gov_factor > 1:
+        filename = '/_totalsPreGovFactor.json'
+    else:
+        filename = '/_totalsLiquidityMining.json'
+
+    totals[totals>=CLAIM_THRESHOLD].apply(lambda x:                                           format(x, f'.{CLAIM_PRECISION}f')).                                            to_json(reports_dir+filename,
+                                                    indent=4)
 
 
-# In[ ]:
+# # Gov Factor
+# Liquidity providers that participate in the governance of Balancer get a bonus on the BAL earned
 
-
-total_redistribution = redistribution_df.groupby('share_holder').sum()['reward']
-total_pre_redistribution = json.load(open(reports_dir+'/_totalsPreRedistribute.json'))
-total_post_redistribution = total_pre_redistribution.copy()
-for index,value in total_redistribution.iteritems():
-    old_value = float(total_pre_redistribution.get(index,0))
-    new_value = old_value + value
-    total_post_redistribution[index] = format(new_value, f'.{CLAIM_PRECISION}f')
-
-for r in redistribution_df['redistributer'].drop_duplicates():
-    del total_post_redistribution[r]
-
-
-# In[ ]:
-
-
-print('BAL  pre-redistribution: {:.18f}'.format(sum([float(v) for v in total_pre_redistribution.values()])))
-print('BAL post-redistribution: {:.18f}'.format(sum([float(v) for v in total_post_redistribution.values()])))
-
-
-# Do a final redirect to handle contracts that hold smart pools tokens and can't withdraw BAL
-
-# In[ ]:
-
-
-redirects = json.load(open('config/redirect.json'))
-for src,dst in redirects.items():
-    if src in total_post_redistribution.keys():
-        if dst not in total_post_redistribution.keys():
-            total_post_redistribution[dst] = 0
-        total_post_redistribution[dst] = float(total_post_redistribution[dst])
-        total_post_redistribution[dst] += float(total_post_redistribution.pop(src))
-        total_post_redistribution[dst] = format(total_post_redistribution[dst], 
-                                                f'.{CLAIM_PRECISION}f')
-print('BAL post-redistribution and final redirect: {:.18f}'.format(sum([float(v) for v in total_post_redistribution.values()])))
-
-
-# In[ ]:
-
-
-if gov_factor > 1:
-    json.dump(total_post_redistribution, 
-              open(reports_dir+'/_totalsPreGovFactor.json', mode='w'),
-              indent=4,
-              separators=(',', ':'))
-else:
-    json.dump(total_post_redistribution, 
-          open(reports_dir+'/_totals.json', mode='w'),
-          indent=4,
-          separators=(',', ':'))
-
-
-# In[ ]:
+# In[50]:
 
 
 # apply govFactor
 if gov_factor > 1:
-    voters_url = f'https://hub.snapshot.page/api/balancer/proposal/{latest_gov_proposal}'
-    voters = list(json.loads(requests.get(voters_url).content).keys())
-    print(f'{len(voters)} addresses voted on proposal {latest_gov_proposal}')
+    voters = []
+    for i,p in latest_gov_proposals.iterrows():
+        voters_url = f'https://hub.snapshot.page/api/balancer/proposal/{i}'
+        prop_voters = list(json.loads(requests.get(voters_url).content).keys())
+        print(f'{len(prop_voters)} addresses voted on proposal {i}')
+        voters.extend(prop_voters)
+#     latest_gov_proposal_snapshot_block = proposals.loc[latest_gov_proposal,
 
-    # get delegators and delegatees
-    url = 'https://api.thegraph.com/subgraphs/name/snapshot-labs/snapshot'
-    query = f'''query {{
-      delegations(block: {{number: {latest_gov_proposal_snapshot_block}}}, 
-          first: 1000, 
-          where: {{space_in: ["balancer", ""]}}) {{
-            delegate
-            delegator
-      }}
-    }}'''
-    r = requests.post(url, json = {'query':query})
-    delegations = pd.DataFrame(json.loads(r.content)['data']['delegations'])
-    if len(delegations)==1000:
-            warnings.warn('Delegations reached 1000, implement pagination')
-    delegators_that_voted_indirectly = delegations[delegations.delegate.isin(voters)]['delegator']
-    print(f'{len(delegators_that_voted_indirectly)} addresses voted through delegators')
-    voters.extend(delegators_that_voted_indirectly)
-    print(f'{len(voters)} total voters')
+        # get delegators and delegatees
+        url = 'https://api.thegraph.com/subgraphs/name/snapshot-labs/snapshot'
+        query = f'''query {{
+          delegations(block: {{number: {p['msg']['payload'].get('snapshot',0)}}}, 
+              first: 1000, 
+              where: {{space_in: ["balancer", ""]}}) {{
+                delegate
+                delegator
+          }}
+        }}'''
+        r = requests.post(url, json = {'query':query})
+        delegations = pd.DataFrame(json.loads(r.content)['data']['delegations'])
+        if len(delegations)==1000:
+                warnings.warn('Delegations reached 1000, implement pagination')
+        delegators_that_voted_indirectly = delegations[delegations.delegate.isin(voters)]['delegator']
+        print(f'{len(delegators_that_voted_indirectly)} addresses voted through delegators')
+        voters.extend(delegators_that_voted_indirectly)
     
-    totals_post_gov_factor = {}
-    for k,v in total_post_redistribution.items():
-        totals_post_gov_factor[k] = float(v) * (gov_factor if k in voters else 1)
-
-    expanded_BAL_mined = sum(totals_post_gov_factor.values())
-
-    for k,v in totals_post_gov_factor.items():
-        totals_post_gov_factor[k] = format(v*WEEKLY_MINED/expanded_BAL_mined, f'.{CLAIM_PRECISION}f')
+    voters = list(dict.fromkeys(voters)) #drop duplicates
+    print(f'{len(voters)} total unique voters')
+    
+    totals_pre_govfactor = totals.copy()
+    totals[totals.index.isin(voters)] = totals * gov_factor
+    
+    expanded_BAL_mined = totals.sum()
+    
+    totals = totals * WEEKLY_MINED / expanded_BAL_mined
+    totals_post_govfactor = totals.copy()
 
     print('govFactor expansion: {:.2f}'.format(expanded_BAL_mined/WEEKLY_MINED))
-    print('BAL post-govFactor: {:.18f}'.format(sum([float(v) for v in totals_post_gov_factor.values()])))
+    print('BAL post-govFactor: {:.18f}'.format(totals.sum()))
     
-    json.dump(totals_post_gov_factor, 
-          open(reports_dir+'/_totals.json', mode='w'),
-          indent=4,
-          separators=(',', ':'))
+    if not REALTIME_ESTIMATOR:
+        filename = '/_totalsLiquidityMining.json'
+        totals[totals>=CLAIM_THRESHOLD].apply(lambda x:                                               format(x, f'.{CLAIM_PRECISION}f')).                                                to_json(reports_dir+filename,
+                                                        indent=4)
 
 
-# In[ ]:
+# In[51]:
 
 
-# delete this week's previous estimates
+print(time.strftime("%Y-%m-%d %H:%M:%S", time.localtime()))
+
+
+# # Update real time estimates in GBQ
+
+# In[52]:
+
+
 if REALTIME_ESTIMATOR:
+    # delete this week's previous estimates
     project_id = os.environ['GCP_PROJECT']
     sql = f'''
         DELETE FROM {project_id}.bal_mining_estimates.pool_estimates
@@ -1086,13 +1039,8 @@ if REALTIME_ESTIMATOR:
     query = client.query(sql)
     query.result();
 
-
-# In[ ]:
-
-
-# write to GBQ (LPs)
-if REALTIME_ESTIMATOR:
-    cur_estimate = pd.read_json(f'reports/{WEEK}/_totals.json', orient='index', dtype=False)
+    # write to GBQ (LPs)
+    cur_estimate = pd.DataFrame(totals)
     cur_estimate.columns = ['earned']
     cur_estimate.index.name = 'address'
     
@@ -1116,6 +1064,7 @@ if REALTIME_ESTIMATOR:
         prev_earned = diff_estimate['earned_prev'].astype(float)
         cur_estimate['velocity'] = ((cur_earned-prev_earned)/delta_t).apply(lambda x: format(x, f'.{18}f'))
         
+    cur_estimate['earned'] = cur_estimate['earned'].apply(lambda x: format(x, f'.{18}f'))
     cur_estimate['timestamp'] = end_block_timestamp
     cur_estimate['week'] = WEEK
     cur_estimate.reset_index(inplace=True)
@@ -1123,12 +1072,7 @@ if REALTIME_ESTIMATOR:
                         project_id=os.environ['GCP_PROJECT'], 
                         if_exists='append')
 
-
-# In[ ]:
-
-
-# write to GBQ (pools)
-if REALTIME_ESTIMATOR:
+    # write to GBQ (pools)
     cur_estimate = pd.DataFrame(subpools['BAL_mined'].groupby('address').sum())
     cur_estimate.columns = ['earned']
     cur_estimate['earned'] = cur_estimate['earned'].apply(lambda x: format(x, f'.{18}f'))
@@ -1162,21 +1106,127 @@ if REALTIME_ESTIMATOR:
                         if_exists='append')
 
 
+# # Gas Reimbursement Program
+
+# In[53]:
+
+
+if not REALTIME_ESTIMATOR:
+    print(time.strftime("%Y-%m-%d %H:%M:%S", time.localtime()) + ' - Querying Bigquery for eligible swaps and reimbursement values ...')
+
+    sql = '''
+    WITH n_swaps as (
+        SELECT
+            txns.`block_number`,
+            txns.`block_timestamp`,
+            txns.`from_address`,
+            txns.`hash`,
+            txns.`receipt_gas_used`,
+            txns.`gas_price`,
+            count(1) as n_swaps
+        FROM `blockchain-etl.ethereum_balancer.BPool_event_LOG_SWAP` swaps
+        INNER JOIN `bigquery-public-data.crypto_ethereum.transactions` txns
+        ON swaps.transaction_hash = txns.`hash`
+        WHERE 1=1
+        AND swaps.block_timestamp >= TIMESTAMP_SECONDS({0})
+        AND txns.block_timestamp >= TIMESTAMP_SECONDS({0})
+        AND swaps.block_timestamp < TIMESTAMP_SECONDS({1})
+        AND txns.block_timestamp < TIMESTAMP_SECONDS({1})
+        AND txns.to_address = '0x3e66b66fd1d0b02fda6c811da9e0547970db2f21'
+        AND swaps.tokenIn IN ('0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2',
+                                 '0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48',
+                                 '0x6b175474e89094c44da98b954eedeac495271d0f',
+                                 '0xba100000625a3754423978a60c9317c58a424e3d',
+                                 '0x2260fac5e5542a773aa44fbcfedf7c193bc2c599')
+        AND swaps.tokenOut IN ('0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2',
+                                 '0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48',
+                                 '0x6b175474e89094c44da98b954eedeac495271d0f',
+                                 '0xba100000625a3754423978a60c9317c58a424e3d',
+                                 '0x2260fac5e5542a773aa44fbcfedf7c193bc2c599')
+        GROUP BY 1,2,3,4,5,6
+    ),
+    median_gas_prices AS (
+        SELECT DISTINCT
+            txns.`block_number`,
+            PERCENTILE_CONT(txns.`gas_price`, 0.5) OVER(PARTITION BY txns.`block_number`) AS block_median_gas_price
+        FROM `bigquery-public-data.crypto_ethereum.transactions` txns
+        INNER JOIN n_swaps ON txns.block_number = n_swaps.block_number
+        WHERE 1=1
+        AND txns.block_timestamp >= TIMESTAMP_SECONDS({0})
+        AND txns.block_timestamp < TIMESTAMP_SECONDS({1})
+    ),
+    reimbursements AS (
+        SELECT n.*, m.block_median_gas_price,
+        CASE WHEN receipt_gas_used > n_swaps * 100000 THEN n_swaps * 100000 ELSE receipt_gas_used END AS gas_reimbursement,
+        CASE WHEN gas_price > block_median_gas_price THEN block_median_gas_price ELSE gas_price END AS reimbursement_price
+        FROM n_swaps n 
+        INNER JOIN median_gas_prices m
+        ON n.block_number = m.block_number
+    )
+
+    SELECT
+        from_address as address,
+        SUM(gas_reimbursement*reimbursement_price)/1E18 as eth_reimbursement 
+    FROM reimbursements 
+    GROUP BY 1
+    ORDER BY 1
+    '''.format(start_block_timestamp, end_block_timestamp)
+
+
+    client = bigquery.Client()
+
+    bqstorageclient = bigquery_storage.BigQueryReadClient()
+    reimbursements = (
+        client.query(sql)
+        .result()
+        .to_dataframe(bqstorage_client=bqstorageclient)
+    )
+    print(time.strftime("%Y-%m-%d %H:%M:%S", time.localtime()) + ' - Done!')
+    print(f'ETH reimbursements for the week: {sum(reimbursements.eth_reimbursement)}')
+
+    # get BAL:ETH price feed from Coingecko
+    bal_eth_coingecko = 'https://api.coingecko.com/api/v3/coins/ethereum/contract/0xba100000625a3754423978a60c9317c58a424e3d/market_chart/range?vs_currency=eth&from={0}&to={1}'.format(start_block_timestamp, end_block_timestamp)
+
+    baleth_feed = pd.read_json(bal_eth_coingecko)['prices']
+    baleth_feed = pd.DataFrame(baleth_feed.tolist(), index=baleth_feed.index, columns=['timestamp','price'])
+    baleth_feed['datetime'] = pd.to_datetime(baleth_feed['timestamp']/1000, unit='s')
+    baleth_feed.drop(columns=['timestamp'], inplace=True)
+    baleth_feed.set_index('datetime', inplace=True)
+    baleth_feed.plot(title='BAL:ETH');
+    plt.show()
+    print(f'Median BAL:ETH price for the week: {np.median(baleth_feed)}')
+    reimbursements['bal_reimbursement'] = reimbursements['eth_reimbursement'] / np.median(baleth_feed)
+    reimbursements['address'] = reimbursements['address'].apply(Web3.toChecksumAddress)
+    reimbursements.set_index('address', inplace=True)
+    reimbursements = reimbursements['bal_reimbursement']
+    reimbursements[reimbursements>=CLAIM_THRESHOLD].apply(       lambda x: format(x, f'.{CLAIM_PRECISION}f')).to_json(reports_dir+'/_gasReimbursement.json',
+       indent=4)
+    print(f'BAL reimbursements for the week: {sum(reimbursements)}')
+
+    # combine BAL from liquidity mining and gas reimbursements
+    totals = pd.DataFrame(totals).join(reimbursements, how='outer')
+    totals.fillna(0, inplace=True)
+    totals['bal_total'] = totals['bal_mined'] + totals['bal_reimbursement']
+    totals = totals['bal_total']
+    totals[totals>=CLAIM_THRESHOLD].apply(       lambda x: format(x, f'.{CLAIM_PRECISION}f')).to_json(reports_dir+'/_totals.json',
+       indent=4)
+
+
 # # Plots
 
-# In[ ]:
+# In[54]:
 
 
+top_tokens = subpools['BAL_mined'].groupby(['token_address']).sum().sort_values(ascending=False).head(10).index
 subpools['datetime'] = pd.to_datetime(subpools.timestamp, unit='s')
 rewards_per_token = subpools.groupby(['token_address','datetime']).sum()['BAL_mined']
 print('Top 10 tokens:\n' + '\n'.join(top_tokens))
 if not REALTIME_ESTIMATOR:
-    top_tokens = subpools['BAL_mined'].groupby(['token_address']).sum().sort_values(ascending=False).head(10).index
     ax = pd.DataFrame(rewards_per_token).reset_index().        pivot(index='datetime', columns='token_address', values='BAL_mined')[top_tokens].        plot(figsize = (15,10),
              title = 'BAL mined by top 10 tokens')
 
 
-# In[ ]:
+# In[55]:
 
 
 rewards_per_pool = subpools.groupby(['address','datetime']).sum()['BAL_mined']
@@ -1187,7 +1237,7 @@ if not REALTIME_ESTIMATOR:
              title = 'BAL earned by top 10 pools')
 
 
-# In[ ]:
+# In[56]:
 
 
 rewards_per_lp = bal_mined['bal_mined'].groupby(['chksum_bpt_holder','block_number']).sum()
@@ -1199,7 +1249,7 @@ if not REALTIME_ESTIMATOR:
     ax.ticklabel_format(axis='x', style='plain')
 
 
-# In[ ]:
+# In[57]:
 
 
 if not REALTIME_ESTIMATOR:
@@ -1254,26 +1304,54 @@ if not REALTIME_ESTIMATOR:
     plt.tight_layout()
 
 
-# In[ ]:
+# In[58]:
 
 
 if gov_factor > 1:
-    pregov = pd.DataFrame.from_dict(total_post_redistribution, orient='index', dtype=float, columns=['pregov'])
-    postgov = pd.DataFrame.from_dict(totals_post_gov_factor, orient='index', dtype=float, columns=['postgov'])
+    pregov = pd.DataFrame(totals_pre_govfactor)
+    pregov.columns= ['pregov']
+    postgov = pd.DataFrame(totals_post_govfactor)
+    postgov.columns= ['postgov']
     compare = pregov.join(postgov)
+    compare['ratio'] = compare['postgov']/compare['pregov']
+    compare['voter'] = compare.index.isin(voters)
+    compare['color'] = compare['voter'].apply(lambda x: 'blue' if x else 'red')
     effective_gov_factor = compare[compare['voter']]['ratio'].median()
     effective_gov_loss = compare[~compare['voter']]['ratio'].median()
     print(f'Effective govFactor: {effective_gov_factor:.3f} vs {effective_gov_loss:.3f}')
     absolute_increase = (compare[compare['voter']]['postgov'] - compare[compare['voter']]['pregov']).sum()
     print(f'Additional BAL mined by governors: {absolute_increase:.3f}')    
     if not REALTIME_ESTIMATOR:
-        ax = compare[compare['voter']].plot.scatter(x='pregov', y='postgov', c='color', figsize=(15,10))
-        compare[~compare['voter']].plot.scatter(x='pregov', y='postgov', c='color', ax=ax)
+        ax = compare[compare['voter']].plot.scatter(x='pregov', y='postgov', 
+                                                    c='color', figsize=(10,10),
+                                                    label='voted'
+                                                   )
+        compare[~compare['voter']].plot.scatter(x='pregov', y='postgov', 
+                                                    c='color', figsize=(10,10),
+                                                    label='abstained', ax=ax
+                                                   )
+
+        x = compare['pregov']
+        y = compare['pregov']
+        ax.plot(np.unique(x), np.poly1d(np.polyfit(x, y, 1))(np.unique(x)), 
+                color='grey', linestyle='--',
+                label = 'if no govFactor')
+
+        x = compare[compare['voter']]['pregov']
+        y = compare[compare['voter']]['postgov']
+        ax.plot(np.unique(x), np.poly1d(np.polyfit(x, y, 1))(np.unique(x)), 
+                color='lightblue', linestyle='--',
+                label = 'w/ govFactor (voters)')
+        
+        x = compare[~compare['voter']]['pregov']
+        y = compare[~compare['voter']]['postgov']
+        ax.plot(np.unique(x), np.poly1d(np.polyfit(x, y, 1))(np.unique(x)), 
+                color='salmon', linestyle='--',
+                label = 'w/ govFactor (abstained)')
+
+
         ax.set_xlabel('BAL earned pre-govFactor')
         ax.set_ylabel('BAL earned post-govFactor')
         ax.set_title('Effects of govFactor on each liquidity provider')
-        ax.legend(['voted','did not vote'])
-        compare['ratio'] = compare['postgov']/compare['pregov']
-        compare['voter'] = compare.index.isin(voters)
-        compare['color'] = compare['voter'].apply(lambda x: 'blue' if x else 'red')
+        ax.legend()
 

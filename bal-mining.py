@@ -8,19 +8,19 @@
 # Google BigQuery SQL to get the blocks mined around a timestamp
 # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 # SELECT * FROM `bigquery-public-data.crypto_ethereum.blocks`
-# WHERE timestamp > "2021-01-24 23:59:30"
-# and timestamp < "2021-01-25 00:00:30"
+# WHERE timestamp > "2021-01-31 23:59:30"
+# and timestamp < "2021-02-01 00:00:30"
 # order by timestamp
 
 
 # In[2]:
 
 
-REALTIME_ESTIMATOR = True
+REALTIME_ESTIMATOR = False
 # set the window of blocks, will be overwritten if REALTIME_ESTIMATOR == True
-WEEK = 34
-START_BLOCK = 11675866
-END_BLOCK = 11721455
+WEEK = 35
+START_BLOCK = 11721455
+END_BLOCK = 11766939
 # we can hard code latest gov proposal if we want
 latest_gov_proposal = ''
 latest_gov_proposal_snapshot_block = 11655773
@@ -1354,4 +1354,16 @@ if gov_factor > 1:
         ax.set_ylabel('BAL earned post-govFactor')
         ax.set_title('Effects of govFactor on each liquidity provider')
         ax.legend()
+
+
+# In[85]:
+
+
+print('Final Check Totals')
+_lm = pd.read_json(reports_dir+'/_totalsLiquidityMining.json', orient='index').sum().values[0]
+_gas = pd.read_json(reports_dir+'/_gasReimbursement.json', orient='index').sum().values[0]
+_claim = pd.read_json(reports_dir+'/_totals.json', orient='index').sum().values[0]
+print(f'Liquidity Mining: {_lm}')
+print(f'Gas Reimbursement: {_gas}')
+print(f'Total: {_claim}')
 

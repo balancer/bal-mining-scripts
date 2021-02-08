@@ -43,7 +43,7 @@ On week 26, the process was ported over to Python with the [blockchain-etl](http
 | [33](/reports/33/_totals.json) |    11630234 |  11675866 |
 | [34](/reports/34/_totals.json) |    11675866 |  11721455 |
 | [35](/reports/35/_totals.json) |    11721455 |  11766939 |
-
+| [36](/reports/36/_totals.json) |    11766939 |  11812442 |
 ## Requirements
 * Python 3 + Jupyter Notebook
 * An ethereum node (for querying blocks timestamps and token decimals) 

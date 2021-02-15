@@ -8,22 +8,21 @@
 # Google BigQuery SQL to get the blocks mined around a timestamp
 # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 # SELECT * FROM `bigquery-public-data.crypto_ethereum.blocks`
-# WHERE timestamp > "2021-01-31 23:59:30"
-# and timestamp < "2021-02-01 00:00:30"
+# WHERE timestamp > "2021-02-07 23:59:30"
+# and timestamp < "2021-02-08 00:00:30"
 # order by timestamp
 
 
 # In[2]:
 
 
-REALTIME_ESTIMATOR = False
+REALTIME_ESTIMATOR = True
 # set the window of blocks, will be overwritten if REALTIME_ESTIMATOR == True
-WEEK = 35
-START_BLOCK = 11721455
-END_BLOCK = 11766939
+WEEK = 37
+START_BLOCK = 11812442
+END_BLOCK = 11857946
 # we can hard code latest gov proposal if we want
 latest_gov_proposal = ''
-latest_gov_proposal_snapshot_block = 11655773
 gov_factor = 1.1
 
 
@@ -130,14 +129,9 @@ if gov_factor > 1 and not latest_gov_proposal:
     # only proposals that ended before the beginning of the current week count
     proposals = proposals[proposals['end'] < start_block_timestamp]
     latest_gov_proposals = proposals[proposals['end']==proposals['end'].max()]
-#     latest_gov_proposal_snapshot_block = proposals.loc[latest_gov_proposal,'msg']['payload'].get('snapshot',0)
-#     title = proposals.loc[latest_gov_proposal,'msg']['payload'].get('name',0)
     for i,p in latest_gov_proposals.iterrows():
         print(f'Most recent governance proposal: {i}')
         print(f"Title: {p['msg']['payload'].get('name',0)}")
-#     if latest_gov_proposal == 'QmWtk4pJ2CNhmLFK9Nhk5gGD7xr2KbsK4cfpFXyR9YCbYG': # if the latest proposal is the govFactor proposal
-#         gov_factor = 1
-#         print(f'No proposals since the govFactor proposal until the beginning of the week. Using govFactor=1')
 
 
 # In[7]:
@@ -970,7 +964,6 @@ if gov_factor > 1:
         prop_voters = list(json.loads(requests.get(voters_url).content).keys())
         print(f'{len(prop_voters)} addresses voted on proposal {i}')
         voters.extend(prop_voters)
-#     latest_gov_proposal_snapshot_block = proposals.loc[latest_gov_proposal,
 
         # get delegators and delegatees
         url = 'https://api.thegraph.com/subgraphs/name/snapshot-labs/snapshot'
@@ -1111,7 +1104,18 @@ if REALTIME_ESTIMATOR:
 # In[53]:
 
 
+from google.cloud import bigquery
+from google.cloud import bigquery_storage
+
 if not REALTIME_ESTIMATOR:
+    whitelist = pd.read_json(f'https://raw.githubusercontent.com/balancer-labs/assets/w{WEEK}/lists/eligible.json').index.values
+    gas_whitelist = pd.Series(whitelist).str.lower().tolist()
+#     gas_whitelist = ['0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2',
+#                      '0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48',
+#                      '0x6b175474e89094c44da98b954eedeac495271d0f',
+#                      '0xba100000625a3754423978a60c9317c58a424e3d',
+#                      '0x2260fac5e5542a773aa44fbcfedf7c193bc2c599']
+
     print(time.strftime("%Y-%m-%d %H:%M:%S", time.localtime()) + ' - Querying Bigquery for eligible swaps and reimbursement values ...')
 
     sql = '''
@@ -1133,16 +1137,8 @@ if not REALTIME_ESTIMATOR:
         AND swaps.block_timestamp < TIMESTAMP_SECONDS({1})
         AND txns.block_timestamp < TIMESTAMP_SECONDS({1})
         AND txns.to_address = '0x3e66b66fd1d0b02fda6c811da9e0547970db2f21'
-        AND swaps.tokenIn IN ('0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2',
-                                 '0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48',
-                                 '0x6b175474e89094c44da98b954eedeac495271d0f',
-                                 '0xba100000625a3754423978a60c9317c58a424e3d',
-                                 '0x2260fac5e5542a773aa44fbcfedf7c193bc2c599')
-        AND swaps.tokenOut IN ('0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2',
-                                 '0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48',
-                                 '0x6b175474e89094c44da98b954eedeac495271d0f',
-                                 '0xba100000625a3754423978a60c9317c58a424e3d',
-                                 '0x2260fac5e5542a773aa44fbcfedf7c193bc2c599')
+        AND swaps.tokenIn IN ('{2}')
+        AND swaps.tokenOut IN ('{2}')
         GROUP BY 1,2,3,4,5,6
     ),
     median_gas_prices AS (
@@ -1154,6 +1150,7 @@ if not REALTIME_ESTIMATOR:
         WHERE 1=1
         AND txns.block_timestamp >= TIMESTAMP_SECONDS({0})
         AND txns.block_timestamp < TIMESTAMP_SECONDS({1})
+        AND txns.`gas_price` > 1000000000
     ),
     reimbursements AS (
         SELECT n.*, m.block_median_gas_price,
@@ -1170,7 +1167,7 @@ if not REALTIME_ESTIMATOR:
     FROM reimbursements 
     GROUP BY 1
     ORDER BY 1
-    '''.format(start_block_timestamp, end_block_timestamp)
+    '''.format(start_block_timestamp, end_block_timestamp, '\',\''.join(gas_whitelist))
 
 
     client = bigquery.Client()
@@ -1356,14 +1353,14 @@ if gov_factor > 1:
         ax.legend()
 
 
-# In[85]:
+# In[59]:
 
 
-print('Final Check Totals')
-_lm = pd.read_json(reports_dir+'/_totalsLiquidityMining.json', orient='index').sum().values[0]
-_gas = pd.read_json(reports_dir+'/_gasReimbursement.json', orient='index').sum().values[0]
-_claim = pd.read_json(reports_dir+'/_totals.json', orient='index').sum().values[0]
-print(f'Liquidity Mining: {_lm}')
-print(f'Gas Reimbursement: {_gas}')
-print(f'Total: {_claim}')
+if not REALTIME_ESTIMATOR:
+    print('Final Check Totals')
+    _lm = pd.read_json(reports_dir+'/_totalsLiquidityMining.json', orient='index').sum().values[0]
+    _claim = pd.read_json(reports_dir+'/_totals.json', orient='index').sum().values[0]
+    print(f'Liquidity Mining: {format(_lm, f".{CLAIM_PRECISION}f")}')
+    print(f'Gas Reimbursement: {format(_claim-145000, f".{CLAIM_PRECISION}f")}')
+    print(f'Total: {format(_claim, f".{CLAIM_PRECISION}f")}')
 

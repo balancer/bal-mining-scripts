@@ -1032,6 +1032,24 @@ if REALTIME_ESTIMATOR:
     query = client.query(sql)
     query.result();
 
+    # zero previous week's velocity
+    sql = f'''
+        UPDATE {project_id}.bal_mining_estimates.pool_estimates
+        SET velocity = '0'
+        WHERE week = {WEEK-1}
+    '''
+    client = bigquery.Client()
+    query = client.query(sql)
+    query.result();
+    sql = f'''
+        UPDATE {project_id}.bal_mining_estimates.lp_estimates
+        SET velocity = '0'
+        WHERE week = {WEEK-1}
+    '''
+    client = bigquery.Client()
+    query = client.query(sql)
+    query.result();
+
     # write to GBQ (LPs)
     cur_estimate = pd.DataFrame(totals)
     cur_estimate.columns = ['earned']

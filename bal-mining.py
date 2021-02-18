@@ -18,9 +18,9 @@
 
 REALTIME_ESTIMATOR = True
 # set the window of blocks, will be overwritten if REALTIME_ESTIMATOR == True
-WEEK = 37
-START_BLOCK = 11812442
-END_BLOCK = 11857946
+WEEK = 38
+START_BLOCK = 11857946
+END_BLOCK = 11882634
 # we can hard code latest gov proposal if we want
 latest_gov_proposal = ''
 gov_factor = 1.1
@@ -979,9 +979,9 @@ if gov_factor > 1:
         delegations = pd.DataFrame(json.loads(r.content)['data']['delegations'])
         if len(delegations)==1000:
                 warnings.warn('Delegations reached 1000, implement pagination')
-        delegators_that_voted_indirectly = delegations[delegations.delegate.isin(voters)]['delegator']
+        delegators_that_voted_indirectly = delegations[delegations.delegate.isin(map(lambda x: x.lower(), voters))]['delegator']
         print(f'{len(delegators_that_voted_indirectly)} addresses voted through delegators')
-        voters.extend(delegators_that_voted_indirectly)
+        voters.extend(map(Web3.toChecksumAddress, delegators_that_voted_indirectly))
     
     voters = list(dict.fromkeys(voters)) #drop duplicates
     print(f'{len(voters)} total unique voters')

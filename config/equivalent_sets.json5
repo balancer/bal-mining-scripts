@@ -135,6 +135,14 @@
         ],
         [
             [
+                '0x59fec83eC709c893aedD1A144Cf1828Eb04127Cd', // pxGOLD_MAY2021
+            ],
+            [
+                '0x261EfCdD24CeA98652B9700800a13DfBca4103fF', // sXAU
+            ],
+        ],
+        [
+            [
                 '0x0D8775F648430679A709E98d2b0Cb6250d2887EF', // BAT
                 '0xE1BA0FB44CCb0D11b80F92f4f8Ed94CA3fF51D00', // aBAT
                 '0x6C8c6b02E7b2BE14d4fA6022Dfd6d75921D90E4E', // cBAT

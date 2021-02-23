@@ -47,6 +47,9 @@
                 '0xDaFF85B6f5787b2d9eE11CCDf5e852816063326A', // pxUSD-OCT2020
             ],
             [
+                '0x1456688345527bE1f37E9e627DA0837D6f08C925', // USDP
+            ],
+            [
                 '0xF06DdacF71e2992E2122A1a0168C6967aFdf63ce', // uUSDrBTC-DEC
             ],
             [
@@ -128,6 +131,14 @@
             ],
             [
                 '0x8dAEBADE922dF735c38C80C7eBD708Af50815fAa', // TBTC
+            ],
+        ],
+        [
+            [
+                '0x59fec83eC709c893aedD1A144Cf1828Eb04127Cd', // pxGOLD_MAY2021
+            ],
+            [
+                '0x261EfCdD24CeA98652B9700800a13DfBca4103fF', // sXAU
             ],
         ],
         [

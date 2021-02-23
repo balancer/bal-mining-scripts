@@ -8,8 +8,8 @@
 # Google BigQuery SQL to get the blocks mined around a timestamp
 # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 # SELECT * FROM `bigquery-public-data.crypto_ethereum.blocks`
-# WHERE timestamp > "2021-02-07 23:59:30"
-# and timestamp < "2021-02-08 00:00:30"
+# WHERE timestamp > "2021-02-21 23:59:30"
+# and timestamp < "2021-02-22 00:00:30"
 # order by timestamp
 
 
@@ -20,7 +20,7 @@ REALTIME_ESTIMATOR = True
 # set the window of blocks, will be overwritten if REALTIME_ESTIMATOR == True
 WEEK = 38
 START_BLOCK = 11857946
-END_BLOCK = 11882634
+END_BLOCK = 11903479
 # we can hard code latest gov proposal if we want
 latest_gov_proposal = ''
 gov_factor = 1.1
@@ -347,6 +347,10 @@ import json
 from web3.exceptions import ABIFunctionNotFound, BadFunctionCallOutput, InvalidAddress
 token_abi = json.load(open('abi/BToken.json'))
 def get_token_decimals(token_address):
+    if token_address == '0x0Ba45A8b5d5575935B8158a88C631E9F9C95a2e5':
+        return 18
+    if token_address == '0xE0B7927c4aF23765Cb51314A0E0521A9645F0E2A':
+        return 9
     try:
         token_contract = w3.eth.contract(token_address, abi=token_abi)
     except InvalidAddress:

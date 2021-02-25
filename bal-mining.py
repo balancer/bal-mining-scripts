@@ -1019,23 +1019,6 @@ print(time.strftime("%Y-%m-%d %H:%M:%S", time.localtime()))
 
 
 if REALTIME_ESTIMATOR:
-    # delete this week's previous estimates
-    project_id = os.environ['GCP_PROJECT']
-    sql = f'''
-        DELETE FROM {project_id}.bal_mining_estimates.pool_estimates
-        WHERE week = {WEEK}
-    '''
-    client = bigquery.Client()
-    query = client.query(sql)
-    query.result();
-    sql = f'''
-        DELETE FROM {project_id}.bal_mining_estimates.lp_estimates
-        WHERE week = {WEEK}
-    '''
-    client = bigquery.Client()
-    query = client.query(sql)
-    query.result();
-
     # zero previous week's velocity
     sql = f'''
         UPDATE {project_id}.bal_mining_estimates.pool_estimates
@@ -1060,10 +1043,10 @@ if REALTIME_ESTIMATOR:
     cur_estimate.index.name = 'address'
     
     try:
-        prev_estimate = pd.read_gbq('select address, earned, timestamp from bal_mining_estimates.lp_estimates', 
+        prev_estimate = pd.read_gbq(f'select address, earned, timestamp from bal_mining_estimates.lp_estimates WHERE week = {WEEK}', 
                         project_id=os.environ['GCP_PROJECT'])
         prev_estimate.set_index('address', inplace=True)
-        prev_estimate_timestamp = prev_estimate.loc[0, 'timestamp']
+        prev_estimate_timestamp = prev_estimate.iloc[0]['timestamp']
     except:
         prev_estimate_timestamp = 0
     if prev_estimate_timestamp < start_block_timestamp:
@@ -1079,6 +1062,15 @@ if REALTIME_ESTIMATOR:
         prev_earned = diff_estimate['earned_prev'].astype(float)
         cur_estimate['velocity'] = ((cur_earned-prev_earned)/delta_t).apply(lambda x: format(x, f'.{18}f'))
         
+    # delete this week's previous estimates
+    sql = f'''
+        DELETE FROM {project_id}.bal_mining_estimates.lp_estimates
+        WHERE week = {WEEK}
+    '''
+    client = bigquery.Client()
+    query = client.query(sql)
+    query.result();
+
     cur_estimate['earned'] = cur_estimate['earned'].apply(lambda x: format(x, f'.{18}f'))
     cur_estimate['timestamp'] = end_block_timestamp
     cur_estimate['week'] = WEEK
@@ -1087,6 +1079,8 @@ if REALTIME_ESTIMATOR:
                         project_id=os.environ['GCP_PROJECT'], 
                         if_exists='append')
 
+
+    
     # write to GBQ (pools)
     cur_estimate = pd.DataFrame(subpools['BAL_mined'].groupby('address').sum())
     cur_estimate.columns = ['earned']
@@ -1094,10 +1088,10 @@ if REALTIME_ESTIMATOR:
     cur_estimate.index.name = 'address'
     
     try:
-        prev_estimate = pd.read_gbq('select address, earned, timestamp from bal_mining_estimates.pool_estimates', 
+        prev_estimate = pd.read_gbq(f'select address, earned, timestamp from bal_mining_estimates.pool_estimates WHERE week = {WEEK}', 
                         project_id=os.environ['GCP_PROJECT'])
         prev_estimate.set_index('address', inplace=True)
-        prev_estimate_timestamp = prev_estimate.loc[0, 'timestamp']
+        prev_estimate_timestamp = prev_estimate.iloc[0]['timestamp']
     except:
         prev_estimate_timestamp = 0
     if prev_estimate_timestamp < start_block_timestamp:
@@ -1113,6 +1107,16 @@ if REALTIME_ESTIMATOR:
         prev_earned = diff_estimate['earned_prev'].astype(float)
         cur_estimate['velocity'] = ((cur_earned-prev_earned)/delta_t).apply(lambda x: format(x, f'.{18}f'))
         
+    # delete this week's previous estimates
+    project_id = os.environ['GCP_PROJECT']
+    sql = f'''
+        DELETE FROM {project_id}.bal_mining_estimates.pool_estimates
+        WHERE week = {WEEK}
+    '''
+    client = bigquery.Client()
+    query = client.query(sql)
+    query.result();
+
     cur_estimate['timestamp'] = end_block_timestamp
     cur_estimate['week'] = WEEK
     cur_estimate.reset_index(inplace=True)
@@ -1123,7 +1127,7 @@ if REALTIME_ESTIMATOR:
 
 # # Gas Reimbursement Program
 
-# In[53]:
+# In[54]:
 
 
 from google.cloud import bigquery
@@ -1233,7 +1237,7 @@ if not REALTIME_ESTIMATOR:
 
 # # Plots
 
-# In[54]:
+# In[55]:
 
 
 top_tokens = subpools['BAL_mined'].groupby(['token_address']).sum().sort_values(ascending=False).head(10).index
@@ -1245,7 +1249,7 @@ if not REALTIME_ESTIMATOR:
              title = 'BAL mined by top 10 tokens')
 
 
-# In[55]:
+# In[56]:
 
 
 rewards_per_pool = subpools.groupby(['address','datetime']).sum()['BAL_mined']
@@ -1256,7 +1260,7 @@ if not REALTIME_ESTIMATOR:
              title = 'BAL earned by top 10 pools')
 
 
-# In[56]:
+# In[57]:
 
 
 rewards_per_lp = bal_mined['bal_mined'].groupby(['chksum_bpt_holder','block_number']).sum()
@@ -1268,7 +1272,7 @@ if not REALTIME_ESTIMATOR:
     ax.ticklabel_format(axis='x', style='plain')
 
 
-# In[57]:
+# In[58]:
 
 
 if not REALTIME_ESTIMATOR:
@@ -1323,7 +1327,7 @@ if not REALTIME_ESTIMATOR:
     plt.tight_layout()
 
 
-# In[58]:
+# In[59]:
 
 
 if gov_factor > 1:
@@ -1375,7 +1379,7 @@ if gov_factor > 1:
         ax.legend()
 
 
-# In[59]:
+# In[60]:
 
 
 if not REALTIME_ESTIMATOR:

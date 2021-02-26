@@ -18,9 +18,9 @@
 
 REALTIME_ESTIMATOR = True
 # set the window of blocks, will be overwritten if REALTIME_ESTIMATOR == True
-WEEK = 38
-START_BLOCK = 11857946
-END_BLOCK = 11903479
+WEEK = 39
+START_BLOCK = 11903479
+END_BLOCK = 11928909
 # we can hard code latest gov proposal if we want
 latest_gov_proposal = ''
 gov_factor = 1.1
@@ -300,7 +300,12 @@ plt.rcParams['figure.facecolor'] = 'white'
 
 from tqdm.auto import tqdm
 def get_list_of_snapshot_blocks(start, end):
-    block_list = range(end, start, -SNAPSHOT_WINDOW_SIZE)
+    # in the estimator, compute snapshot blocks from start to end
+    # otherwise estimates and velocity can vary too much if there's a huge change in liquidity mid week
+    if REALTIME_ESTIMATOR: 
+        block_list = range(start, end, SNAPSHOT_WINDOW_SIZE)
+    else:
+        block_list = range(end, start, -SNAPSHOT_WINDOW_SIZE)
     block_list = list(block_list)
     block_list.sort()
     return block_list
@@ -1127,7 +1132,7 @@ if REALTIME_ESTIMATOR:
 
 # # Gas Reimbursement Program
 
-# In[54]:
+# In[53]:
 
 
 from google.cloud import bigquery
@@ -1237,7 +1242,7 @@ if not REALTIME_ESTIMATOR:
 
 # # Plots
 
-# In[55]:
+# In[54]:
 
 
 top_tokens = subpools['BAL_mined'].groupby(['token_address']).sum().sort_values(ascending=False).head(10).index
@@ -1249,7 +1254,7 @@ if not REALTIME_ESTIMATOR:
              title = 'BAL mined by top 10 tokens')
 
 
-# In[56]:
+# In[55]:
 
 
 rewards_per_pool = subpools.groupby(['address','datetime']).sum()['BAL_mined']
@@ -1260,7 +1265,7 @@ if not REALTIME_ESTIMATOR:
              title = 'BAL earned by top 10 pools')
 
 
-# In[57]:
+# In[56]:
 
 
 rewards_per_lp = bal_mined['bal_mined'].groupby(['chksum_bpt_holder','block_number']).sum()
@@ -1272,7 +1277,7 @@ if not REALTIME_ESTIMATOR:
     ax.ticklabel_format(axis='x', style='plain')
 
 
-# In[58]:
+# In[57]:
 
 
 if not REALTIME_ESTIMATOR:
@@ -1327,7 +1332,7 @@ if not REALTIME_ESTIMATOR:
     plt.tight_layout()
 
 
-# In[59]:
+# In[58]:
 
 
 if gov_factor > 1:
@@ -1379,7 +1384,7 @@ if gov_factor > 1:
         ax.legend()
 
 
-# In[60]:
+# In[59]:
 
 
 if not REALTIME_ESTIMATOR:

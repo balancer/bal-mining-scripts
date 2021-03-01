@@ -18,9 +18,9 @@
 
 REALTIME_ESTIMATOR = True
 # set the window of blocks, will be overwritten if REALTIME_ESTIMATOR == True
-WEEK = 38
-START_BLOCK = 11857946
-END_BLOCK = 11903479
+WEEK = 39
+START_BLOCK = 11903479
+END_BLOCK = 11928909
 # we can hard code latest gov proposal if we want
 latest_gov_proposal = ''
 gov_factor = 1.1
@@ -300,7 +300,12 @@ plt.rcParams['figure.facecolor'] = 'white'
 
 from tqdm.auto import tqdm
 def get_list_of_snapshot_blocks(start, end):
-    block_list = range(end, start, -SNAPSHOT_WINDOW_SIZE)
+    # in the estimator, compute snapshot blocks from start to end
+    # otherwise estimates and velocity can vary too much if there's a huge change in liquidity mid week
+    if REALTIME_ESTIMATOR: 
+        block_list = range(start, end, SNAPSHOT_WINDOW_SIZE)
+    else:
+        block_list = range(end, start, -SNAPSHOT_WINDOW_SIZE)
     block_list = list(block_list)
     block_list.sort()
     return block_list
@@ -1019,23 +1024,6 @@ print(time.strftime("%Y-%m-%d %H:%M:%S", time.localtime()))
 
 
 if REALTIME_ESTIMATOR:
-    # delete this week's previous estimates
-    project_id = os.environ['GCP_PROJECT']
-    sql = f'''
-        DELETE FROM {project_id}.bal_mining_estimates.pool_estimates
-        WHERE week = {WEEK}
-    '''
-    client = bigquery.Client()
-    query = client.query(sql)
-    query.result();
-    sql = f'''
-        DELETE FROM {project_id}.bal_mining_estimates.lp_estimates
-        WHERE week = {WEEK}
-    '''
-    client = bigquery.Client()
-    query = client.query(sql)
-    query.result();
-
     # zero previous week's velocity
     sql = f'''
         UPDATE {project_id}.bal_mining_estimates.pool_estimates
@@ -1060,10 +1048,10 @@ if REALTIME_ESTIMATOR:
     cur_estimate.index.name = 'address'
     
     try:
-        prev_estimate = pd.read_gbq('select address, earned, timestamp from bal_mining_estimates.lp_estimates', 
+        prev_estimate = pd.read_gbq(f'select address, earned, timestamp from bal_mining_estimates.lp_estimates WHERE week = {WEEK}', 
                         project_id=os.environ['GCP_PROJECT'])
         prev_estimate.set_index('address', inplace=True)
-        prev_estimate_timestamp = prev_estimate.loc[0, 'timestamp']
+        prev_estimate_timestamp = prev_estimate.iloc[0]['timestamp']
     except:
         prev_estimate_timestamp = 0
     if prev_estimate_timestamp < start_block_timestamp:
@@ -1079,6 +1067,15 @@ if REALTIME_ESTIMATOR:
         prev_earned = diff_estimate['earned_prev'].astype(float)
         cur_estimate['velocity'] = ((cur_earned-prev_earned)/delta_t).apply(lambda x: format(x, f'.{18}f'))
         
+    # delete this week's previous estimates
+    sql = f'''
+        DELETE FROM {project_id}.bal_mining_estimates.lp_estimates
+        WHERE week = {WEEK}
+    '''
+    client = bigquery.Client()
+    query = client.query(sql)
+    query.result();
+
     cur_estimate['earned'] = cur_estimate['earned'].apply(lambda x: format(x, f'.{18}f'))
     cur_estimate['timestamp'] = end_block_timestamp
     cur_estimate['week'] = WEEK
@@ -1087,6 +1084,8 @@ if REALTIME_ESTIMATOR:
                         project_id=os.environ['GCP_PROJECT'], 
                         if_exists='append')
 
+
+    
     # write to GBQ (pools)
     cur_estimate = pd.DataFrame(subpools['BAL_mined'].groupby('address').sum())
     cur_estimate.columns = ['earned']
@@ -1094,10 +1093,10 @@ if REALTIME_ESTIMATOR:
     cur_estimate.index.name = 'address'
     
     try:
-        prev_estimate = pd.read_gbq('select address, earned, timestamp from bal_mining_estimates.pool_estimates', 
+        prev_estimate = pd.read_gbq(f'select address, earned, timestamp from bal_mining_estimates.pool_estimates WHERE week = {WEEK}', 
                         project_id=os.environ['GCP_PROJECT'])
         prev_estimate.set_index('address', inplace=True)
-        prev_estimate_timestamp = prev_estimate.loc[0, 'timestamp']
+        prev_estimate_timestamp = prev_estimate.iloc[0]['timestamp']
     except:
         prev_estimate_timestamp = 0
     if prev_estimate_timestamp < start_block_timestamp:
@@ -1113,6 +1112,16 @@ if REALTIME_ESTIMATOR:
         prev_earned = diff_estimate['earned_prev'].astype(float)
         cur_estimate['velocity'] = ((cur_earned-prev_earned)/delta_t).apply(lambda x: format(x, f'.{18}f'))
         
+    # delete this week's previous estimates
+    project_id = os.environ['GCP_PROJECT']
+    sql = f'''
+        DELETE FROM {project_id}.bal_mining_estimates.pool_estimates
+        WHERE week = {WEEK}
+    '''
+    client = bigquery.Client()
+    query = client.query(sql)
+    query.result();
+
     cur_estimate['timestamp'] = end_block_timestamp
     cur_estimate['week'] = WEEK
     cur_estimate.reset_index(inplace=True)

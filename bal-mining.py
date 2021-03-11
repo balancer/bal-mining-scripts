@@ -8,19 +8,19 @@
 # Google BigQuery SQL to get the blocks mined around a timestamp
 # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 # SELECT * FROM `bigquery-public-data.crypto_ethereum.blocks`
-# WHERE timestamp > "2021-02-21 23:59:30"
-# and timestamp < "2021-02-22 00:00:30"
+# WHERE timestamp > "2021-02-28 23:59:30"
+# and timestamp < "2021-03-01 00:00:30"
 # order by timestamp
 
 
 # In[2]:
 
 
-REALTIME_ESTIMATOR = True
+REALTIME_ESTIMATOR = False
 # set the window of blocks, will be overwritten if REALTIME_ESTIMATOR == True
-WEEK = 39
-START_BLOCK = 11903479
-END_BLOCK = 11928909
+WEEK = 40
+START_BLOCK = 11948959
+END_BLOCK = 11994473
 # we can hard code latest gov proposal if we want
 latest_gov_proposal = ''
 gov_factor = 1.1
@@ -800,7 +800,7 @@ bal_mined['chksum_bpt_holder'] = bal_mined['bpt_holder'].apply(lambda x: chksums
 bal_mined.set_index(['address', 'block_number', 'shareholders_subpool', 'chksum_bpt_holder'], inplace=True)
 
 
-# In[44]:
+# In[87]:
 
 
 totals = bal_mined['bal_mined'].groupby('chksum_bpt_holder').sum()
@@ -810,7 +810,7 @@ if not REALTIME_ESTIMATOR:
                                                   indent=4)
 
 
-# In[45]:
+# In[88]:
 
 
 if not REALTIME_ESTIMATOR:
@@ -832,7 +832,7 @@ if not REALTIME_ESTIMATOR:
 #   * by doing this recursively we also account for staking contracts that hold BPTs of smart pools (BAL earned by the CRP is redistributed to its token holders; then the subset of BAL that goes to the staking contract is redistributed to its holders)
 #   * all CRPs created via the CRPFactory are redistributers by default. Other contracts can PR into `config/redistribute.json`
 
-# In[46]:
+# In[89]:
 
 
 # get addresses that redirect
@@ -844,7 +844,7 @@ else:
     redirects = json.load(open('config/redirect.json'))
 
 
-# In[47]:
+# In[90]:
 
 
 # get addresses that redistribute
@@ -874,7 +874,7 @@ redistributers_list.extend(crps['pool'].drop_duplicates().apply(Web3.toChecksumA
 # print('Redistributers: {}'.format(redistributers_list))
 
 
-# In[48]:
+# In[91]:
 
 
 # get redistributers' token holders
@@ -911,7 +911,7 @@ shares.columns = ['perc_share']
 print(time.strftime("%Y-%m-%d %H:%M:%S", time.localtime()) + ' - Done!')
 
 
-# In[49]:
+# In[92]:
 
 
 miners = bal_mined['bal_mined'].groupby(['block_number', 'chksum_bpt_holder']).sum().reset_index()
@@ -962,7 +962,7 @@ if not REALTIME_ESTIMATOR:
 # # Gov Factor
 # Liquidity providers that participate in the governance of Balancer get a bonus on the BAL earned
 
-# In[50]:
+# In[93]:
 
 
 # apply govFactor
@@ -1012,7 +1012,7 @@ if gov_factor > 1:
                                                         indent=4)
 
 
-# In[51]:
+# In[94]:
 
 
 print(time.strftime("%Y-%m-%d %H:%M:%S", time.localtime()))
@@ -1020,7 +1020,7 @@ print(time.strftime("%Y-%m-%d %H:%M:%S", time.localtime()))
 
 # # Update real time estimates in GBQ
 
-# In[52]:
+# In[95]:
 
 
 if REALTIME_ESTIMATOR:
@@ -1132,7 +1132,7 @@ if REALTIME_ESTIMATOR:
 
 # # Gas Reimbursement Program
 
-# In[53]:
+# In[101]:
 
 
 from google.cloud import bigquery
@@ -1150,54 +1150,114 @@ if not REALTIME_ESTIMATOR:
     print(time.strftime("%Y-%m-%d %H:%M:%S", time.localtime()) + ' - Querying Bigquery for eligible swaps and reimbursement values ...')
 
     sql = '''
-    WITH n_swaps as (
-        SELECT
-            txns.`block_number`,
-            txns.`block_timestamp`,
-            txns.`from_address`,
-            txns.`hash`,
-            txns.`receipt_gas_used`,
-            txns.`gas_price`,
-            count(1) as n_swaps
-        FROM `blockchain-etl.ethereum_balancer.BPool_event_LOG_SWAP` swaps
+    WITH trades AS (
+        SELECT transaction_hash, tokenIn, tokenOut FROM `blockchain-etl.ethereum_balancer.ExchangeProxy2_call_batchSwapExactIn`
+        WHERE to_address = '0x3e66b66fd1d0b02fda6c811da9e0547970db2f21'
+        AND block_timestamp >= TIMESTAMP_SECONDS({0})
+        AND block_timestamp < TIMESTAMP_SECONDS({1})
+
+        UNION ALL
+        
+        SELECT transaction_hash, tokenIn, tokenOut FROM `blockchain-etl.ethereum_balancer.ExchangeProxy2_call_batchSwapExactOut`
+        WHERE to_address = '0x3e66b66fd1d0b02fda6c811da9e0547970db2f21'
+        AND block_timestamp >= TIMESTAMP_SECONDS({0})
+        AND block_timestamp < TIMESTAMP_SECONDS({1})
+
+        UNION ALL
+        
+        SELECT transaction_hash, tokenIn, tokenOut FROM `blockchain-etl.ethereum_balancer.ExchangeProxy2_call_multihopBatchSwapExactIn`
+        WHERE to_address = '0x3e66b66fd1d0b02fda6c811da9e0547970db2f21'
+        AND block_timestamp >= TIMESTAMP_SECONDS({0})
+        AND block_timestamp < TIMESTAMP_SECONDS({1})
+
+        UNION ALL
+        
+        SELECT transaction_hash, tokenIn, tokenOut FROM `blockchain-etl.ethereum_balancer.ExchangeProxy2_call_multihopBatchSwapExactOut`
+        WHERE to_address = '0x3e66b66fd1d0b02fda6c811da9e0547970db2f21'
+        AND block_timestamp >= TIMESTAMP_SECONDS({0})
+        AND block_timestamp < TIMESTAMP_SECONDS({1})
+
+        UNION ALL
+        
+        SELECT transaction_hash, tokenIn, tokenOut FROM `blockchain-etl.ethereum_balancer.ExchangeProxy2_call_smartSwapExactIn`
+        WHERE to_address = '0x3e66b66fd1d0b02fda6c811da9e0547970db2f21'
+        AND block_timestamp >= TIMESTAMP_SECONDS({0})
+        AND block_timestamp < TIMESTAMP_SECONDS({1})
+
+        UNION ALL
+        
+        SELECT transaction_hash, tokenIn, tokenOut FROM `blockchain-etl.ethereum_balancer.ExchangeProxy2_call_smartSwapExactIn`
+        WHERE to_address = '0x3e66b66fd1d0b02fda6c811da9e0547970db2f21'
+        AND block_timestamp >= TIMESTAMP_SECONDS({0})
+        AND block_timestamp < TIMESTAMP_SECONDS({1})
+    ),
+    trades_swaps AS (
+        SELECT t.*, s.tokenIn as swap_tokenIn, s.tokenOut as swap_tokenOut
+        FROM `blockchain-etl.ethereum_balancer.BPool_event_LOG_SWAP` s
+        INNER JOIN trades t
+        ON t.transaction_hash = s.transaction_hash
+        AND s.block_timestamp >= TIMESTAMP_SECONDS({0})
+        AND s.block_timestamp < TIMESTAMP_SECONDS({1})
+    ),
+    eligibility AS (
+        SELECT *, 
+        CASE 
+        WHEN tokenIn   IN ('{2}') 
+          AND tokenOut IN ('{2}') 
+        THEN 1
+        WHEN swap_tokenIn   IN ('{2}') 
+          AND swap_tokenOut IN ('{2}') 
+        THEN 1
+        ELSE 0 END as eligible_swaps
+        FROM trades_swaps
+    ), n_swaps AS (
+        SELECT 
+          transaction_hash, 
+          txns.from_address, 
+          txns.block_number, 
+          txns.block_timestamp, 
+          SUM(eligible_swaps) as n_swaps 
+        FROM eligibility e
         INNER JOIN `bigquery-public-data.crypto_ethereum.transactions` txns
-        ON swaps.transaction_hash = txns.`hash`
-        WHERE 1=1
-        AND swaps.block_timestamp >= TIMESTAMP_SECONDS({0})
+        ON txns.`hash` = e.transaction_hash
         AND txns.block_timestamp >= TIMESTAMP_SECONDS({0})
-        AND swaps.block_timestamp < TIMESTAMP_SECONDS({1})
         AND txns.block_timestamp < TIMESTAMP_SECONDS({1})
         AND txns.to_address = '0x3e66b66fd1d0b02fda6c811da9e0547970db2f21'
-        AND swaps.tokenIn IN ('{2}')
-        AND swaps.tokenOut IN ('{2}')
-        GROUP BY 1,2,3,4,5,6
+        GROUP BY 1, 2, 3, 4
     ),
     median_gas_prices AS (
         SELECT DISTINCT
             txns.`block_number`,
             PERCENTILE_CONT(txns.`gas_price`, 0.5) OVER(PARTITION BY txns.`block_number`) AS block_median_gas_price
         FROM `bigquery-public-data.crypto_ethereum.transactions` txns
-        INNER JOIN n_swaps ON txns.block_number = n_swaps.block_number
+        INNER JOIN n_swaps 
+        ON txns.block_number = n_swaps.block_number
+        INNER JOIN `bigquery-public-data.crypto_ethereum.blocks` blocks
+        ON txns.block_number = blocks.number
         WHERE 1=1
+        AND txns.from_address <> blocks.miner
         AND txns.block_timestamp >= TIMESTAMP_SECONDS({0})
         AND txns.block_timestamp < TIMESTAMP_SECONDS({1})
-        AND txns.`gas_price` > 1000000000
-    ),
-    reimbursements AS (
-        SELECT n.*, m.block_median_gas_price,
-        CASE WHEN receipt_gas_used > n_swaps * 100000 THEN n_swaps * 100000 ELSE receipt_gas_used END AS gas_reimbursement,
-        CASE WHEN gas_price > block_median_gas_price THEN block_median_gas_price ELSE gas_price END AS reimbursement_price
-        FROM n_swaps n 
-        INNER JOIN median_gas_prices m
-        ON n.block_number = m.block_number
+        AND blocks.timestamp >= TIMESTAMP_SECONDS({0})
+        AND blocks.timestamp < TIMESTAMP_SECONDS({1})
+        AND txns.gas_price > 10E9
     )
-
-    SELECT
-        from_address as address,
-        SUM(gas_reimbursement*reimbursement_price)/1E18 as eth_reimbursement 
-    FROM reimbursements 
-    GROUP BY 1
-    ORDER BY 1
+    SELECT 
+        n.block_timestamp as datetime, 
+        n.transaction_hash, 
+        n.from_address as address,
+        n_swaps,
+        m.block_median_gas_price,
+        CASE 
+            WHEN n_swaps = 1 THEN 130000
+            WHEN n_swaps = 2 THEN 220000
+            WHEN n_swaps = 3 THEN 300000
+            ELSE 400000
+        END * m.block_median_gas_price/1E18 as eth_reimbursement
+    FROM n_swaps n 
+    INNER JOIN median_gas_prices m
+    ON n.block_number = m.block_number
+    WHERE n_swaps > 0
     '''.format(start_block_timestamp, end_block_timestamp, '\',\''.join(gas_whitelist))
 
 
@@ -1210,29 +1270,35 @@ if not REALTIME_ESTIMATOR:
         .to_dataframe(bqstorage_client=bqstorageclient)
     )
     print(time.strftime("%Y-%m-%d %H:%M:%S", time.localtime()) + ' - Done!')
+    
+    reimbursements.groupby('datetime').mean()['block_median_gas_price'].plot(title='Median gas price')
+    plt.show()
+    
     print(f'ETH reimbursements for the week: {sum(reimbursements.eth_reimbursement)}')
-
+    
     # get BAL:ETH price feed from Coingecko
     bal_eth_coingecko = 'https://api.coingecko.com/api/v3/coins/ethereum/contract/0xba100000625a3754423978a60c9317c58a424e3d/market_chart/range?vs_currency=eth&from={0}&to={1}'.format(start_block_timestamp, end_block_timestamp)
 
     baleth_feed = pd.read_json(bal_eth_coingecko)['prices']
     baleth_feed = pd.DataFrame(baleth_feed.tolist(), index=baleth_feed.index, columns=['timestamp','price'])
-    baleth_feed['datetime'] = pd.to_datetime(baleth_feed['timestamp']/1000, unit='s')
-    baleth_feed.drop(columns=['timestamp'], inplace=True)
-    baleth_feed.set_index('datetime', inplace=True)
-    baleth_feed.plot(title='BAL:ETH');
+    baleth_feed['datetime'] = pd.to_datetime(baleth_feed['timestamp']/1000, unit='s', utc=True)
+    baleth_feed.plot(x='datetime',y='price',title='BAL:ETH')
     plt.show()
-    print(f'Median BAL:ETH price for the week: {np.median(baleth_feed)}')
-    reimbursements['bal_reimbursement'] = reimbursements['eth_reimbursement'] / np.median(baleth_feed)
-    reimbursements['address'] = reimbursements['address'].apply(Web3.toChecksumAddress)
-    reimbursements.set_index('address', inplace=True)
-    reimbursements = reimbursements['bal_reimbursement']
-    reimbursements[reimbursements>=CLAIM_THRESHOLD].apply(       lambda x: format(x, f'.{CLAIM_PRECISION}f')).to_json(reports_dir+'/_gasReimbursement.json',
+
+    merge = pd.merge_asof(reimbursements.sort_values(by='datetime'), 
+                          baleth_feed.sort_values(by='datetime'), 
+                          on='datetime', direction='nearest')
+
+    merge['bal_reimbursement'] = merge['eth_reimbursement'] / merge['price']
+    merge['address'] = merge['address'].apply(Web3.toChecksumAddress)
+
+    totals_bal4gas = merge[['address','bal_reimbursement']].groupby('address').sum()['bal_reimbursement']
+    totals_bal4gas[totals_bal4gas>=CLAIM_THRESHOLD].apply(       lambda x: format(x, f'.{CLAIM_PRECISION}f')).to_json(reports_dir+'/_gasReimbursement.json',
        indent=4)
-    print(f'BAL reimbursements for the week: {sum(reimbursements)}')
+    print(f'BAL reimbursements for the week: {sum(totals_bal4gas)}')
 
     # combine BAL from liquidity mining and gas reimbursements
-    totals = pd.DataFrame(totals).join(reimbursements, how='outer')
+    totals = pd.DataFrame(totals).join(totals_bal4gas, how='outer')
     totals.fillna(0, inplace=True)
     totals['bal_total'] = totals['bal_mined'] + totals['bal_reimbursement']
     totals = totals['bal_total']
@@ -1242,7 +1308,7 @@ if not REALTIME_ESTIMATOR:
 
 # # Plots
 
-# In[54]:
+# In[55]:
 
 
 top_tokens = subpools['BAL_mined'].groupby(['token_address']).sum().sort_values(ascending=False).head(10).index
@@ -1254,7 +1320,7 @@ if not REALTIME_ESTIMATOR:
              title = 'BAL mined by top 10 tokens')
 
 
-# In[55]:
+# In[56]:
 
 
 rewards_per_pool = subpools.groupby(['address','datetime']).sum()['BAL_mined']
@@ -1265,7 +1331,7 @@ if not REALTIME_ESTIMATOR:
              title = 'BAL earned by top 10 pools')
 
 
-# In[56]:
+# In[57]:
 
 
 rewards_per_lp = bal_mined['bal_mined'].groupby(['chksum_bpt_holder','block_number']).sum()
@@ -1277,7 +1343,7 @@ if not REALTIME_ESTIMATOR:
     ax.ticklabel_format(axis='x', style='plain')
 
 
-# In[57]:
+# In[58]:
 
 
 if not REALTIME_ESTIMATOR:
@@ -1332,7 +1398,7 @@ if not REALTIME_ESTIMATOR:
     plt.tight_layout()
 
 
-# In[58]:
+# In[59]:
 
 
 if gov_factor > 1:
@@ -1384,7 +1450,7 @@ if gov_factor > 1:
         ax.legend()
 
 
-# In[59]:
+# In[60]:
 
 
 if not REALTIME_ESTIMATOR:

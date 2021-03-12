@@ -29,7 +29,7 @@ def compute_bal_for_gas(start_block_timestamp, end_block_timestamp, gas_whitelis
     if verbose: print(f'ETH reimbursements for the week: {sum(reimbursements.eth_reimbursement)}')
     
     # get BAL:ETH price feed from Coingecko
-    bal_eth_coingecko = 'https://api.coingecko.com/api/v3/coins/ethereum/contract/0xba100000625a3754423978a60c9317c58a424e3d/market_chart/range?vs_currency=eth&from={0}&to={1}'.format(start_block_timestamp, end_block_timestamp)
+    bal_eth_coingecko = 'https://api.coingecko.com/api/v3/coins/ethereum/contract/0xba100000625a3754423978a60c9317c58a424e3d/market_chart/range?vs_currency=eth&from={0}&to={1}'.format(start_block_timestamp-7200, end_block_timestamp+7200)
 
     baleth_feed = pd.read_json(bal_eth_coingecko)['prices']
     baleth_feed = pd.DataFrame(baleth_feed.tolist(), index=baleth_feed.index, columns=['timestamp','price'])

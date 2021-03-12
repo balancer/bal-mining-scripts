@@ -55,6 +55,7 @@ if offset>0:
     tag = F'w{WEEK}'
 whitelist = pd.read_json(f'https://raw.githubusercontent.com/balancer-labs/assets/{tag}/lists/eligible.json').index.values
 gas_whitelist = pd.Series(whitelist).str.lower().tolist()
+gas_whitelist.append('0xeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee')
 
 bal4gas_df = compute_bal_for_gas(start_timestamp, end_timestamp, gas_whitelist, plot=False, verbose=True)
 bal4gas_df.to_gbq('bal_mining_estimates.gas_estimates_staging', 

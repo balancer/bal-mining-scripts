@@ -8,8 +8,8 @@
 # Google BigQuery SQL to get the blocks mined around a timestamp
 # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 # SELECT * FROM `bigquery-public-data.crypto_ethereum.blocks`
-# WHERE timestamp > "2021-02-21 23:59:30"
-# and timestamp < "2021-02-22 00:00:30"
+# WHERE timestamp > "2021-03-14 23:59:30"
+# and timestamp < "2021-03-15 00:00:30"
 # order by timestamp
 
 
@@ -18,9 +18,9 @@
 
 REALTIME_ESTIMATOR = True
 # set the window of blocks, will be overwritten if REALTIME_ESTIMATOR == True
-WEEK = 39
-START_BLOCK = 11903479
-END_BLOCK = 11928909
+WEEK = 41
+START_BLOCK = 11994473
+END_BLOCK = 12039857
 # we can hard code latest gov proposal if we want
 latest_gov_proposal = ''
 gov_factor = 1.1
@@ -1135,104 +1135,28 @@ if REALTIME_ESTIMATOR:
 # In[53]:
 
 
-from google.cloud import bigquery
-from google.cloud import bigquery_storage
+from src.bal4gas import compute_bal_for_gas
 
 if not REALTIME_ESTIMATOR:
     whitelist = pd.read_json(f'https://raw.githubusercontent.com/balancer-labs/assets/w{WEEK}/lists/eligible.json').index.values
     gas_whitelist = pd.Series(whitelist).str.lower().tolist()
+    gas_whitelist.append('0xeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee')
 #     gas_whitelist = ['0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2',
 #                      '0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48',
 #                      '0x6b175474e89094c44da98b954eedeac495271d0f',
 #                      '0xba100000625a3754423978a60c9317c58a424e3d',
 #                      '0x2260fac5e5542a773aa44fbcfedf7c193bc2c599']
 
-    print(time.strftime("%Y-%m-%d %H:%M:%S", time.localtime()) + ' - Querying Bigquery for eligible swaps and reimbursement values ...')
+    
+    merge = compute_bal_for_gas(start_block_timestamp, end_block_timestamp, gas_whitelist, plot=True, verbose=True)
 
-    sql = '''
-    WITH n_swaps as (
-        SELECT
-            txns.`block_number`,
-            txns.`block_timestamp`,
-            txns.`from_address`,
-            txns.`hash`,
-            txns.`receipt_gas_used`,
-            txns.`gas_price`,
-            count(1) as n_swaps
-        FROM `blockchain-etl.ethereum_balancer.BPool_event_LOG_SWAP` swaps
-        INNER JOIN `bigquery-public-data.crypto_ethereum.transactions` txns
-        ON swaps.transaction_hash = txns.`hash`
-        WHERE 1=1
-        AND swaps.block_timestamp >= TIMESTAMP_SECONDS({0})
-        AND txns.block_timestamp >= TIMESTAMP_SECONDS({0})
-        AND swaps.block_timestamp < TIMESTAMP_SECONDS({1})
-        AND txns.block_timestamp < TIMESTAMP_SECONDS({1})
-        AND txns.to_address = '0x3e66b66fd1d0b02fda6c811da9e0547970db2f21'
-        AND swaps.tokenIn IN ('{2}')
-        AND swaps.tokenOut IN ('{2}')
-        GROUP BY 1,2,3,4,5,6
-    ),
-    median_gas_prices AS (
-        SELECT DISTINCT
-            txns.`block_number`,
-            PERCENTILE_CONT(txns.`gas_price`, 0.5) OVER(PARTITION BY txns.`block_number`) AS block_median_gas_price
-        FROM `bigquery-public-data.crypto_ethereum.transactions` txns
-        INNER JOIN n_swaps ON txns.block_number = n_swaps.block_number
-        WHERE 1=1
-        AND txns.block_timestamp >= TIMESTAMP_SECONDS({0})
-        AND txns.block_timestamp < TIMESTAMP_SECONDS({1})
-        AND txns.`gas_price` > 1000000000
-    ),
-    reimbursements AS (
-        SELECT n.*, m.block_median_gas_price,
-        CASE WHEN receipt_gas_used > n_swaps * 100000 THEN n_swaps * 100000 ELSE receipt_gas_used END AS gas_reimbursement,
-        CASE WHEN gas_price > block_median_gas_price THEN block_median_gas_price ELSE gas_price END AS reimbursement_price
-        FROM n_swaps n 
-        INNER JOIN median_gas_prices m
-        ON n.block_number = m.block_number
-    )
-
-    SELECT
-        from_address as address,
-        SUM(gas_reimbursement*reimbursement_price)/1E18 as eth_reimbursement 
-    FROM reimbursements 
-    GROUP BY 1
-    ORDER BY 1
-    '''.format(start_block_timestamp, end_block_timestamp, '\',\''.join(gas_whitelist))
-
-
-    client = bigquery.Client()
-
-    bqstorageclient = bigquery_storage.BigQueryReadClient()
-    reimbursements = (
-        client.query(sql)
-        .result()
-        .to_dataframe(bqstorage_client=bqstorageclient)
-    )
-    print(time.strftime("%Y-%m-%d %H:%M:%S", time.localtime()) + ' - Done!')
-    print(f'ETH reimbursements for the week: {sum(reimbursements.eth_reimbursement)}')
-
-    # get BAL:ETH price feed from Coingecko
-    bal_eth_coingecko = 'https://api.coingecko.com/api/v3/coins/ethereum/contract/0xba100000625a3754423978a60c9317c58a424e3d/market_chart/range?vs_currency=eth&from={0}&to={1}'.format(start_block_timestamp, end_block_timestamp)
-
-    baleth_feed = pd.read_json(bal_eth_coingecko)['prices']
-    baleth_feed = pd.DataFrame(baleth_feed.tolist(), index=baleth_feed.index, columns=['timestamp','price'])
-    baleth_feed['datetime'] = pd.to_datetime(baleth_feed['timestamp']/1000, unit='s')
-    baleth_feed.drop(columns=['timestamp'], inplace=True)
-    baleth_feed.set_index('datetime', inplace=True)
-    baleth_feed.plot(title='BAL:ETH');
-    plt.show()
-    print(f'Median BAL:ETH price for the week: {np.median(baleth_feed)}')
-    reimbursements['bal_reimbursement'] = reimbursements['eth_reimbursement'] / np.median(baleth_feed)
-    reimbursements['address'] = reimbursements['address'].apply(Web3.toChecksumAddress)
-    reimbursements.set_index('address', inplace=True)
-    reimbursements = reimbursements['bal_reimbursement']
-    reimbursements[reimbursements>=CLAIM_THRESHOLD].apply(       lambda x: format(x, f'.{CLAIM_PRECISION}f')).to_json(reports_dir+'/_gasReimbursement.json',
+    totals_bal4gas = merge[['address','bal_reimbursement']].groupby('address').sum()['bal_reimbursement']
+    totals_bal4gas[totals_bal4gas>=CLAIM_THRESHOLD].apply(       lambda x: format(x, f'.{CLAIM_PRECISION}f')).to_json(reports_dir+'/_gasReimbursement.json',
        indent=4)
-    print(f'BAL reimbursements for the week: {sum(reimbursements)}')
+    print(f'BAL reimbursements for the week: {sum(totals_bal4gas)}')
 
     # combine BAL from liquidity mining and gas reimbursements
-    totals = pd.DataFrame(totals).join(reimbursements, how='outer')
+    totals = pd.DataFrame(totals).join(totals_bal4gas, how='outer')
     totals.fillna(0, inplace=True)
     totals['bal_total'] = totals['bal_mined'] + totals['bal_reimbursement']
     totals = totals['bal_total']

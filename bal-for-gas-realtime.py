@@ -11,7 +11,7 @@ end_timestamp = int(datetime.utcnow().replace(tzinfo=timezone.utc).timestamp())
 
 offset = 0
 if len(sys.argv) > 1:
-    offset = sys.argv[1]
+    offset = int(sys.argv[1])
 
 try:
     sql = f'''
@@ -53,7 +53,13 @@ WEEK = int(1 + (datetime.utcfromtimestamp(start_timestamp) - week_1_start).days/
 tag = 'master'
 if offset>0:
     tag = F'w{WEEK}'
-whitelist = pd.read_json(f'https://raw.githubusercontent.com/balancer-labs/assets/{tag}/lists/eligible.json').index.values
+try:
+    whitelist = pd.read_json(f'https://raw.githubusercontent.com/balancer-labs/assets/{tag}/lists/eligible.json').index.values
+except:
+    print(f'Tag {tag} not found, resorting to master')
+    tag = 'master'
+    whitelist = pd.read_json(f'https://raw.githubusercontent.com/balancer-labs/assets/{tag}/lists/eligible.json').index.values
+
 gas_whitelist = pd.Series(whitelist).str.lower().tolist()
 gas_whitelist.append('0xeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee')
 

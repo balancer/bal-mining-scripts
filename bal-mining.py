@@ -8,8 +8,8 @@
 # Google BigQuery SQL to get the blocks mined around a timestamp
 # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 # SELECT * FROM `bigquery-public-data.crypto_ethereum.blocks`
-# WHERE timestamp > "2021-03-14 23:59:30"
-# and timestamp < "2021-03-15 00:00:30"
+# WHERE timestamp > "2021-03-21 23:59:30"
+# and timestamp < "2021-03-22 00:00:30"
 # order by timestamp
 
 
@@ -18,9 +18,9 @@
 
 REALTIME_ESTIMATOR = True
 # set the window of blocks, will be overwritten if REALTIME_ESTIMATOR == True
-WEEK = 41
-START_BLOCK = 11994473
-END_BLOCK = 12039857
+WEEK = 42
+START_BLOCK = 12039857
+END_BLOCK = 12085254
 # we can hard code latest gov proposal if we want
 latest_gov_proposal = ''
 gov_factor = 1.1
@@ -436,6 +436,18 @@ whitelist_df['prices_lists'] = whitelist_df['prices_dict'].apply(lambda x: x.get
 prices_not_found = whitelist_df[whitelist_df['prices_lists'].apply(lambda x: len(x)==0)].index
 whitelist_df.drop(index=prices_not_found, inplace=True)
 print('Prices not found in Coingecko for: {}'.format(list(prices_not_found)))
+
+# Alert if this is the first week the token is not found on Coingecko
+# This is to prevent situations like what happened with 0x15822A64c8Cb27D7828C45E0aAFC3e6C5DeCd172 on week 41
+last_weeek_reports_dir = f'reports/{WEEK-1}'
+last_week_prices = json.load(open(last_weeek_reports_dir+'/_prices.json'))
+for t in tokens_not_found:
+    if t in last_week_prices.keys():
+        print(f'Attention: {t} was found on Coingecko last week')
+for t in prices_not_found:
+    if t in last_week_prices.keys():
+        print(f'Attention: {t} had a price feed on Coingecko last week')
+        
 
 exploded_whitelist_df = whitelist_df.explode('prices_lists').dropna()
 exploded_whitelist_df.reset_index(inplace=True)
@@ -1153,7 +1165,6 @@ if not REALTIME_ESTIMATOR:
     totals_bal4gas = merge[['address','bal_reimbursement']].groupby('address').sum()['bal_reimbursement']
     totals_bal4gas[totals_bal4gas>=CLAIM_THRESHOLD].apply(       lambda x: format(x, f'.{CLAIM_PRECISION}f')).to_json(reports_dir+'/_gasReimbursement.json',
        indent=4)
-    print(f'BAL reimbursements for the week: {sum(totals_bal4gas)}')
 
     # combine BAL from liquidity mining and gas reimbursements
     totals = pd.DataFrame(totals).join(totals_bal4gas, how='outer')

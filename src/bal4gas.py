@@ -43,5 +43,6 @@ def compute_bal_for_gas(start_block_timestamp, end_block_timestamp, gas_whitelis
                           on='datetime', direction='nearest')
 
     merge['bal_reimbursement'] = merge['eth_reimbursement'] / merge['price']
+    if verbose: print(f'BAL reimbursements for the week: {sum(merge.bal_reimbursement)}')
     merge['address'] = merge['address'].apply(Web3.toChecksumAddress)
     return merge

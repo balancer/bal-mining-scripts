@@ -34,6 +34,10 @@ report.2020*
 *.sln
 *.sw?
 /lib
+/js/lib
 
 *checkpoint.ipynb
-python/compare-java-python.ipynb
+compare-java-python.ipynb
+_poolsSeries.json.zip
+bal-for-gas-compare-implementations.ipynb
+*.pyc

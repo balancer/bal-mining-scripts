@@ -16,6 +16,21 @@
         ],
         [
             [
+                '0xEC6a5D88bF56Fd3F96957AE65916C69F29DB35c5', // apeUSD-AAVE
+            ],
+            [
+                '0x0f775aD69e3c93D599D3315A130Bd82A0cDda397', // apeUSD-LINK
+            ],
+            [
+                '0x5C6Af72cBd740b90528C8Fe226125413b6bd7E5A', // apeUSD-SNX
+            ],
+            [
+                '0xfA5e27893aee4805283D86e4283Da64F8c72dd56', // apeUSD-UMA
+            ],
+            [
+                '0xFbB6B34DD77274a06EA2E5462a5e0B9E23ce478e', // apeUSD-UNI
+            ],
+            [
                 '0x3449FC1Cd036255BA1EB19d65fF4BA2b8903A69a', // BAC
             ],
             [
@@ -136,6 +151,9 @@
         [
             [
                 '0x59fec83eC709c893aedD1A144Cf1828Eb04127Cd', // pxGOLD_MAY2021
+            ],
+            [
+                '0x5247C0DB4044FB6F97f32C7E1B48758019A5A912', // pxGOLD_MAR2022
             ],
             [
                 '0x261EfCdD24CeA98652B9700800a13DfBca4103fF', // sXAU

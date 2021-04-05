@@ -469,6 +469,18 @@ if not REALTIME_ESTIMATOR:
 prices_df['timestamp'] = prices_df['timestamp']//1000
 
 
+# In[98]:
+
+
+if not REALTIME_ESTIMATOR:
+    prices_df['datetime'] = pd.to_datetime(prices_df.timestamp, unit='s')
+    price_check = prices_df.pivot(index='datetime', columns='token_address', values='price')
+    price_check = price_check/price_check.max(axis=0)
+    price_check = price_check.fillna(method='pad')
+    price_check.plot(legend=False, figsize=(15,10), 
+                     title='Token prices relative to their respective max values in the period');
+
+
 # In[30]:
 
 

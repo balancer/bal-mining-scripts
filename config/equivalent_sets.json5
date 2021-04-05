@@ -127,6 +127,12 @@
             [
                 '0x90f802C7E8fb5D40B0De583e34C065A3bd2020D8', // YD-ETH-MAR21
             ],
+            [
+                '0x4b7Fb448dF91C8Ed973494F8C8c4f12DAF3A8521', // YD-BTC-JUN21
+            ],
+            [
+                '0xcBE430927370e95B4B10cFc702c6017EC7abEfC3', // YD-ETH-JUN21
+            ],
         ],
         [
             [

@@ -13,6 +13,9 @@
             [
                 '0x5e74C9036fb86BD7eCdcb084a0673EFc32eA31cb', // sETH
             ],
+            [
+                '0xae7ab96520DE3A18E5e111B5EaAb095312D7fE84', // stETH
+            ],
         ],
         [
             [
@@ -60,6 +63,9 @@
             ],
             [
                 '0xDaFF85B6f5787b2d9eE11CCDf5e852816063326A', // pxUSD-OCT2020
+            ],
+            [
+                '0x4B606e9Eb2228c70f44453AFe5a73e1FeA258Ce1', // pxUSD_MAR2022
             ],
             [
                 '0x1456688345527bE1f37E9e627DA0837D6f08C925', // USDP
@@ -120,6 +126,12 @@
             ],
             [
                 '0x90f802C7E8fb5D40B0De583e34C065A3bd2020D8', // YD-ETH-MAR21
+            ],
+            [
+                '0x4b7Fb448dF91C8Ed973494F8C8c4f12DAF3A8521', // YD-BTC-JUN21
+            ],
+            [
+                '0xcBE430927370e95B4B10cFc702c6017EC7abEfC3', // YD-ETH-JUN21
             ],
         ],
         [

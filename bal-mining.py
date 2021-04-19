@@ -8,8 +8,8 @@
 # Google BigQuery SQL to get the blocks mined around a timestamp
 # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 # SELECT * FROM `bigquery-public-data.crypto_ethereum.blocks`
-# WHERE timestamp > "2021-04-11 23:59:30"
-# and timestamp < "2021-04-12 00:00:30"
+# WHERE timestamp > "2021-04-18 23:59:30"
+# and timestamp < "2021-04-19 00:00:30"
 # order by timestamp
 
 
@@ -18,9 +18,9 @@
 
 REALTIME_ESTIMATOR = True
 # set the window of blocks, will be overwritten if REALTIME_ESTIMATOR == True
-WEEK = 45
-START_BLOCK = 12176303
-END_BLOCK = 12221872
+WEEK = 46
+START_BLOCK = 12221872 
+END_BLOCK = 12267212
 # we can hard code latest gov proposal if we want
 latest_gov_proposal = ''
 gov_factor = 1.1
@@ -867,7 +867,7 @@ if not REALTIME_ESTIMATOR:
 #   * by doing this recursively we also account for staking contracts that hold BPTs of smart pools (BAL earned by the CRP is redistributed to its token holders; then the subset of BAL that goes to the staking contract is redistributed to its holders)
 #   * all CRPs created via the CRPFactory are redistributers by default. Other contracts can PR into `config/redistribute.json`
 
-# In[61]:
+# In[47]:
 
 
 # get addresses that redirect
@@ -879,7 +879,7 @@ else:
     redirects = json.load(open('config/redirect.json'))
 
 
-# In[62]:
+# In[48]:
 
 
 # get addresses that redistribute
@@ -909,7 +909,7 @@ redistributers_list.extend(crps['pool'].drop_duplicates().apply(Web3.toChecksumA
 # print('Redistributers: {}'.format(redistributers_list))
 
 
-# In[63]:
+# In[49]:
 
 
 # get redistributers' token holders
@@ -946,7 +946,7 @@ shares.columns = ['perc_share']
 print(time.strftime("%Y-%m-%d %H:%M:%S", time.localtime()) + ' - Done!')
 
 
-# In[64]:
+# In[50]:
 
 
 miners = bal_mined['bal_mined'].groupby(['block_number', 'chksum_bpt_holder']).sum().reset_index()
@@ -997,7 +997,7 @@ if not REALTIME_ESTIMATOR:
 # # Gov Factor
 # Liquidity providers that participate in the governance of Balancer get a bonus on the BAL earned
 
-# In[65]:
+# In[51]:
 
 
 # apply govFactor
@@ -1047,7 +1047,7 @@ if gov_factor > 1:
                                                         indent=4)
 
 
-# In[66]:
+# In[52]:
 
 
 print(time.strftime("%Y-%m-%d %H:%M:%S", time.localtime()))
@@ -1055,7 +1055,7 @@ print(time.strftime("%Y-%m-%d %H:%M:%S", time.localtime()))
 
 # # Update real time estimates in GBQ
 
-# In[67]:
+# In[53]:
 
 
 if REALTIME_ESTIMATOR:
@@ -1167,7 +1167,7 @@ if REALTIME_ESTIMATOR:
 
 # # Gas Reimbursement Program
 
-# In[68]:
+# In[54]:
 
 
 from src.bal4gas import compute_bal_for_gas
@@ -1200,7 +1200,7 @@ if not REALTIME_ESTIMATOR:
 
 # # Plots
 
-# In[69]:
+# In[55]:
 
 
 top_tokens = subpools['BAL_mined'].groupby(['token_address']).sum().sort_values(ascending=False).head(10).index
@@ -1212,7 +1212,7 @@ if not REALTIME_ESTIMATOR:
              title = 'BAL mined by top 10 tokens')
 
 
-# In[70]:
+# In[56]:
 
 
 rewards_per_pool = subpools.groupby(['address','datetime']).sum()['BAL_mined']
@@ -1223,7 +1223,7 @@ if not REALTIME_ESTIMATOR:
              title = 'BAL earned by top 10 pools')
 
 
-# In[71]:
+# In[57]:
 
 
 rewards_per_lp = bal_mined['bal_mined'].groupby(['chksum_bpt_holder','block_number']).sum()
@@ -1235,7 +1235,7 @@ if not REALTIME_ESTIMATOR:
     ax.ticklabel_format(axis='x', style='plain')
 
 
-# In[72]:
+# In[58]:
 
 
 if not REALTIME_ESTIMATOR:
@@ -1290,7 +1290,7 @@ if not REALTIME_ESTIMATOR:
     plt.tight_layout()
 
 
-# In[73]:
+# In[59]:
 
 
 if gov_factor > 1:
@@ -1342,7 +1342,7 @@ if gov_factor > 1:
         ax.legend()
 
 
-# In[74]:
+# In[61]:
 
 
 if not REALTIME_ESTIMATOR:
@@ -1350,6 +1350,6 @@ if not REALTIME_ESTIMATOR:
     _lm = pd.read_json(reports_dir+'/_totalsLiquidityMining.json', orient='index').sum().values[0]
     _claim = pd.read_json(reports_dir+'/_totals.json', orient='index').sum().values[0]
     print(f'Liquidity Mining: {format(_lm, f".{CLAIM_PRECISION}f")}')
-    print(f'Gas Reimbursement: {format(_claim-145000, f".{CLAIM_PRECISION}f")}')
+    print(f'Gas Reimbursement week {WEEK}: {format(_claim-145000, f".{CLAIM_PRECISION}f")}')
     print(f'Total: {format(_claim, f".{CLAIM_PRECISION}f")}')
 

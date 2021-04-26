@@ -173,6 +173,14 @@
         ],
         [
             [
+                '0xdB25f211AB05b1c97D595516F45794528a807ad8', // EURS
+            ],
+            [
+                '0xD71eCFF9342A5Ced620049e616c5035F1dB98620', // sEUR
+            ],
+        ],
+        [
+            [
                 '0x0D8775F648430679A709E98d2b0Cb6250d2887EF', // BAT
                 '0xE1BA0FB44CCb0D11b80F92f4f8Ed94CA3fF51D00', // aBAT
                 '0x6C8c6b02E7b2BE14d4fA6022Dfd6d75921D90E4E', // cBAT

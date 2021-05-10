@@ -71,6 +71,21 @@
                 '0x4B606e9Eb2228c70f44453AFe5a73e1FeA258Ce1', // pxUSD_MAR2022
             ],
             [
+                '0xC88F47067dB2E25851317A2FDaE73a22c0777c37', // oneBTC
+            ],
+            [
+                '0xEc0d77a58528a218cBf41Fa6E1585c8D7A085868', // oneETH
+            ],
+            [
+                '0x18Cc17a1EeD37C02A77B0B96b7890C7730E2a2CF', // oneLINK
+            ],
+            [
+                '0x8F041A3940a5e6FB580075C3774E15FcFA0E1618', // oneWING
+            ],
+            [
+                '0x7BD198b9107496fD5cC3d7655AF52f43a8eDBc4C', // oneVBTC
+            ],
+            [
                 '0x1456688345527bE1f37E9e627DA0837D6f08C925', // USDP
             ],
             [
@@ -268,6 +283,12 @@
             [
                 '0x1f9840a85d5aF5bf1D1762F925BDADdC4201F984', // UNI
                 '0x35A18000230DA775CAc24873d00Ff85BccdeD550', // cUNI
+            ],
+        ],
+        [
+            [
+                '0x1b40183EFB4Dd766f11bDa7A7c3AD8982e998421', // VSP
+                '0xbA4cFE5741b357FA371b506e5db0774aBFeCf8Fc', // vVSP
             ],
         ],
         [

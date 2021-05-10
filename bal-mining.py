@@ -18,9 +18,9 @@
 
 REALTIME_ESTIMATOR = True
 # set the window of blocks, will be overwritten if REALTIME_ESTIMATOR == True
-WEEK = 48
-START_BLOCK = 12312588 
-END_BLOCK = 12357852
+WEEK = 49
+START_BLOCK = 12357852 
+END_BLOCK = 12403257
 # we can hard code latest gov proposal if we want
 latest_gov_proposal = ''
 gov_factor = 1.1

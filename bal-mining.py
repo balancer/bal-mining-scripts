@@ -1170,7 +1170,8 @@ if REALTIME_ESTIMATOR:
 # In[54]:
 
 
-from src.bal4gas import compute_bal_for_gas
+from src.bal4gas_V1 import compute_bal_for_gas as compute_bal_for_gas_V1
+from src.bal4gas_V2 import compute_bal_for_gas as compute_bal_for_gas_V2
 
 if not REALTIME_ESTIMATOR:
     whitelist = pd.read_json(f'https://raw.githubusercontent.com/balancer-labs/assets/w{WEEK}/lists/eligible.json').index.values
@@ -1183,7 +1184,13 @@ if not REALTIME_ESTIMATOR:
 #                      '0x2260fac5e5542a773aa44fbcfedf7c193bc2c599']
 
     
-    merge = compute_bal_for_gas(start_block_timestamp, end_block_timestamp, gas_whitelist, plot=True, verbose=True)
+    v1 = compute_bal_for_gas_V1(start_block_timestamp, end_block_timestamp, gas_whitelist, plot=True, verbose=True)
+
+    gas_whitelist.remove('0xeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee')
+    gas_whitelist.append('0x0000000000000000000000000000000000000000')
+    v2 = compute_bal_for_gas_V2(start_block_timestamp, end_block_timestamp, gas_whitelist, plot=True, verbose=True)
+    
+    merge = v1.append(v2)
 
     totals_bal4gas = merge[['address','bal_reimbursement']].groupby('address').sum()['bal_reimbursement']
     totals_bal4gas[totals_bal4gas>=CLAIM_THRESHOLD].apply(       lambda x: format(x, f'.{CLAIM_PRECISION}f')).to_json(reports_dir+'/_gasReimbursement.json',

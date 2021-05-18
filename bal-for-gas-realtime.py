@@ -2,7 +2,8 @@ from google.cloud import bigquery
 import os
 import pandas as pd
 from datetime import datetime, timezone
-from src.bal4gas import compute_bal_for_gas
+from src.bal4gas_V1 import compute_bal_for_gas as compute_bal_for_gas_V1
+from src.bal4gas_V2 import compute_bal_for_gas as compute_bal_for_gas_V2
 import sys
 
 project_id = os.environ['GCP_PROJECT']
@@ -63,7 +64,42 @@ except:
 gas_whitelist = pd.Series(whitelist).str.lower().tolist()
 gas_whitelist.append('0xeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee')
 
-bal4gas_df = compute_bal_for_gas(start_timestamp, end_timestamp, gas_whitelist, plot=False, verbose=True)
+bal4gas_df = compute_bal_for_gas_V1(start_timestamp, end_timestamp, gas_whitelist, plot=False, verbose=True)
+bal4gas_df.to_gbq('bal_mining_estimates.gas_estimates_staging', 
+                        project_id=project_id, 
+                        if_exists='replace')
+
+# merge staging into prod
+sql = '''
+MERGE bal_mining_estimates.gas_estimates prod
+USING bal_mining_estimates.gas_estimates_staging stage
+ON prod.transaction_hash = stage.transaction_hash
+WHEN MATCHED THEN
+    UPDATE SET 
+        datetime = stage.datetime,
+        address = stage.address,
+        n_swaps = stage.n_swaps,
+        block_median_gas_price = stage.block_median_gas_price,
+        eth_reimbursement = stage.eth_reimbursement,
+        timestamp = stage.timestamp,
+        price = stage.price,
+        bal_reimbursement = stage.bal_reimbursement
+WHEN NOT MATCHED BY TARGET THEN
+    INSERT (datetime, transaction_hash, address, n_swaps, 
+            block_median_gas_price, eth_reimbursement, timestamp,
+            price, bal_reimbursement)
+    VALUES (datetime, transaction_hash, address, n_swaps, 
+            block_median_gas_price, eth_reimbursement, timestamp,
+            price, bal_reimbursement)
+'''
+client = bigquery.Client()
+query = client.query(sql)
+query.result()
+
+gas_whitelist.remove('0xeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee')
+gas_whitelist.append('0x0000000000000000000000000000000000000000')
+
+bal4gas_df = compute_bal_for_gas_V2(start_timestamp, end_timestamp, gas_whitelist, plot=False, verbose=True)
 bal4gas_df.to_gbq('bal_mining_estimates.gas_estimates_staging', 
                         project_id=project_id, 
                         if_exists='replace')

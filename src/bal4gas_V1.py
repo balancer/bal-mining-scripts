@@ -7,13 +7,13 @@ import time
 
 def compute_bal_for_gas(start_block_timestamp, end_block_timestamp, gas_whitelist, plot=True, verbose=True):
     sql = ''
-    with open('src/bal4gas.sql','r') as file:
+    with open('src/bal4gas_V1.sql','r') as file:
         sql = (file
             .read()
             .format(start_block_timestamp, 
                 end_block_timestamp, 
                 '\',\''.join(gas_whitelist)))
-    if verbose: print(time.strftime("%Y-%m-%d %H:%M:%S", time.localtime()) + ' - Querying Bigquery for eligible swaps and reimbursement values ...')
+    if verbose: print(time.strftime("%Y-%m-%d %H:%M:%S", time.localtime()) + ' - Querying Bigquery for eligible V1 swaps and reimbursement values ...')
     client = bigquery.Client()
     bqstorageclient = bigquery_storage.BigQueryReadClient()
     reimbursements = (
@@ -26,7 +26,7 @@ def compute_bal_for_gas(start_block_timestamp, end_block_timestamp, gas_whitelis
         reimbursements.groupby('datetime').mean()['block_median_gas_price'].plot(title='Median gas price')
         plt.show()
     
-    if verbose: print(f'ETH reimbursements for the week: {sum(reimbursements.eth_reimbursement)}')
+    if verbose: print(f'ETH reimbursements for the week (V1): {sum(reimbursements.eth_reimbursement)}')
     
     # get BAL:ETH price feed from Coingecko
     bal_eth_coingecko = 'https://api.coingecko.com/api/v3/coins/ethereum/contract/0xba100000625a3754423978a60c9317c58a424e3d/market_chart/range?vs_currency=eth&from={0}&to={1}'.format(start_block_timestamp-7200, end_block_timestamp+7200)
@@ -43,6 +43,6 @@ def compute_bal_for_gas(start_block_timestamp, end_block_timestamp, gas_whitelis
                           on='datetime', direction='nearest')
 
     merge['bal_reimbursement'] = merge['eth_reimbursement'] / merge['price']
-    if verbose: print(f'BAL reimbursements for the week: {sum(merge.bal_reimbursement)}')
+    if verbose: print(f'BAL reimbursements for the week (V1): {sum(merge.bal_reimbursement)}')
     merge['address'] = merge['address'].apply(Web3.toChecksumAddress)
     return merge

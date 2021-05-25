@@ -1122,7 +1122,7 @@ v2_miners = pd.DataFrame(miner_export_v2).reset_index()
 n = len(v2_miners['miner'].drop_duplicates()[v2_miners['miner'].drop_duplicates().isin(redirects.keys())])
 print(f'Redirect: {n} redirectors found')
 v2_miners['miner'] = v2_miners['miner'].apply(lambda x: redirects.get(x,x))
-miner_export_v2 = v2_miners.groupby('miner').sum()
+miner_export_v2 = v2_miners.groupby('miner').sum()[0]
 
 
 if not REALTIME_ESTIMATOR:

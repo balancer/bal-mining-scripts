@@ -8,8 +8,8 @@
 # Google BigQuery SQL to get the blocks mined around a timestamp
 # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 # SELECT * FROM `bigquery-public-data.crypto_ethereum.blocks`
-# WHERE timestamp > "2021-05-02 23:59:30"
-# and timestamp < "2021-05-03 00:00:30"
+# WHERE timestamp > "2021-05-23 23:59:30"
+# and timestamp < "2021-05-24 00:00:30"
 # order by timestamp
 
 
@@ -18,9 +18,9 @@
 
 REALTIME_ESTIMATOR = True
 # set the window of blocks, will be overwritten if REALTIME_ESTIMATOR == True
-WEEK = 49
-START_BLOCK = 12357852 
-END_BLOCK = 12403257
+WEEK = 51
+START_BLOCK = 12448607 
+END_BLOCK = 12493701
 # we can hard code latest gov proposal if we want
 latest_gov_proposal = ''
 gov_factor = 1.1
@@ -167,21 +167,43 @@ BLACKLISTED_SHAREHOLDERS_lower = [x.lower() for x in BLACKLISTED_SHAREHOLDERS]
 # In[9]:
 
 
+from urllib.request import urlopen
+import json
+# V2 allocation
+V2_LM_ALLOCATION_URL = 'https://raw.githubusercontent.com/balancer-labs/frontend-v2/master/src/lib/utils/liquidityMining/LiquidityMiningV2.json'
+jsonurl = urlopen(V2_LM_ALLOCATION_URL)
+try:
+    V2_ALLOCATION_THIS_WEEK = json.loads(jsonurl.read())[f'week_{WEEK}']['tiers']
+except KeyError:
+    V2_ALLOCATION_THIS_WEEK = {}
+V2_MINING_POOLS = {}
+for tier in V2_ALLOCATION_THIS_WEEK.values():
+    for pool in tier['slots'].values():
+        pool_address = pool[:42].lower()
+        V2_MINING_POOLS[pool_address] = V2_MINING_POOLS.get(pool_address,0) + tier['BAL']
+BAL_MINED_ON_V2 = sum(V2_MINING_POOLS.values())
+print(f'BAL mined on V2 on week {WEEK}: {BAL_MINED_ON_V2}')
+
+
+# In[10]:
+
+
 BAL_TOKEN = '0xba100000625a3754423978a60c9317c58a424e3D'
 SNAPSHOT_WINDOW_SIZE = 256
 CLAIM_PRECISION = 18 # leave out of results addresses that mined less than CLAIM_THRESHOLD BAL
 CLAIM_THRESHOLD = 10**(-CLAIM_PRECISION)
 WEEKLY_MINED = 145000
-LIQUIDITY_STAKING = 45000
+BAL_MINED_ON_V1 = WEEKLY_MINED - BAL_MINED_ON_V2
+LIQUIDITY_STAKING = 45000 / WEEKLY_MINED * BAL_MINED_ON_V1
 if REALTIME_ESTIMATOR:
     week_passed = (end_block_timestamp - start_block_timestamp)/(7*24*3600)
-    WEEKLY_MINED = int(WEEKLY_MINED*week_passed)
+    BAL_MINED_ON_V1 = int(BAL_MINED_ON_V1*week_passed)
     LIQUIDITY_STAKING = int(LIQUIDITY_STAKING*week_passed)
-STAKERS_SHARE = LIQUIDITY_STAKING / WEEKLY_MINED
+STAKERS_SHARE = LIQUIDITY_STAKING / BAL_MINED_ON_V1
 reports_dir = f'reports/{WEEK}'
 
 
-# In[10]:
+# In[11]:
 
 
 import os
@@ -189,7 +211,7 @@ if not os.path.exists(reports_dir):
     os.mkdir(reports_dir)
 
 
-# In[11]:
+# In[12]:
 
 
 import numpy as np
@@ -229,7 +251,7 @@ def get_wrap_factor(tokens_weights):
     return element_wise_product.sum()/np.triu(weights_matrix, k=1).sum()
 
 
-# In[12]:
+# In[13]:
 
 
 def get_staking_boosts_of_pair(a, b, bal_multiplier=1):
@@ -288,14 +310,14 @@ def get_BRF(tokens_weights, bal_multiplier=1):
     return numerator/denominator
 
 
-# In[13]:
+# In[14]:
 
 
 import matplotlib.pyplot as plt
 plt.rcParams['figure.facecolor'] = 'white'
 
 
-# In[14]:
+# In[15]:
 
 
 from tqdm.auto import tqdm
@@ -319,7 +341,7 @@ print('week {}: first snapshot block: {} ({}...)'.format(WEEK, min(snapshot_bloc
 print('week {}: last snapshot block: {} (...{})'.format(WEEK, max(snapshot_blocks), snapshot_blocks[-3:]))
 
 
-# In[15]:
+# In[16]:
 
 
 # remove kovan
@@ -344,7 +366,7 @@ whitelist_df.set_index(whitelist_df['checksum_token_address'].str.lower(), inpla
 whitelist_df.index.name = 'token_address'
 
 
-# In[16]:
+# In[17]:
 
 
 # get decimals of whitelisted tokens
@@ -374,7 +396,7 @@ whitelist_df['decimals'] = whitelist_df['checksum_token_address'].apply(get_toke
 print(time.strftime("%Y-%m-%d %H:%M:%S", time.localtime()) + ' - Done!')
 
 
-# In[17]:
+# In[18]:
 
 
 # get USD prices of whitelist tokens
@@ -425,7 +447,7 @@ for i in tqdm(whitelist_df.index, 'Getting prices'):
     whitelist_df.loc[i,'prices_dict'] = [prices_dict]
 
 
-# In[18]:
+# In[19]:
 
 
 import json
@@ -469,7 +491,7 @@ if not REALTIME_ESTIMATOR:
 prices_df['timestamp'] = prices_df['timestamp']//1000
 
 
-# In[19]:
+# In[20]:
 
 
 if not REALTIME_ESTIMATOR:
@@ -481,7 +503,7 @@ if not REALTIME_ESTIMATOR:
                      title='Token prices relative to their respective max values in the period');
 
 
-# In[20]:
+# In[21]:
 
 
 # get eligible token balances of every balancer pool at every snapshot block from Big Query
@@ -519,7 +541,7 @@ and balance > 0
 # print(sql)
 
 
-# In[21]:
+# In[22]:
 
 
 from google.cloud import bigquery
@@ -539,14 +561,14 @@ n = len(pools_balances)
 print(time.strftime("%Y-%m-%d %H:%M:%S", time.localtime()) + f' - Done ({n} records)')
 
 
-# In[22]:
+# In[23]:
 
 
 pools_balances['scaled_balance'] = pools_balances['balance'] * pools_balances.join(whitelist_df['decimals'], on='token_address')['decimals'].apply(lambda x: 10**(-x))
 pools_balances['timestamp'] = pools_balances['block_number'].apply(lambda x: snapshot_blocks_timestamps[x])
 
 
-# In[23]:
+# In[24]:
 
 
 pools_balances.set_index(['address','block_number','token_address'], inplace=True)
@@ -557,7 +579,7 @@ eligible_pools_balances = pools_balances[pools_balances['number_of_liquid_eligib
 eligible_pools_balances.reset_index(inplace=True)
 
 
-# In[24]:
+# In[25]:
 
 
 # merge balances and prices datasets on nearest timestamp, and compute USD balance of each token in each pool at each block
@@ -567,7 +589,7 @@ usd_pools_balances = pd.merge_asof(eligible_pools_balances.sort_values(by='times
 usd_pools_balances['usd_balance'] = usd_pools_balances['scaled_balance'] * usd_pools_balances['price']
 
 
-# In[25]:
+# In[26]:
 
 
 # get token weights and swap fees of pools with public swap enabled
@@ -589,7 +611,7 @@ and W.block_number in ({})
 # print(sql)
 
 
-# In[26]:
+# In[27]:
 
 
 from google.cloud import bigquery
@@ -609,7 +631,7 @@ n = len(pools_weights)
 print(time.strftime("%Y-%m-%d %H:%M:%S", time.localtime()) + f' - Done ({n} records)')
 
 
-# In[27]:
+# In[28]:
 
 
 # the merge removes records associated with balances of tokens that are not part of the pool
@@ -626,7 +648,7 @@ pools_weights_balances = pools_weights_balances.join(norm_weights)
 pools_weights_balances = pools_weights_balances[pools_weights_balances['norm_weights']<1]
 
 
-# In[28]:
+# In[29]:
 
 
 print(time.strftime("%Y-%m-%d %H:%M:%S", time.localtime()) + ' - Computing wrap factor...')
@@ -636,7 +658,7 @@ pools_weights_balances = pools_weights_balances.join(wrap_factor)
 print(time.strftime("%Y-%m-%d %H:%M:%S", time.localtime()) + ' - Done')
 
 
-# In[29]:
+# In[30]:
 
 
 print(time.strftime("%Y-%m-%d %H:%M:%S", time.localtime()) + ' - Computing BRF (first pass)...')
@@ -646,7 +668,7 @@ pools_weights_balances = pools_weights_balances.join(brf)
 print(time.strftime("%Y-%m-%d %H:%M:%S", time.localtime()) + ' - Done')
 
 
-# In[30]:
+# In[31]:
 
 
 # compute the fee factor
@@ -656,13 +678,13 @@ print(time.strftime("%Y-%m-%d %H:%M:%S", time.localtime()) + ' - Done')
 pools_weights_balances['fee_factor'] = np.exp(-(0.25 *                                                 (100 *                                                  (pools_weights_balances['swapfee'].astype(float) / 1E18)))**2)
 
 
-# In[31]:
+# In[32]:
 
 
 pools_weights_balances['adjustedLiquidityPreTokenCap'] = pools_weights_balances['usd_balance'] *                                                             pools_weights_balances['fee_factor'] *                                                             pools_weights_balances['wrap_factor'] *                                                             pools_weights_balances['first_pass_brf']
 
 
-# In[32]:
+# In[33]:
 
 
 # compute the tokenCapFactor for each token_address at each block_number
@@ -671,13 +693,13 @@ tokenCapFactor.name = 'tokenCapFactor'
 pools_weights_balances = pools_weights_balances.join(tokenCapFactor)
 
 
-# In[33]:
+# In[34]:
 
 
 pools_weights_balances['token_capped_usd_balance'] = pools_weights_balances['usd_balance'] *                                                         pools_weights_balances['tokenCapFactor']
 
 
-# In[34]:
+# In[35]:
 
 
 # get liquidity providers and the amount of BPT each has
@@ -703,7 +725,7 @@ select * from private_pools
 # print(sql)
 
 
-# In[35]:
+# In[36]:
 
 
 from google.cloud import bigquery
@@ -723,7 +745,7 @@ n = len(bpt_balances)
 print(time.strftime("%Y-%m-%d %H:%M:%S", time.localtime()) + f' - Done ({n} records)')
 
 
-# In[36]:
+# In[37]:
 
 
 is_shareholder = bpt_balances['bpt_holder'].isin(BLACKLISTED_SHAREHOLDERS_lower)
@@ -732,7 +754,7 @@ bpt_balances.set_index(['address','block_number','is_shareholder','bpt_holder'],
 bpt_balances.rename_axis(index={'is_shareholder': 'shareholders_subpool'}, inplace=True)
 
 
-# In[37]:
+# In[38]:
 
 
 # split pools that have a blacklisted shareholder as one of their LPs
@@ -749,7 +771,7 @@ for c in splitable_cols:
     subpools[c] = subpools[c] * subpools['relative_size_of_subpool']
 
 
-# In[38]:
+# In[39]:
 
 
 TEMP_BAL_MULTIPLIER = 3
@@ -767,7 +789,7 @@ subpools = subpools.join(brf)
 print(time.strftime("%Y-%m-%d %H:%M:%S", time.localtime()) + ' - Done')
 
 
-# In[39]:
+# In[40]:
 
 
 subpools['adjustedLiquidityPreStaking'] = subpools['token_capped_usd_balance'] *                                             subpools['fee_factor'] *                                             subpools['wrap_factor'] *                                             subpools['second_pass_brf_mult1']
@@ -775,7 +797,7 @@ subpools['adjustedLiquidityPreStaking'] = subpools['token_capped_usd_balance'] *
 subpools['adjustedLiquidityWithTempStakingMult'] = subpools['token_capped_usd_balance'] *                                             subpools['fee_factor'] *                                             subpools['wrap_factor'] *                                             subpools['second_pass_brf_with_temp_mult']
 
 
-# In[40]:
+# In[41]:
 
 
 # compute final BAL multiplier
@@ -786,7 +808,7 @@ stretch = (final_desired_adjusted_liquidity - total_adjustedLiquidityPreStaking)
 final_bal_multiplier = 1 + stretch * (TEMP_BAL_MULTIPLIER - 1)
 
 
-# In[41]:
+# In[42]:
 
 
 print(time.strftime("%Y-%m-%d %H:%M:%S", time.localtime()) + ' - Third BRF - with final BAL multiplier...')
@@ -796,14 +818,14 @@ subpools = subpools.join(brf)
 print(time.strftime("%Y-%m-%d %H:%M:%S", time.localtime()) + ' - Done')
 
 
-# In[42]:
+# In[43]:
 
 
 # compute the final adjusted liquidity of each token in each subpool at each block
 subpools['finalAdjustedLiquidity'] = subpools['token_capped_usd_balance'] *                                             subpools['fee_factor'] *                                             subpools['wrap_factor'] *                                             subpools['third_pass_brf_with_final_mult']
 
 
-# In[43]:
+# In[44]:
 
 
 # compute the total final adjusted liquidity at each block
@@ -815,10 +837,10 @@ share_of_liquidity.name = 'share_of_liquidity'
 subpools = subpools.join(share_of_liquidity)
 
 # compute the BAL mined by each token in each subpool at each block, proportional to the share of liquidity
-subpools['BAL_mined'] = subpools['share_of_liquidity'] * WEEKLY_MINED / len(snapshot_blocks)
+subpools['BAL_mined'] = subpools['share_of_liquidity'] * BAL_MINED_ON_V1 / len(snapshot_blocks)
 
 
-# In[44]:
+# In[45]:
 
 
 # compute the BAL mined by each LP proportional to their share of the pool
@@ -835,7 +857,7 @@ bal_mined['chksum_bpt_holder'] = bal_mined['bpt_holder'].apply(lambda x: chksums
 bal_mined.set_index(['address', 'block_number', 'shareholders_subpool', 'chksum_bpt_holder'], inplace=True)
 
 
-# In[45]:
+# In[46]:
 
 
 totals = bal_mined['bal_mined'].groupby('chksum_bpt_holder').sum()
@@ -845,7 +867,7 @@ if not REALTIME_ESTIMATOR:
                                                   indent=4)
 
 
-# In[46]:
+# In[47]:
 
 
 if not REALTIME_ESTIMATOR:
@@ -867,7 +889,7 @@ if not REALTIME_ESTIMATOR:
 #   * by doing this recursively we also account for staking contracts that hold BPTs of smart pools (BAL earned by the CRP is redistributed to its token holders; then the subset of BAL that goes to the staking contract is redistributed to its holders)
 #   * all CRPs created via the CRPFactory are redistributers by default. Other contracts can PR into `config/redistribute.json`
 
-# In[47]:
+# In[48]:
 
 
 # get addresses that redirect
@@ -879,7 +901,7 @@ else:
     redirects = json.load(open('config/redirect.json'))
 
 
-# In[48]:
+# In[49]:
 
 
 # get addresses that redistribute
@@ -909,7 +931,7 @@ redistributers_list.extend(crps['pool'].drop_duplicates().apply(Web3.toChecksumA
 # print('Redistributers: {}'.format(redistributers_list))
 
 
-# In[49]:
+# In[50]:
 
 
 # get redistributers' token holders
@@ -946,7 +968,7 @@ shares.columns = ['perc_share']
 print(time.strftime("%Y-%m-%d %H:%M:%S", time.localtime()) + ' - Done!')
 
 
-# In[50]:
+# In[51]:
 
 
 miners = bal_mined['bal_mined'].groupby(['block_number', 'chksum_bpt_holder']).sum().reset_index()
@@ -988,7 +1010,7 @@ if not REALTIME_ESTIMATOR:
     if gov_factor > 1:
         filename = '/_totalsPreGovFactor.json'
     else:
-        filename = '/_totalsLiquidityMining.json'
+        filename = '/_totalsLiquidityMining_V1.json'
 
     totals[totals>=CLAIM_THRESHOLD].apply(lambda x:                                           format(x, f'.{CLAIM_PRECISION}f')).                                            to_json(reports_dir+filename,
                                                     indent=4)
@@ -997,7 +1019,7 @@ if not REALTIME_ESTIMATOR:
 # # Gov Factor
 # Liquidity providers that participate in the governance of Balancer get a bonus on the BAL earned
 
-# In[51]:
+# In[52]:
 
 
 # apply govFactor
@@ -1035,27 +1057,112 @@ if gov_factor > 1:
     
     expanded_BAL_mined = totals.sum()
     
-    totals = totals * WEEKLY_MINED / expanded_BAL_mined
+    totals = totals * BAL_MINED_ON_V1 / expanded_BAL_mined
     totals_post_govfactor = totals.copy()
 
-    print('govFactor expansion: {:.2f}'.format(expanded_BAL_mined/WEEKLY_MINED))
+    print('govFactor expansion: {:.2f}'.format(expanded_BAL_mined/BAL_MINED_ON_V1))
     print('BAL post-govFactor: {:.18f}'.format(totals.sum()))
     
     if not REALTIME_ESTIMATOR:
-        filename = '/_totalsLiquidityMining.json'
+        filename = '/_totalsLiquidityMining_V1.json'
         totals[totals>=CLAIM_THRESHOLD].apply(lambda x:                                               format(x, f'.{CLAIM_PRECISION}f')).                                                to_json(reports_dir+filename,
                                                         indent=4)
 
 
-# In[52]:
+# In[53]:
 
 
 print(time.strftime("%Y-%m-%d %H:%M:%S", time.localtime()))
 
 
+# # V2 Liquidity Mining
+
+# In[54]:
+
+
+from google.cloud import bigquery
+from google.cloud import bigquery_storage
+import time
+
+with open('src/liquidity_mining_V2.sql','r') as file:
+    sql = (
+        file
+        .read()
+        .format(
+            WEEK, 
+            '\',\''.join(V2_MINING_POOLS.keys())
+        )
+    )
+# print(sql)
+
+print(time.strftime("%Y-%m-%d %H:%M:%S", time.localtime()) + ' - Querying Bigquery for the V2 LPs...')
+
+client = bigquery.Client()
+bqstorageclient = bigquery_storage.BigQueryReadClient()
+time_weighted_share = (
+    client.query(sql)
+    .result()
+    .to_dataframe(bqstorage_client=bqstorageclient)
+)
+print(time.strftime("%Y-%m-%d %H:%M:%S", time.localtime()) + ' - Done!')
+time_weighted_share['miner'] = time_weighted_share['miner'].apply(Web3.toChecksumAddress)
+time_weighted_share.set_index(['pool_address','miner'], inplace=True)
+
+weekly_pools_BAL = pd.Series(V2_MINING_POOLS)
+weekly_pools_BAL.index.name = 'pool_address'
+
+bal_mined_v2 = time_weighted_share['share']*weekly_pools_BAL
+if REALTIME_ESTIMATOR:
+    bal_mined_v2 *= week_passed
+
+miner_export_v2 = bal_mined_v2.groupby('miner').sum()
+print(f'{miner_export_v2.sum()} BAL mined on V2')
+
+v2_miners = pd.DataFrame(miner_export_v2).reset_index()
+n = len(v2_miners['miner'].drop_duplicates()[v2_miners['miner'].drop_duplicates().isin(redirects.keys())])
+print(f'Redirect: {n} redirectors found')
+v2_miners['miner'] = v2_miners['miner'].apply(lambda x: redirects.get(x,x))
+miner_export_v2 = v2_miners.groupby('miner').sum()[0]
+
+
+if not REALTIME_ESTIMATOR:
+    filename = '/_totalsLiquidityMining_V2.json'
+    (
+        miner_export_v2[miner_export_v2>=CLAIM_THRESHOLD]
+        .apply(
+            lambda x: format(
+                x, 
+                f'.{CLAIM_PRECISION}f'
+            )
+        )
+        .to_json(reports_dir+filename, indent=4)
+    )
+
+
+# In[55]:
+
+
+if (len(miner_export_v2)>0):
+    miner_export_V1_plus_V2 = totals_post_govfactor.add(miner_export_v2, fill_value=0)
+else:
+    miner_export_V1_plus_V2 = totals_post_govfactor.copy()
+if not REALTIME_ESTIMATOR:
+    filename = '/_totalsLiquidityMining.json'
+    (
+        miner_export_V1_plus_V2[miner_export_V1_plus_V2>=CLAIM_THRESHOLD]
+        .apply(
+            lambda x: format(
+                x, 
+                f'.{CLAIM_PRECISION}f'
+            )
+        )
+        .to_json(reports_dir+filename, indent=4)
+    )
+
+
 # # Update real time estimates in GBQ
 
-# In[53]:
+# In[56]:
 
 
 if REALTIME_ESTIMATOR:
@@ -1078,7 +1185,7 @@ if REALTIME_ESTIMATOR:
     query.result();
 
     # write to GBQ (LPs)
-    cur_estimate = pd.DataFrame(totals)
+    cur_estimate = pd.DataFrame(miner_export_V1_plus_V2)
     cur_estimate.columns = ['earned']
     cur_estimate.index.name = 'address'
     
@@ -1167,7 +1274,7 @@ if REALTIME_ESTIMATOR:
 
 # # Gas Reimbursement Program
 
-# In[54]:
+# In[57]:
 
 
 from src.bal4gas_V1 import compute_bal_for_gas as compute_bal_for_gas_V1
@@ -1197,17 +1304,14 @@ if not REALTIME_ESTIMATOR:
        indent=4)
 
     # combine BAL from liquidity mining and gas reimbursements
-    totals = pd.DataFrame(totals).join(totals_bal4gas, how='outer')
-    totals.fillna(0, inplace=True)
-    totals['bal_total'] = totals['bal_mined'] + totals['bal_reimbursement']
-    totals = totals['bal_total']
+    totals = miner_export_V1_plus_V2.add(totals_bal4gas, fill_value=0)
     totals[totals>=CLAIM_THRESHOLD].apply(       lambda x: format(x, f'.{CLAIM_PRECISION}f')).to_json(reports_dir+'/_totals.json',
        indent=4)
 
 
 # # Plots
 
-# In[55]:
+# In[58]:
 
 
 top_tokens = subpools['BAL_mined'].groupby(['token_address']).sum().sort_values(ascending=False).head(10).index
@@ -1219,7 +1323,7 @@ if not REALTIME_ESTIMATOR:
              title = 'BAL mined by top 10 tokens')
 
 
-# In[56]:
+# In[59]:
 
 
 rewards_per_pool = subpools.groupby(['address','datetime']).sum()['BAL_mined']
@@ -1230,7 +1334,7 @@ if not REALTIME_ESTIMATOR:
              title = 'BAL earned by top 10 pools')
 
 
-# In[57]:
+# In[60]:
 
 
 rewards_per_lp = bal_mined['bal_mined'].groupby(['chksum_bpt_holder','block_number']).sum()
@@ -1242,7 +1346,7 @@ if not REALTIME_ESTIMATOR:
     ax.ticklabel_format(axis='x', style='plain')
 
 
-# In[58]:
+# In[61]:
 
 
 if not REALTIME_ESTIMATOR:
@@ -1297,7 +1401,7 @@ if not REALTIME_ESTIMATOR:
     plt.tight_layout()
 
 
-# In[59]:
+# In[62]:
 
 
 if gov_factor > 1:
@@ -1349,14 +1453,21 @@ if gov_factor > 1:
         ax.legend()
 
 
-# In[60]:
+# In[63]:
 
 
 if not REALTIME_ESTIMATOR:
     print('Final Check Totals')
-    _lm = pd.read_json(reports_dir+'/_totalsLiquidityMining.json', orient='index').sum().values[0]
+    _lm_v1 = pd.read_json(reports_dir+'/_totalsLiquidityMining_V1.json', orient='index').sum().values[0]
+    try:
+        _lm_v2 = pd.read_json(reports_dir+'/_totalsLiquidityMining_V2.json', orient='index').sum().values[0]
+    except:
+        _lm_v2 = 0
+    _lm_both = pd.read_json(reports_dir+'/_totalsLiquidityMining.json', orient='index').sum().values[0]
     _claim = pd.read_json(reports_dir+'/_totals.json', orient='index').sum().values[0]
-    print(f'Liquidity Mining: {format(_lm, f".{CLAIM_PRECISION}f")}')
+    print(f'Liquidity Mining V1: {format(_lm_v1, f".{CLAIM_PRECISION}f")}')
+    print(f'Liquidity Mining V2: {format(_lm_v2, f".{CLAIM_PRECISION}f")}')
+    print(f'Liquidity Mining 1+2: {format(_lm_both, f".{CLAIM_PRECISION}f")}')
     print(f'Gas Reimbursement week {WEEK}: {format(_claim-145000, f".{CLAIM_PRECISION}f")}')
     print(f'Total: {format(_claim, f".{CLAIM_PRECISION}f")}')
 

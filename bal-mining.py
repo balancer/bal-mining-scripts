@@ -8,8 +8,8 @@
 # Google BigQuery SQL to get the blocks mined around a timestamp
 # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 # SELECT * FROM `bigquery-public-data.crypto_ethereum.blocks`
-# WHERE timestamp > "2021-05-23 23:59:30"
-# and timestamp < "2021-05-24 00:00:30"
+# WHERE timestamp > "2021-05-30 23:59:30"
+# and timestamp < "2021-05-31 00:00:30"
 # order by timestamp
 
 
@@ -18,9 +18,9 @@
 
 REALTIME_ESTIMATOR = True
 # set the window of blocks, will be overwritten if REALTIME_ESTIMATOR == True
-WEEK = 51
-START_BLOCK = 12448607 
-END_BLOCK = 12493701
+WEEK = 52
+START_BLOCK = 12493701 
+END_BLOCK = 12538795
 # we can hard code latest gov proposal if we want
 latest_gov_proposal = ''
 gov_factor = 1.1

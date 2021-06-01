@@ -35,6 +35,7 @@ BPT_SUPPLY AS (
   FROM `blockchain-etl.ethereum_balancer.view_token_balances_subset`
   WHERE token_address IN UNNEST(pool_addresses)
   AND address <> '0x0000000000000000000000000000000000000000'
+  AND balance > 0
   GROUP BY block_number, token_address
 ),
 LPS_SHARES AS (
@@ -45,6 +46,7 @@ LPS_SHARES AS (
   AND a.token_address = b.token_address
   WHERE a.token_address IN UNNEST(pool_addresses)
   AND address <> '0x0000000000000000000000000000000000000000'
+  AND balance > 0
 ),
 SHARES_INTEGRATOR AS (
   SELECT token_address, SUM(share*delta_t) as share_integral
@@ -70,6 +72,3 @@ SELECT
   address as miner, 
   time_weighted_share as share
 FROM RESULTS
--- ,
--- SELECT token_address, SUM(time_weighted_share) FROM RESULTS
--- GROUP BY token_address

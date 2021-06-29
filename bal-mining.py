@@ -8,19 +8,19 @@
 # Google BigQuery SQL to get the blocks mined around a timestamp
 # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 # SELECT * FROM `bigquery-public-data.crypto_ethereum.blocks`
-# WHERE timestamp > "2021-06-20 23:59:30"
-# and timestamp < "2021-06-21 00:00:30"
+# WHERE timestamp > "2021-06-27 23:59:30"
+# and timestamp < "2021-06-28 00:00:30"
 # order by timestamp
 
 
 # In[2]:
 
 
-REALTIME_ESTIMATOR = False
+REALTIME_ESTIMATOR = True
 # set the window of blocks, will be overwritten if REALTIME_ESTIMATOR == True
-WEEK = 55
-START_BLOCK = 12629257
-END_BLOCK = 12674364
+WEEK = 56
+START_BLOCK = 12674364
+END_BLOCK = 12719182
 # we can hard code latest gov proposal if we want
 latest_gov_proposal = ''
 gov_factor = 1.1
@@ -507,8 +507,10 @@ if not REALTIME_ESTIMATOR:
 
 
 # get eligible token balances of every balancer pool at every snapshot block from Big Query
+# starting week 56, the V1 AAVE/WETH smart pool no longer participates in the V1 liquidity mining program
 get_pools_sql = '''
 SELECT pool FROM `blockchain-etl.ethereum_balancer.BFactory_event_LOG_NEW_POOL` 
+WHERE pool <> '0xc697051d1c6296c24ae3bcef39aca743861d9a81'
 '''
 
 sql = """

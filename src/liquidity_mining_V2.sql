@@ -68,7 +68,7 @@ RESULTS AS (
   SELECT * FROM TIME_WEIGHTED_SHARE
 )
 SELECT 
-  token_address as pool_address, 
-  address as miner, 
-  time_weighted_share as share
-FROM RESULTS
+  R.token_address as pool_address, 
+  R.address as miner, 
+  R.time_weighted_share as tw_share
+FROM RESULTS R

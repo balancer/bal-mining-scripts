@@ -199,7 +199,10 @@ if REALTIME_ESTIMATOR:
     week_passed = (end_block_timestamp - start_block_timestamp)/(7*24*3600)
     BAL_MINED_ON_V1 = int(BAL_MINED_ON_V1*week_passed)
     LIQUIDITY_STAKING = int(LIQUIDITY_STAKING*week_passed)
-STAKERS_SHARE = LIQUIDITY_STAKING / BAL_MINED_ON_V1
+if BAL_MINED_ON_V1 > 0:
+    STAKERS_SHARE = LIQUIDITY_STAKING / BAL_MINED_ON_V1
+else:
+    STAKERS_SHARE = 0
 reports_dir = f'reports/{WEEK}'
 
 

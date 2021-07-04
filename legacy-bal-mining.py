@@ -1065,7 +1065,7 @@ if gov_factor > 1:
     totals = totals * BAL_MINED_ON_V1 / expanded_BAL_mined
     totals_post_govfactor = totals.copy()
 
-    print('govFactor expansion: {:.2f}'.format(expanded_BAL_mined/BAL_MINED_ON_V1))
+    # print('govFactor expansion: {:.2f}'.format(expanded_BAL_mined/BAL_MINED_ON_V1))
     print('BAL post-govFactor: {:.18f}'.format(totals.sum()))
     
     if not REALTIME_ESTIMATOR:

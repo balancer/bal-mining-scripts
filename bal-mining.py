@@ -31,6 +31,7 @@ def get_export_filename(network, token):
 from google.cloud import bigquery
 from google.cloud import bigquery_storage
 import warnings
+import requests
 import time
 from web3 import Web3
 import pandas as pd
@@ -86,6 +87,84 @@ else:
 
 
 # In[5]:
+
+
+def get_bpt_supply_gbq(pools_addresses,
+                   network):
+
+    network_blocks_table = {
+        1: 'bigquery-public-data.crypto_ethereum.blocks',
+        137: 'public-data-finance.crypto_polygon.blocks',
+    }
+
+    bpt_balances_table = {
+        1: 'blockchain-etl.ethereum_balancer.view_token_balances_subset',
+        137: 'blockchain-etl.polygon_balancer.view_bpt_balances',
+    }
+
+    sql = '''
+        DECLARE pool_addresses ARRAY<STRING>;
+        SET pool_addresses = [
+            '{0}'
+        ];
+
+        SELECT block_number, token_address, SUM(balance) AS supply
+        FROM `{1}`
+        WHERE token_address IN UNNEST(pool_addresses)
+        AND address <> '0x0000000000000000000000000000000000000000'
+        AND balance > 0
+        AND block_number = (SELECT MAX(number) FROM `{2}`)
+        GROUP BY block_number, token_address
+    '''.format(
+        '\',\''.join(pools_addresses),
+        bpt_balances_table[network],
+        network_blocks_table[network]
+    )
+#     print(sql)
+    
+    client = bigquery.Client()
+    bqstorageclient = bigquery_storage.BigQueryReadClient()
+    BPT_supply_df = (
+        client.query(sql)
+        .result()
+        .to_dataframe(bqstorage_client=bqstorageclient)
+    )
+    return BPT_supply_df
+
+
+# In[6]:
+
+
+def get_bpt_supply_subgraph(pools_addresses,
+                            network):
+
+    endpoint = {
+        1: 'https://api.thegraph.com/subgraphs/name/balancer-labs/balancer-v2',
+        137: 'https://api.thegraph.com/subgraphs/name/balancer-labs/balancer-polygon-v2',
+    }
+
+    query = '''
+        {
+          pools(
+            where:{address_in:
+              ["{}"]
+            }
+          ) {
+            address
+            totalShares
+          }
+        }
+    '''.replace('{','{{').replace('}','}}').replace('{{}}','{}').format(
+        '","'.join(pools_addresses)
+    )
+    r = requests.post(endpoint[network], json = {'query':query})
+    p = json.loads(r.content)['data']['pools']
+    BPT_supply_df = pd.DataFrame(p)
+    BPT_supply_df['totalShares'] = BPT_supply_df['totalShares'].astype(float)
+    return BPT_supply_df
+
+
+# In[7]:
 
 
 def v2_liquidity_mining(week, 
@@ -161,7 +240,7 @@ def v2_liquidity_mining(week,
     return miner_export
 
 
-# In[6]:
+# In[8]:
 
 
 # V2 allocation
@@ -173,6 +252,7 @@ except KeyError:
     V2_ALLOCATION_THIS_WEEK = {}
 full_export = pd.DataFrame()
 for chain in V2_ALLOCATION_THIS_WEEK:
+    print('------------------------------------------------------------------------------')
     print('\nChain: {}'.format(chain['chainId']))
     df = pd.DataFrame()
     for pool,rewards in chain['pools'].items():
@@ -182,12 +262,32 @@ for chain in V2_ALLOCATION_THIS_WEEK:
     df.fillna(0, inplace=True)
     df.index.name = 'pool_address'
     print('BAL to be mined on this chain: {}'.format(df[BAL_addresses[chain['chainId']]].sum()))
+
+    if not REALTIME_ESTIMATOR:
+        print('Google BigQuery sanity check - BPT supply:')
+        supply_gbq = get_bpt_supply_gbq(df.index, chain['chainId'])
+        supply_gbq.set_index('token_address', inplace=True)
+        supply_gbq.index.name = 'pool_address'
+        supply_subgraph = get_bpt_supply_subgraph(df.index, chain['chainId'])
+        supply_subgraph.set_index('address', inplace=True)
+        supply_subgraph.index.name = 'pool_address'
+        all_good = True
+        for i,r in supply_subgraph.join(supply_gbq).iterrows():
+            error = (r.supply/1e18 / r.totalShares)
+            if abs(error-1) > 1e-3:
+                all_good = False
+                print(f'{i} : {error:.3f}')
+        if all_good:
+            print('   All good')
+        else:
+            print('other than that, all good')    
+            
     chain_export = v2_liquidity_mining(WEEK, df, chain['chainId'])
     chain_export['chain_id'] = chain['chainId']
     full_export = full_export.append(chain_export)
 
 
-# In[7]:
+# In[9]:
 
 
 if not REALTIME_ESTIMATOR:
@@ -217,13 +317,13 @@ if not REALTIME_ESTIMATOR:
     print('Total BAL mined: {}'.format(mined_BAL.sum()))
 
 
-# In[8]:
+# In[10]:
 
 
 full_export_bkp = full_export.copy()
 
 
-# In[9]:
+# In[11]:
 
 
 full_export = (
@@ -243,7 +343,7 @@ full_export['earned'] = full_export['earned'].apply(lambda x: format(x, f'.{18}f
 
 # # Update real time estimates in GBQ
 
-# In[10]:
+# In[12]:
 
 
 if REALTIME_ESTIMATOR:
@@ -303,7 +403,7 @@ if REALTIME_ESTIMATOR:
 
 # # Gas Reimbursement Program
 
-# In[11]:
+# In[13]:
 
 
 from src.bal4gas_V1 import compute_bal_for_gas as compute_bal_for_gas_V1
@@ -333,7 +433,7 @@ if not REALTIME_ESTIMATOR:
        indent=4)
 
 
-# In[12]:
+# In[14]:
 
 
 if not REALTIME_ESTIMATOR:

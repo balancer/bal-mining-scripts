@@ -4,66 +4,14 @@ Set of scripts to calculate weekly BAL liquidity mining distributions.
 
 On week 26, the process was ported over to Python with the [blockchain-etl](https://github.com/blockchain-etl/) project on Google Bigquery as the  source for state data, such as pools' balances, fees, liquidity providers etc. The legacy scripts used up to week 25 can be found in the `js` directory.
 
-## Historical Runs
+## [Historical Runs](https://github.com/balancer-labs/bal-mining-scripts/blob/aca467d/README.md#historical-runs)
 
-| Week                           | Start Block | End Block |
-| :----------------------------- | ----------: | --------: |
-| [1](/reports/1/_totals.json)   |    10176690 |  10221761 |
-| [2](/reports/2/_totals.json)   |    10221761 |  10267003 |
-| [3](/reports/3/_totals.json)   |    10267003 |  10312236 |
-| [4](/reports/4/_totals.json)   |    10312236 |  10357402 |
-| [5](/reports/5/_totals.json)   |    10357402 |  10402520 |
-| [6](/reports/6/_totals.json)   |    10402520 |  10447836 |
-| [7](/reports/7/_totals.json)   |    10447836 |  10493044 |
-| [8](/reports/8/_totals.json)   |    10493044 |  10538187 |
-| [9](/reports/9/_totals.json)   |    10538187 |  10583488 |
-| [10](/reports/10/_totals.json) |    10583488 |  10628811 |
-| [11](/reports/11/_totals.json) |    10628811 |  10674230 |
-| [12](/reports/12/_totals.json) |    10674230 |  10719753 |
-| [13](/reports/13/_totals.json) |    10719753 |  10765333 |
-| [14](/reports/14/_totals.json) |    10765333 |  10811169 |
-| [15](/reports/15/_totals.json) |    10811169 |  10856779 |
-| [16](/reports/16/_totals.json) |    10856779 |  10902386 |
-| [17](/reports/17/_totals.json) |    10902386 |  10947679 |
-| [18](/reports/18/_totals.json) |    10947679 |  10992408 |
-| [19](/reports/19/_totals.json) |    10992408 |  11037419 |
-| [20](/reports/20/_totals.json) |    11037419 |  11083026 |
-| [21](/reports/21/_totals.json) |    11083026 |  11128711 |
-| [22](/reports/22/_totals.json) |    11128711 |  11174328 |
-| [23](/reports/23/_totals.json) |    11174328 |  11219938 |
-| [24](/reports/24/_totals.json) |    11219938 |  11265559 |
-| [25](/reports/25/_totals.json) |    11265559 |  11311151 |
-| [26](/reports/26/_totals.json) |    11311151 |  11356700 |
-| [27](/reports/27/_totals.json) |    11356700 |  11402291 |
-| [28](/reports/28/_totals.json) |    11402291 |  11447731 |
-| [29](/reports/29/_totals.json) |    11447731 |  11493367 |
-| [30](/reports/30/_totals.json) |    11493367 |  11538966 |
-| [31](/reports/31/_totals.json) |    11538966 |  11584641 |
-| [32](/reports/32/_totals.json) |    11584641 |  11630234 |
-| [33](/reports/33/_totals.json) |    11630234 |  11675866 |
-| [34](/reports/34/_totals.json) |    11675866 |  11721455 |
-| [35](/reports/35/_totals.json) |    11721455 |  11766939 |
-| [36](/reports/36/_totals.json) |    11766939 |  11812442 |
-| [37](/reports/37/_totals.json) |    11812442 |  11857946 |
-| [38](/reports/38/_totals.json) |    11857946 |  11903479 |
-| [39](/reports/39/_totals.json) |    11903479 |  11948959 |
-| [40](/reports/40/_totals.json) |    11948959 |  11994473 |
-| [41](/reports/41/_totals.json) |    11994473 |  12039857 |
-| [42](/reports/42/_totals.json) |    12039857 |  12085254 |
-| [43](/reports/43/_totals.json) |    12085254 |  12130764 |
-| [44](/reports/44/_totals.json) |    12130764 |  12176303 |
-| [45](/reports/45/_totals.json) |    12176303 |  12221872 |
-| [46](/reports/46/_totals.json) |    12221872 |  12267212 |
-| [47](/reports/47/_totals.json) |    12267212 |  12312588 |
-| [48](/reports/48/_totals.json) |    12312588 |  12357852 |
-| [49](/reports/49/_totals.json) |    12357852 |  12403257 |
-| [50](/reports/50/_totals.json) |    12403257 |  12448607 |
-| [51](/reports/51/_totals.json) |    12448607 |  12493701 |
-| [52](/reports/52/_totals.json) |    12493701 |  12538795 |
-| [53](/reports/53/_totals.json) |    12538795 |  12584091 |
-| [54](/reports/54/_totals.json) |    12584091 |  12629257 |
-| [55](/reports/55/_totals.json) |    12629257 |  12674364 |
-| [56](/reports/56/_totals.json) |    12674364 |  12719182 |
+## [Reports](https://github.com/balancer-labs/bal-mining-scripts/tree/master/reports)
+Starting on week 57 of the liquidity mining program (June 28th 2021), pools can be incentivized with multiple tokens. Each weekly report directory has the following structure:  
+* `__<network>_<token>.json` files, containing a list of liquidity providers and the amount of `<token>` earned by each for providing liquidity in incentivized Balancer pools on `<network>`
+* `_totalsLiquidityMining.json`: for consistency with the reports provided in previous weeks, contains a list of liquidity providers and `BAL` earned across all networks
+* `_gasResimbursement.json`: results of the _BAL for Gas_ program for the week
+* `_totals.json`: total amount of `BAL` to be claimed on Ethereum mainnet (`__ethereum_0xba1...` + `_gasResimbursement.json`)
 
 ## Requirements
 * Python 3 + Jupyter Notebook
@@ -84,12 +32,10 @@ On week 26, the process was ported over to Python with the [blockchain-etl](http
 
 ## Weekly distributions
 
-145,000 BAL will be distributed on a weekly basis. Liquidity providers must claim their BAL at [claim.balancer.finance](https://claim.balancer.finance/).
+145,000 BAL will be distributed on a weekly basis.  
+Ethereum mainnet liquidity providers must claim their BAL at [claim.balancer.finance](https://claim.balancer.finance/).  
+Polygon liquidity providers will have their BAL sent directly to their wallet by Wednesday.
 
 ## BAL Redirections
 
-In case smart contracts which cannot receive BAL tokens are specified, owners of those smart contracts can choose to redirect BAL tokens to a new address. In order to submit a redirection request, submit a pull request to update `redirect.json` using `"fromAddress" : "toAddress"` along with some sort of ownership proof. Please reach out to the Balancer team if you need assistance.
-
-## BAL Redistributions
-
-The mining script identifies the liquidity providers of configurable rights pools (CRPs) deployed via the CRPFactory and redistributes BAL earned by those pools appropriately. CRPs deployed via other methods should submit a pull request to update `redistribute.json` using `"controllerAddress" : "poolDescription"` along with some sort of ownership proof. Please reach out to the Balancer team if you need assistance.
+In case smart contracts which cannot receive BAL tokens are liquidity providers (ie. hold the tokens that represent ownership of the pool), owners of those smart contracts can choose to redirect BAL tokens to a new address. In order to submit a redirection request, submit a pull request to update `redirect.json` using `"fromAddress" : "toAddress"` along with some sort of ownership proof. Please reach out to the Balancer team if you need assistance.

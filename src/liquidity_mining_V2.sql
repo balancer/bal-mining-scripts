@@ -24,15 +24,15 @@ WITH INTERVALS AS (
       IF(week_start < a.timestamp, a.timestamp, week_start),
       SECOND
     ) AS delta_t
-  FROM `bigquery-public-data.crypto_ethereum.blocks` a
-  INNER JOIN `bigquery-public-data.crypto_ethereum.blocks` b
+  FROM `{2}` a
+  INNER JOIN `{2}` b
   ON a.number+1 = b.number
   WHERE b.timestamp >= week_start
   AND a.timestamp <= week_end
 ),
 BPT_SUPPLY AS (
   SELECT block_number, token_address, SUM(balance) AS supply
-  FROM `blockchain-etl.ethereum_balancer.view_token_balances_subset`
+  FROM `{3}`
   WHERE token_address IN UNNEST(pool_addresses)
   AND address <> '0x0000000000000000000000000000000000000000'
   AND balance > 0
@@ -40,7 +40,7 @@ BPT_SUPPLY AS (
 ),
 LPS_SHARES AS (
   SELECT a.block_number, a.token_address, address, balance/supply AS share
-  FROM `blockchain-etl.ethereum_balancer.view_token_balances_subset` a
+  FROM `{3}` a
   INNER JOIN BPT_SUPPLY b
   ON a.block_number = b.block_number
   AND a.token_address = b.token_address
@@ -68,7 +68,7 @@ RESULTS AS (
   SELECT * FROM TIME_WEIGHTED_SHARE
 )
 SELECT 
-  token_address as pool_address, 
-  address as miner, 
-  time_weighted_share as share
-FROM RESULTS
+  R.token_address as pool_address, 
+  R.address as miner, 
+  R.time_weighted_share as tw_share
+FROM RESULTS R

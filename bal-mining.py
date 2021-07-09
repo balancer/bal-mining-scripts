@@ -4,8 +4,8 @@
 # In[ ]:
 
 
-REALTIME_ESTIMATOR = True
-WEEK = 58
+REALTIME_ESTIMATOR = False
+WEEK = 57
 
 
 # In[ ]:
@@ -408,6 +408,14 @@ if REALTIME_ESTIMATOR:
     query.result()
 
 
+# In[ ]:
+
+
+pd.read_json(
+    f'https://raw.githubusercontent.com/balancer-labs/assets/master/lists/ui-not-eligible.json', 
+    orient='index').loc['homestead'].values.tolist()
+
+
 # # Gas Reimbursement Program
 
 # In[ ]:
@@ -417,16 +425,20 @@ from src.bal4gas_V1 import compute_bal_for_gas as compute_bal_for_gas_V1
 from src.bal4gas_V2 import compute_bal_for_gas as compute_bal_for_gas_V2
 
 if not REALTIME_ESTIMATOR:
-    whitelist = pd.read_json(f'https://raw.githubusercontent.com/balancer-labs/assets/master/lists/eligible.json').index.values
-    gas_whitelist = pd.Series(whitelist).str.lower().tolist()
-    gas_whitelist.append('0xeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee')
+    allowlist_part1 = pd.read_json(f'https://raw.githubusercontent.com/balancer-labs/assets/master/lists/eligible.json').index.values
+    allowlist_part2 = pd.read_json(
+        f'https://raw.githubusercontent.com/balancer-labs/assets/master/lists/ui-not-eligible.json', 
+        orient='index').loc['homestead'].values
+    allowlist = allowlist_part1.tolist() + allowlist_part2.tolist()
+    gas_allowlist = pd.Series(allowlist).str.lower().tolist()
+    gas_allowlist.append('0xeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee')
 
     
-    v1 = compute_bal_for_gas_V1(week_start_timestamp, week_end_timestamp, gas_whitelist, plot=True, verbose=True)
+    v1 = compute_bal_for_gas_V1(week_start_timestamp, week_end_timestamp, gas_allowlist, plot=True, verbose=True)
 
-    gas_whitelist.remove('0xeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee')
-    gas_whitelist.append('0x0000000000000000000000000000000000000000')
-    v2 = compute_bal_for_gas_V2(week_start_timestamp, week_end_timestamp, gas_whitelist, plot=True, verbose=True)
+    gas_allowlist.remove('0xeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee')
+    gas_allowlist.append('0x0000000000000000000000000000000000000000')
+    v2 = compute_bal_for_gas_V2(week_start_timestamp, week_end_timestamp, gas_allowlist, plot=True, verbose=True)
     
     merge = v1.append(v2)
 

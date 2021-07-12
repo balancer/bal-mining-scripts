@@ -5,7 +5,7 @@
 
 
 REALTIME_ESTIMATOR = False
-WEEK = 57
+WEEK = 58
 
 
 # In[ ]:
@@ -38,7 +38,7 @@ networks = {
     1: 'ethereum',
     137: 'polygon'
 }
-CLAIM_PRECISION = 18 # leave out of results addresses that mined less than CLAIM_THRESHOLD
+CLAIM_PRECISION = 12 # leave out of results addresses that mined less than CLAIM_THRESHOLD
 CLAIM_THRESHOLD = 10**(-CLAIM_PRECISION)
 reports_dir = f'reports/{WEEK}'
 if not os.path.exists(reports_dir):
@@ -115,7 +115,7 @@ def get_bpt_supply_gbq(pools_addresses,
             '{0}'
         ];
 
-        SELECT block_number, token_address, SUM(balance) AS supply
+        SELECT block_number, token_address, SUM(balance)/1e18 AS supply
         FROM `{1}`
         WHERE token_address IN UNNEST(pool_addresses)
         AND address <> '0x0000000000000000000000000000000000000000'
@@ -143,6 +143,7 @@ def get_bpt_supply_gbq(pools_addresses,
 
 
 def get_bpt_supply_subgraph(pools_addresses,
+                            time_travel_block,
                             network):
 
     endpoint = {
@@ -153,7 +154,8 @@ def get_bpt_supply_subgraph(pools_addresses,
     query = '''
         {
           pools(
-            where:{address_in:
+                block: {number: {}},
+                where:{address_in:
               ["{}"]
             }
           ) {
@@ -162,6 +164,7 @@ def get_bpt_supply_subgraph(pools_addresses,
           }
         }
     '''.replace('{','{{').replace('}','}}').replace('{{}}','{}').format(
+        time_travel_block,
         '","'.join(pools_addresses)
     )
     r = requests.post(endpoint[network], json = {'query':query})
@@ -275,19 +278,20 @@ for chain in V2_ALLOCATION_THIS_WEEK:
         supply_gbq = get_bpt_supply_gbq(df.index, chain['chainId'])
         supply_gbq.set_index('token_address', inplace=True)
         supply_gbq.index.name = 'pool_address'
-        supply_subgraph = get_bpt_supply_subgraph(df.index, chain['chainId'])
+        gbq_block_number = int(supply_gbq.iloc[0]['block_number'])
+        supply_subgraph = get_bpt_supply_subgraph(df.index, gbq_block_number, chain['chainId'])
         supply_subgraph.set_index('address', inplace=True)
         supply_subgraph.index.name = 'pool_address'
         all_good = True
         for i,r in supply_subgraph.join(supply_gbq).iterrows():
-            error = (r.supply/1e18 / r.totalShares)
+            error = (r.supply / r.totalShares)
             if abs(error-1) > 1e-3:
                 all_good = False
                 print(f'{i} : {error:.3f}')
         if all_good:
-            print('   All good')
+            print('   All good\n')
         else:
-            print('other than that, all good')    
+            print('other than that, all good\n')    
             
     chain_export = v2_liquidity_mining(WEEK, df, chain['chainId'])
     chain_export['chain_id'] = chain['chainId']
@@ -378,10 +382,6 @@ if REALTIME_ESTIMATOR:
     full_export['timestamp'] = week_end_timestamp
     full_export['week'] = WEEK
     full_export.reset_index(inplace=True)
-#     full_export.dropna(inplace=True)
-#     full_export.to_gbq('bal_mining_estimates.lp_estimates_multitoken', 
-#                        project_id=os.environ['GCP_PROJECT'], 
-#                        if_exists='replace')
     full_export.to_gbq('bal_mining_estimates.lp_estimates_multitoken_staging', 
                        project_id=os.environ['GCP_PROJECT'], 
                        if_exists='replace')
@@ -406,14 +406,6 @@ if REALTIME_ESTIMATOR:
     client = bigquery.Client()
     query = client.query(sql)
     query.result()
-
-
-# In[ ]:
-
-
-pd.read_json(
-    f'https://raw.githubusercontent.com/balancer-labs/assets/master/lists/ui-not-eligible.json', 
-    orient='index').loc['homestead'].values.tolist()
 
 
 # # Gas Reimbursement Program

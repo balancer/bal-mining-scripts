@@ -35,6 +35,7 @@ BPT_SUPPLY AS (
   FROM `{3}`
   WHERE token_address IN UNNEST(pool_addresses)
   AND address <> '0x0000000000000000000000000000000000000000'
+  AND address <> '0xba12222222228d8ba445958a75a0704d566bf2c8'
   AND balance > 0
   GROUP BY block_number, token_address
 ),
@@ -46,6 +47,7 @@ LPS_SHARES AS (
   AND a.token_address = b.token_address
   WHERE a.token_address IN UNNEST(pool_addresses)
   AND address <> '0x0000000000000000000000000000000000000000'
+  AND address <> '0xba12222222228d8ba445958a75a0704d566bf2c8'
   AND balance > 0
 ),
 SHARES_INTEGRATOR AS (

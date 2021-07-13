@@ -15,20 +15,18 @@ Starting on week 57 of the liquidity mining program (June 28th 2021), pools can 
 
 ## Requirements
 * Python 3 + Jupyter Notebook
-* An ethereum node (for querying blocks timestamps and token decimals) 
 * A [service account key](https://cloud.google.com/iam/docs/creating-managing-service-account-keys#iam-service-account-keys-create-console) with read access to Google BigQuery
 
 ## Setup
 * Install required packages: `pip install -r requirements.txt`
-* Configure environment variables:
-  * `ENDPOINT_URL`: URL to an ethereum node that can be queried via Websockets
+* Configure environment variable:
   * `GOOGLE_APPLICATION_CREDENTIALS`: path to a JSON file that contains a service account key with read access to Google BigQuery
 
 ## Usage
 1. Start Jupyter Notebook: `jupyter notebook`  
 1. Open the `bal-mining.ipynb` notebook   
 1. Run all cells
-2. Plots are displayed throughout the notebook. JSON reports are stored in the `reports` directory, with a final tally of user address to BAL received stored in the report week folder at `_totals.json`
+2. Plots are displayed throughout the notebook. JSON reports are stored in the `reports` directory as described above.
 
 ## Weekly distributions
 

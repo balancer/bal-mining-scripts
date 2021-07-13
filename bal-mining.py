@@ -1,31 +1,14 @@
 #!/usr/bin/env python
 # coding: utf-8
 
-# In[1]:
+# In[ ]:
 
 
-REALTIME_ESTIMATOR = True
-# set the window of blocks, will be overwritten if REALTIME_ESTIMATOR == True
-week_1_start_ts = 1590969600
-WEEK = 57
-week_end_timestamp = week_1_start_ts + WEEK * 7 * 24 * 60 * 60
-week_start_timestamp = week_end_timestamp - 7 * 24 * 60 * 60
-BAL_addresses = {
-    1: '0xba100000625a3754423978a60c9317c58a424e3d',
-    137: '0x9a71012b13ca4d3d0cdc72a177df3ef03b0e76a3'
-}
-networks = {
-    1: 'ethereum',
-    137: 'polygon'
-}
-CLAIM_PRECISION = 18 # leave out of results addresses that mined less than CLAIM_THRESHOLD
-CLAIM_THRESHOLD = 10**(-CLAIM_PRECISION)
-reports_dir = f'reports/{WEEK}'
-def get_export_filename(network, token):
-    return f'{reports_dir}/__{network}_{token}.json'
+REALTIME_ESTIMATOR = False
+WEEK = 58
 
 
-# In[2]:
+# In[ ]:
 
 
 from google.cloud import bigquery
@@ -40,7 +23,31 @@ import json
 import os
 
 
-# In[3]:
+# In[ ]:
+
+
+# constants
+week_1_start_ts = 1590969600
+week_end_timestamp = week_1_start_ts + WEEK * 7 * 24 * 60 * 60
+week_start_timestamp = week_end_timestamp - 7 * 24 * 60 * 60
+BAL_addresses = {
+    1: '0xba100000625a3754423978a60c9317c58a424e3d',
+    137: '0x9a71012b13ca4d3d0cdc72a177df3ef03b0e76a3'
+}
+networks = {
+    1: 'ethereum',
+    137: 'polygon'
+}
+CLAIM_PRECISION = 12 # leave out of results addresses that mined less than CLAIM_THRESHOLD
+CLAIM_THRESHOLD = 10**(-CLAIM_PRECISION)
+reports_dir = f'reports/{WEEK}'
+if not os.path.exists(reports_dir):
+    os.mkdir(reports_dir)
+def get_export_filename(network, token):
+    return f'{reports_dir}/__{network}_{token}.json'
+
+
+# In[ ]:
 
 
 if REALTIME_ESTIMATOR:
@@ -74,7 +81,7 @@ if REALTIME_ESTIMATOR:
     week_passed = (week_end_timestamp - week_start_timestamp)/(7*24*3600)
 
 
-# In[4]:
+# In[ ]:
 
 
 # get addresses that redirect
@@ -86,7 +93,7 @@ else:
     redirects = json.load(open('config/redirect.json'))
 
 
-# In[5]:
+# In[ ]:
 
 
 def get_bpt_supply_gbq(pools_addresses,
@@ -108,7 +115,7 @@ def get_bpt_supply_gbq(pools_addresses,
             '{0}'
         ];
 
-        SELECT block_number, token_address, SUM(balance) AS supply
+        SELECT block_number, token_address, SUM(balance)/1e18 AS supply
         FROM `{1}`
         WHERE token_address IN UNNEST(pool_addresses)
         AND address <> '0x0000000000000000000000000000000000000000'
@@ -132,10 +139,11 @@ def get_bpt_supply_gbq(pools_addresses,
     return BPT_supply_df
 
 
-# In[6]:
+# In[ ]:
 
 
 def get_bpt_supply_subgraph(pools_addresses,
+                            time_travel_block,
                             network):
 
     endpoint = {
@@ -146,7 +154,8 @@ def get_bpt_supply_subgraph(pools_addresses,
     query = '''
         {
           pools(
-            where:{address_in:
+                block: {number: {}},
+                where:{address_in:
               ["{}"]
             }
           ) {
@@ -155,6 +164,7 @@ def get_bpt_supply_subgraph(pools_addresses,
           }
         }
     '''.replace('{','{{').replace('}','}}').replace('{{}}','{}').format(
+        time_travel_block,
         '","'.join(pools_addresses)
     )
     r = requests.post(endpoint[network], json = {'query':query})
@@ -164,7 +174,7 @@ def get_bpt_supply_subgraph(pools_addresses,
     return BPT_supply_df
 
 
-# In[7]:
+# In[ ]:
 
 
 def v2_liquidity_mining(week, 
@@ -240,7 +250,7 @@ def v2_liquidity_mining(week,
     return miner_export
 
 
-# In[8]:
+# In[ ]:
 
 
 # V2 allocation
@@ -268,26 +278,27 @@ for chain in V2_ALLOCATION_THIS_WEEK:
         supply_gbq = get_bpt_supply_gbq(df.index, chain['chainId'])
         supply_gbq.set_index('token_address', inplace=True)
         supply_gbq.index.name = 'pool_address'
-        supply_subgraph = get_bpt_supply_subgraph(df.index, chain['chainId'])
+        gbq_block_number = int(supply_gbq.iloc[0]['block_number'])
+        supply_subgraph = get_bpt_supply_subgraph(df.index, gbq_block_number, chain['chainId'])
         supply_subgraph.set_index('address', inplace=True)
         supply_subgraph.index.name = 'pool_address'
         all_good = True
         for i,r in supply_subgraph.join(supply_gbq).iterrows():
-            error = (r.supply/1e18 / r.totalShares)
+            error = (r.supply / r.totalShares)
             if abs(error-1) > 1e-3:
                 all_good = False
                 print(f'{i} : {error:.3f}')
         if all_good:
-            print('   All good')
+            print('   All good\n')
         else:
-            print('other than that, all good')    
+            print('other than that, all good\n')    
             
     chain_export = v2_liquidity_mining(WEEK, df, chain['chainId'])
     chain_export['chain_id'] = chain['chainId']
     full_export = full_export.append(chain_export)
 
 
-# In[9]:
+# In[ ]:
 
 
 if not REALTIME_ESTIMATOR:
@@ -317,13 +328,13 @@ if not REALTIME_ESTIMATOR:
     print('Total BAL mined: {}'.format(mined_BAL.sum()))
 
 
-# In[10]:
+# In[ ]:
 
 
 full_export_bkp = full_export.copy()
 
 
-# In[11]:
+# In[ ]:
 
 
 full_export = (
@@ -343,7 +354,7 @@ full_export['earned'] = full_export['earned'].apply(lambda x: format(x, f'.{18}f
 
 # # Update real time estimates in GBQ
 
-# In[12]:
+# In[ ]:
 
 
 if REALTIME_ESTIMATOR:
@@ -371,10 +382,6 @@ if REALTIME_ESTIMATOR:
     full_export['timestamp'] = week_end_timestamp
     full_export['week'] = WEEK
     full_export.reset_index(inplace=True)
-#     full_export.dropna(inplace=True)
-#     full_export.to_gbq('bal_mining_estimates.lp_estimates_multitoken', 
-#                        project_id=os.environ['GCP_PROJECT'], 
-#                        if_exists='replace')
     full_export.to_gbq('bal_mining_estimates.lp_estimates_multitoken_staging', 
                        project_id=os.environ['GCP_PROJECT'], 
                        if_exists='replace')
@@ -403,23 +410,27 @@ if REALTIME_ESTIMATOR:
 
 # # Gas Reimbursement Program
 
-# In[13]:
+# In[ ]:
 
 
 from src.bal4gas_V1 import compute_bal_for_gas as compute_bal_for_gas_V1
 from src.bal4gas_V2 import compute_bal_for_gas as compute_bal_for_gas_V2
 
 if not REALTIME_ESTIMATOR:
-    whitelist = pd.read_json(f'https://raw.githubusercontent.com/balancer-labs/assets/w{WEEK-1}/lists/eligible.json').index.values
-    gas_whitelist = pd.Series(whitelist).str.lower().tolist()
-    gas_whitelist.append('0xeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee')
+    allowlist_part1 = pd.read_json(f'https://raw.githubusercontent.com/balancer-labs/assets/master/lists/eligible.json').index.values
+    allowlist_part2 = pd.read_json(
+        f'https://raw.githubusercontent.com/balancer-labs/assets/master/lists/ui-not-eligible.json', 
+        orient='index').loc['homestead'].values
+    allowlist = allowlist_part1.tolist() + allowlist_part2.tolist()
+    gas_allowlist = pd.Series(allowlist).str.lower().tolist()
+    gas_allowlist.append('0xeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee')
 
     
-    v1 = compute_bal_for_gas_V1(week_start_timestamp, week_end_timestamp, gas_whitelist, plot=True, verbose=True)
+    v1 = compute_bal_for_gas_V1(week_start_timestamp, week_end_timestamp, gas_allowlist, plot=True, verbose=True)
 
-    gas_whitelist.remove('0xeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee')
-    gas_whitelist.append('0x0000000000000000000000000000000000000000')
-    v2 = compute_bal_for_gas_V2(week_start_timestamp, week_end_timestamp, gas_whitelist, plot=True, verbose=True)
+    gas_allowlist.remove('0xeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee')
+    gas_allowlist.append('0x0000000000000000000000000000000000000000')
+    v2 = compute_bal_for_gas_V2(week_start_timestamp, week_end_timestamp, gas_allowlist, plot=True, verbose=True)
     
     merge = v1.append(v2)
 
@@ -433,7 +444,7 @@ if not REALTIME_ESTIMATOR:
        indent=4)
 
 
-# In[14]:
+# In[ ]:
 
 
 if not REALTIME_ESTIMATOR:

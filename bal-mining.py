@@ -5,7 +5,7 @@
 
 
 REALTIME_ESTIMATOR = False
-WEEK = 58
+WEEK = 59
 
 
 # In[ ]:
@@ -358,6 +358,16 @@ full_export['earned'] = full_export['earned'].apply(lambda x: format(x, f'.{18}f
 
 
 if REALTIME_ESTIMATOR:
+    # zero previous week's velocity
+    sql = f'''
+        UPDATE {project_id}.bal_mining_estimates.lp_estimates_multitoken
+        SET velocity = '0'
+        WHERE week = {WEEK-1}
+    '''
+    client = bigquery.Client()
+    query = client.query(sql)
+    query.result();
+    
     try:
         sql = f'select * from bal_mining_estimates.lp_estimates_multitoken WHERE week = {WEEK}'
         prev_estimate = pd.read_gbq(sql, 

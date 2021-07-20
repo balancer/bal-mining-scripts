@@ -66,4 +66,4 @@ typing-inspect==0.6.0
 urllib3==1.25.11
 varint==1.0.2
 web3==5.12.2
-websockets==8.1
+websockets==9.1

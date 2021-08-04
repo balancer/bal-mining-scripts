@@ -4,7 +4,7 @@
 # In[ ]:
 
 
-REALTIME_ESTIMATOR = False
+REALTIME_ESTIMATOR = True
 WEEK = 59
 
 
@@ -55,20 +55,23 @@ if REALTIME_ESTIMATOR:
     
     from urllib.request import urlopen
     import json
-    url = 'https://ipfs.fleek.co/ipns/balancer-team-bucket.storage.fleek.co/balancer-claim/snapshot'
-    jsonurl = urlopen(url)
-    claims = json.loads(jsonurl.read())
-    claimable_weeks = [20+int(w) for w in claims.keys()]
-    most_recent_week = max(claimable_weeks)
-    # delete the estimates for the most recent published week, since now there's an official value available on IPFS
     project_id = os.environ['GCP_PROJECT']
-    sql = f'''
-        DELETE FROM {project_id}.bal_mining_estimates.lp_estimates_multitoken
-        WHERE week = {most_recent_week}
-    '''
-    client = bigquery.Client()
-    query = client.query(sql)
-    query.result()
+    try:
+        url = 'http://ipfs.fleek.co/ipns/balancer-team-bucket.storage.fleek.co/balancer-claim/snapshot'
+        jsonurl = urlopen(url)
+        claims = json.loads(jsonurl.read())
+        claimable_weeks = [20+int(w) for w in claims.keys()]
+        most_recent_week = max(claimable_weeks)
+        # delete the estimates for the most recent published week, since now there's an official value available on IPFS
+        sql = f'''
+            DELETE FROM {project_id}.bal_mining_estimates.lp_estimates_multitoken
+            WHERE week = {most_recent_week}
+        '''
+        client = bigquery.Client()
+        query = client.query(sql)
+        query.result()
+    except:
+        pass
     
     
     from datetime import datetime

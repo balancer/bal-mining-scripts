@@ -1,6 +1,7 @@
 require('dotenv').config();
 const fleek = require('@fleekhq/fleek-storage-js');
 const requireContext = require('require-context');
+const fileService = require('./lib/fileService');
 
 const network = process.env.NETWORK || 'mainnet';
 
@@ -85,6 +86,8 @@ console.log(Object.keys(files));
         });
         const snapshotUpload = await uploadJson(SNAPSHOT_KEY, snapshot);
         console.log('Successfully published', snapshotUpload);
+
+        fileService.writeData(snapshot, `_current`);
     } catch (e) {
         console.error(e);
     }

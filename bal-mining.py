@@ -57,7 +57,7 @@ if REALTIME_ESTIMATOR:
     import json
     project_id = os.environ['GCP_PROJECT']
     try:
-        url = 'http://ipfs.fleek.co/ipns/balancer-team-bucket.storage.fleek.co/balancer-claim/snapshot'
+        url = 'https://raw.githubusercontent.com/balancer-labs/bal-mining-scripts/master/reports/_current.json'
         jsonurl = urlopen(url)
         claims = json.loads(jsonurl.read())
         claimable_weeks = [20+int(w) for w in claims.keys()]

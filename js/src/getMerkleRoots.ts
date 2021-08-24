@@ -1,24 +1,23 @@
 import { loadTree } from './merkle';
-import requireContext from 'require-context';
+const fs = require('fs');
+const path = require('path');
+const glob = require('glob');
+const { config } = require('./config');
 
-const network = process.env.NETWORK || 'mainnet';
-const networkStr = network === 'kovan' ? '-kovan' : '';
-const requireFile = requireContext(
-    `../../reports${networkStr}`,
-    true,
-    /_totals.json$/
-);
-const reports = Object.fromEntries(
-    requireFile
-        .keys()
-        .map((fileName) => [
-            fileName.replace('/_totals.json', ''),
-            requireFile(fileName),
-        ])
-);
+const globCwd = path.resolve(__dirname, '../' + config.reportsDirectory);
+
+const filenamesOfTotals = glob.sync('./**/' + config.reportFilename, {
+    cwd: globCwd,
+});
+
+const reports = filenamesOfTotals.map((fileName) => [
+    parseInt(fileName.split('/')[1]), // weekNumber
+    JSON.parse(fs.readFileSync(path.resolve(globCwd, fileName)).toString()),
+]);
 
 console.log('Merkle roots');
-Object.entries(reports).forEach(([week, report]) => {
+
+reports.forEach(([week, report]) => {
     const merkleTree = loadTree(report);
     console.log(`Week ${week}`);
     console.log(merkleTree.getHexRoot());

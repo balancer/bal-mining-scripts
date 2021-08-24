@@ -4,31 +4,7 @@ const fleekService = require('./lib/fleekService');
 const fs = require('fs');
 const path = require('path');
 const glob = require('glob');
-
-const liquidityMiningConfig = {
-    homestead: {
-        reportsDirectory: `../reports/`,
-        reportFilename: '_totals.json',
-        jsonSnapshotFilename: '_current.json',
-        fleekNamespace: 'balancer-claims',
-        offset: 20,
-    },
-    'homestead-lido': {
-        reportsDirectory: `../reports/`,
-        reportFilename:
-            '__ethereum_0x5a98fcbea516cf06857215779fd812ca3bef1b32.json',
-        jsonSnapshotFilename: '_current-lido.json',
-        fleekNamespace: 'balancer-claims-lido',
-        offset: 63,
-    },
-    kovan: {
-        reportsDirectory: `../reports-kovan/`,
-        reportFilename: '_totals.json',
-        jsonSnapshotFilename: '_current.json',
-        fleekNamespace: 'balancer-claims-kovan',
-        offset: 0,
-    },
-};
+const { config } = require('./lib/config');
 
 async function getSnapshotFromFile(config) {
     const snapshotPath = config.reportsDirectory + config.jsonSnapshotFilename;
@@ -65,9 +41,6 @@ function weeklyTotals(config) {
 }
 
 (async () => {
-    const network = process.env.NETWORK || 'homestead'; // || 'kovan' || 'homestead-lido'
-    const config = liquidityMiningConfig[network];
-
     const snapshot = await getSnapshotFromFile(config);
     // OR read from fleek
     // const snapshot = await fleekService.getSnapshot(`${config.fleekNamespace}/snapshot`);

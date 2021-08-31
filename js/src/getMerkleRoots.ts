@@ -20,13 +20,14 @@ console.log('Merkle roots');
 
 reports.forEach(([week, report]) => {
     const merkleTree = loadTree(report);
-    console.log(`Week ${week}`);
-    console.log(merkleTree.getHexRoot());
 
     const address = process.env.ADDRESS;
     if (address && address in report) {
         const balance = toWei(report[address]);
         const leaf = soliditySha3(address, balance);
-        console.log(`Proof ${merkleTree.getHexProof(leaf)}`);
+        console.log(`Week: ${week - 20}`);
+        console.log(`> Balance: ${balance}`);
+        console.log(`> Root: ${merkleTree.getHexRoot()}`);
+        console.log(`> Proof: ${merkleTree.getHexProof(leaf)}`);
     }
 });

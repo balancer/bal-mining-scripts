@@ -32,11 +32,13 @@ week_end_timestamp = week_1_start_ts + WEEK * 7 * 24 * 60 * 60
 week_start_timestamp = week_end_timestamp - 7 * 24 * 60 * 60
 BAL_addresses = {
     1: '0xba100000625a3754423978a60c9317c58a424e3d',
-    137: '0x9a71012b13ca4d3d0cdc72a177df3ef03b0e76a3'
+    137: '0x9a71012b13ca4d3d0cdc72a177df3ef03b0e76a3',
+    42161: '0x040d1edc9569d4bab2d15287dc5a4f10f56a56b8'
 }
 networks = {
     1: 'ethereum',
-    137: 'polygon'
+    137: 'polygon',
+    42161: 'arbitrum'
 }
 CLAIM_PRECISION = 12 # leave out of results addresses that mined less than CLAIM_THRESHOLD
 CLAIM_THRESHOLD = 10**(-CLAIM_PRECISION)
@@ -55,23 +57,20 @@ if REALTIME_ESTIMATOR:
     
     from urllib.request import urlopen
     import json
+    url = 'https://raw.githubusercontent.com/balancer-labs/bal-mining-scripts/master/reports/_current.json'
+    jsonurl = urlopen(url)
+    claims = json.loads(jsonurl.read())
+    claimable_weeks = [20+int(w) for w in claims.keys()]
+    most_recent_week = max(claimable_weeks)
+    # delete the estimates for the most recent published week, since now there's an official value available on IPFS
     project_id = os.environ['GCP_PROJECT']
-    try:
-        url = 'https://raw.githubusercontent.com/balancer-labs/bal-mining-scripts/master/reports/_current.json'
-        jsonurl = urlopen(url)
-        claims = json.loads(jsonurl.read())
-        claimable_weeks = [20+int(w) for w in claims.keys()]
-        most_recent_week = max(claimable_weeks)
-        # delete the estimates for the most recent published week, since now there's an official value available on IPFS
-        sql = f'''
-            DELETE FROM {project_id}.bal_mining_estimates.lp_estimates_multitoken
-            WHERE week = {most_recent_week}
-        '''
-        client = bigquery.Client()
-        query = client.query(sql)
-        query.result()
-    except:
-        pass
+    sql = f'''
+        DELETE FROM {project_id}.bal_mining_estimates.lp_estimates_multitoken
+        WHERE week = {most_recent_week}
+    '''
+    client = bigquery.Client()
+    query = client.query(sql)
+    query.result()
     
     
     from datetime import datetime
@@ -105,11 +104,13 @@ def get_bpt_supply_gbq(pools_addresses,
     network_blocks_table = {
         1: 'bigquery-public-data.crypto_ethereum.blocks',
         137: 'public-data-finance.crypto_polygon.blocks',
+        42161: 'nansen-dev.crypto_arbitrum.blocks'
     }
 
     bpt_balances_table = {
         1: 'blockchain-etl.ethereum_balancer.view_token_balances_subset',
         137: 'blockchain-etl.polygon_balancer.view_bpt_balances',
+        42161: 'nansen-dev.arbitrum_balancer.view_V2_bpt_balances'
     }
 
     sql = '''
@@ -152,6 +153,7 @@ def get_bpt_supply_subgraph(pools_addresses,
     endpoint = {
         1: 'https://api.thegraph.com/subgraphs/name/balancer-labs/balancer-v2',
         137: 'https://api.thegraph.com/subgraphs/name/balancer-labs/balancer-polygon-v2',
+        42161: 'https://api.thegraph.com/subgraphs/name/balancer-labs/balancer-arbitrum-v2'
     }
 
     query = '''
@@ -171,7 +173,10 @@ def get_bpt_supply_subgraph(pools_addresses,
         '","'.join(pools_addresses)
     )
     r = requests.post(endpoint[network], json = {'query':query})
-    p = json.loads(r.content)['data']['pools']
+    try:
+        p = json.loads(r.content)['data']['pools']
+    except:
+        raise Exception(json.loads(r.content)['errors'][0]['message'])
     BPT_supply_df = pd.DataFrame(p)
     BPT_supply_df['totalShares'] = BPT_supply_df['totalShares'].astype(float)
     return BPT_supply_df
@@ -189,11 +194,13 @@ def v2_liquidity_mining(week,
     network_blocks_table = {
         1: 'bigquery-public-data.crypto_ethereum.blocks',
         137: 'public-data-finance.crypto_polygon.blocks',
+        42161: 'nansen-dev.crypto_arbitrum.blocks'
     }
 
     bpt_balances_table = {
         1: 'blockchain-etl.ethereum_balancer.view_token_balances_subset',
         137: 'blockchain-etl.polygon_balancer.view_bpt_balances',
+        42161: 'nansen-dev.arbitrum_balancer.view_V2_bpt_balances'
     }
 
     with open('src/liquidity_mining_V2.sql','r') as file:
@@ -272,9 +279,17 @@ for chain in V2_ALLOCATION_THIS_WEEK:
         for r in rewards:
             pool_address = pool[:42].lower()
             df.loc[pool_address,r['tokenAddress']] = r['amount']
+    if len(df) == 0:
+        print('No incentives for this chain')
+        continue
     df.fillna(0, inplace=True)
     df.index.name = 'pool_address'
-    print('BAL to be mined on this chain: {}'.format(df[BAL_addresses[chain['chainId']]].sum()))
+    bal_address = BAL_addresses[chain['chainId']]
+    if bal_address in df.columns:
+        bal_on_this_chain = df[bal_address].sum()
+    else:
+        bal_on_this_chain = 0
+    print('BAL to be mined on this chain: {}'.format(bal_on_this_chain))
 
     if not REALTIME_ESTIMATOR:
         print('Google BigQuery sanity check - BPT supply:')
@@ -282,19 +297,22 @@ for chain in V2_ALLOCATION_THIS_WEEK:
         supply_gbq.set_index('token_address', inplace=True)
         supply_gbq.index.name = 'pool_address'
         gbq_block_number = int(supply_gbq.iloc[0]['block_number'])
-        supply_subgraph = get_bpt_supply_subgraph(df.index, gbq_block_number, chain['chainId'])
-        supply_subgraph.set_index('address', inplace=True)
-        supply_subgraph.index.name = 'pool_address'
-        all_good = True
-        for i,r in supply_subgraph.join(supply_gbq).iterrows():
-            error = (r.supply / r.totalShares)
-            if abs(error-1) > 1e-3:
-                all_good = False
-                print(f'{i} : {error:.3f}')
-        if all_good:
-            print('   All good\n')
-        else:
-            print('other than that, all good\n')    
+        try:
+            supply_subgraph = get_bpt_supply_subgraph(df.index, gbq_block_number, chain['chainId'])
+            supply_subgraph.set_index('address', inplace=True)
+            supply_subgraph.index.name = 'pool_address'
+            all_good = True
+            for i,r in supply_subgraph.join(supply_gbq).iterrows():
+                error = (r.supply / r.totalShares)
+                if abs(error-1) > 1e-3:
+                    all_good = False
+                    print(f'{i} : {error:.3f}')
+            if all_good:
+                print('   All good\n')
+            else:
+                print('other than that, all good\n')
+        except Exception as e:
+            print('   Can\'t read subgraph: ' + e.args[0])
             
     chain_export = v2_liquidity_mining(WEEK, df, chain['chainId'])
     chain_export['chain_id'] = chain['chainId']
@@ -430,11 +448,9 @@ from src.bal4gas_V1 import compute_bal_for_gas as compute_bal_for_gas_V1
 from src.bal4gas_V2 import compute_bal_for_gas as compute_bal_for_gas_V2
 
 if not REALTIME_ESTIMATOR:
-    allowlist_part1 = pd.read_json(f'https://raw.githubusercontent.com/balancer-labs/assets/master/lists/eligible.json').index.values
-    allowlist_part2 = pd.read_json(
-        f'https://raw.githubusercontent.com/balancer-labs/assets/master/lists/ui-not-eligible.json', 
+    allowlist = pd.read_json(
+        f'https://raw.githubusercontent.com/balancer-labs/assets/master/generated/bal-for-gas.json', 
         orient='index').loc['homestead'].values
-    allowlist = allowlist_part1.tolist() + allowlist_part2.tolist()
     gas_allowlist = pd.Series(allowlist).str.lower().tolist()
     gas_allowlist.append('0xeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee')
 

@@ -1,4 +1,5 @@
 require('dotenv').config();
+require('regenerator-runtime/runtime');
 const requireContext = require('require-context');
 const fleekService = require('./lib/fleekService');
 const fs = require('fs');

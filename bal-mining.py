@@ -4,8 +4,8 @@
 # In[ ]:
 
 
-REALTIME_ESTIMATOR = True
-WEEK = 59
+REALTIME_ESTIMATOR = False
+WEEK = 67
 
 
 # In[ ]:
@@ -333,7 +333,12 @@ if not REALTIME_ESTIMATOR:
         typ='series', 
         convert_dates=False)
 
-    mined_BAL = mainnet_BAL.add(polygon_BAL, fill_value=0)
+    arbitrum_BAL = pd.read_json(
+        get_export_filename(networks[42161], BAL_addresses[42161]), 
+        typ='series', 
+        convert_dates=False)
+
+    mined_BAL = mainnet_BAL.add(polygon_BAL, fill_value=0).add(arbitrum_BAL, fill_value=0)
 
     filename = '/_totalsLiquidityMining.json'
     (
@@ -490,12 +495,18 @@ if not REALTIME_ESTIMATOR:
         typ='series', 
         convert_dates=False).sum()
     
+    _arbitrum = pd.read_json(
+        get_export_filename(networks[42161], BAL_addresses[42161]), 
+        typ='series', 
+        convert_dates=False).sum()
     
-    _lm_both = pd.read_json(reports_dir+'/_totalsLiquidityMining.json', orient='index').sum().values[0]
+    
+    _lm_all_networks = pd.read_json(reports_dir+'/_totalsLiquidityMining.json', orient='index').sum().values[0]
     _claim = pd.read_json(reports_dir+'/_totals.json', orient='index').sum().values[0]
     print(f'Liquidity Mining Ethereum: {format(_ethereum, f".{CLAIM_PRECISION}f")}')
     print(f'Liquidity Mining Polygon: {format(_polygon, f".{CLAIM_PRECISION}f")}')
-    print(f'Liquidity Mining Both: {format(_lm_both, f".{CLAIM_PRECISION}f")}')
+    print(f'Liquidity Mining Arbitrum: {format(_arbitrum, f".{CLAIM_PRECISION}f")}')
+    print(f'Liquidity Mining All Networks: {format(_lm_all_networks, f".{CLAIM_PRECISION}f")}')
     print(f'Gas Reimbursement week {WEEK}: {format(_claim-_ethereum, f".{CLAIM_PRECISION}f")}')
     print(f'Claims: {format(_claim, f".{CLAIM_PRECISION}f")}')
 

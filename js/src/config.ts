@@ -20,7 +20,7 @@ const liquidityMiningConfig = {
             '/__arbitrum_0x040d1edc9569d4bab2d15287dc5a4f10f56a56b8.json',
         jsonSnapshotFilename: '_current-arbitrum.json',
         fleekNamespace: 'balancer-claims-arbitrum',
-        offset: 67,
+        offset: 66,
     },
     kovan: {
         reportsDirectory: `../reports-kovan/`,

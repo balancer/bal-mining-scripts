@@ -104,13 +104,13 @@ def get_bpt_supply_gbq(pools_addresses,
     network_blocks_table = {
         1: 'bigquery-public-data.crypto_ethereum.blocks',
         137: 'public-data-finance.crypto_polygon.blocks',
-        42161: 'nansen-dev.crypto_arbitrum.blocks'
+        42161: 'nansen-datasets-prod.crypto_arbitrum.blocks'
     }
 
     bpt_balances_table = {
         1: 'blockchain-etl.ethereum_balancer.view_token_balances_subset',
         137: 'blockchain-etl.polygon_balancer.view_bpt_balances',
-        42161: 'nansen-dev.arbitrum_balancer.view_V2_bpt_balances'
+        42161: 'blockchain-etl.arbitrum_balancer.view_V2_bpt_balances'
     }
 
     sql = '''
@@ -194,13 +194,13 @@ def v2_liquidity_mining(week,
     network_blocks_table = {
         1: 'bigquery-public-data.crypto_ethereum.blocks',
         137: 'public-data-finance.crypto_polygon.blocks',
-        42161: 'nansen-dev.crypto_arbitrum.blocks'
+        42161: 'nansen-datasets-prod.crypto_arbitrum.blocks'
     }
 
     bpt_balances_table = {
         1: 'blockchain-etl.ethereum_balancer.view_token_balances_subset',
         137: 'blockchain-etl.polygon_balancer.view_bpt_balances',
-        42161: 'nansen-dev.arbitrum_balancer.view_V2_bpt_balances'
+        42161: 'blockchain-etl.arbitrum_balancer.view_V2_bpt_balances'
     }
 
     with open('src/liquidity_mining_V2.sql','r') as file:

@@ -4,7 +4,7 @@
 # In[ ]:
 
 
-REALTIME_ESTIMATOR = False
+REALTIME_ESTIMATOR = True
 WEEK = 67
 
 

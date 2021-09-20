@@ -1,14 +1,14 @@
 #!/usr/bin/env python
 # coding: utf-8
 
-# In[ ]:
+# In[1]:
 
 
 REALTIME_ESTIMATOR = True
-WEEK = 67
+WEEK = 68
 
 
-# In[ ]:
+# In[2]:
 
 
 from google.cloud import bigquery
@@ -23,7 +23,7 @@ import json
 import os
 
 
-# In[ ]:
+# In[3]:
 
 
 # constants
@@ -49,7 +49,7 @@ def get_export_filename(network, token):
     return f'{reports_dir}/__{network}_{token}.json'
 
 
-# In[ ]:
+# In[4]:
 
 
 if REALTIME_ESTIMATOR:
@@ -83,7 +83,7 @@ if REALTIME_ESTIMATOR:
     week_passed = (week_end_timestamp - week_start_timestamp)/(7*24*3600)
 
 
-# In[ ]:
+# In[5]:
 
 
 # get addresses that redirect
@@ -95,7 +95,7 @@ else:
     redirects = json.load(open('config/redirect.json'))
 
 
-# In[ ]:
+# In[6]:
 
 
 def get_bpt_supply_gbq(pools_addresses,
@@ -124,12 +124,15 @@ def get_bpt_supply_gbq(pools_addresses,
         WHERE token_address IN UNNEST(pool_addresses)
         AND address <> '0x0000000000000000000000000000000000000000'
         AND balance > 0
-        AND block_number = (SELECT MAX(number) FROM `{2}`)
+        AND block_number = (
+            SELECT MAX(number) FROM `{2}`
+            WHERE timestamp <= TIMESTAMP_SECONDS({3}))
         GROUP BY block_number, token_address
     '''.format(
         '\',\''.join(pools_addresses),
         bpt_balances_table[network],
-        network_blocks_table[network]
+        network_blocks_table[network],
+        week_end_timestamp
     )
 #     print(sql)
     
@@ -143,7 +146,7 @@ def get_bpt_supply_gbq(pools_addresses,
     return BPT_supply_df
 
 
-# In[ ]:
+# In[7]:
 
 
 def get_bpt_supply_subgraph(pools_addresses,
@@ -182,7 +185,7 @@ def get_bpt_supply_subgraph(pools_addresses,
     return BPT_supply_df
 
 
-# In[ ]:
+# In[8]:
 
 
 def v2_liquidity_mining(week, 
@@ -260,7 +263,7 @@ def v2_liquidity_mining(week,
     return miner_export
 
 
-# In[ ]:
+# In[9]:
 
 
 # V2 allocation
@@ -319,7 +322,7 @@ for chain in V2_ALLOCATION_THIS_WEEK:
     full_export = full_export.append(chain_export)
 
 
-# In[ ]:
+# In[10]:
 
 
 if not REALTIME_ESTIMATOR:
@@ -354,13 +357,13 @@ if not REALTIME_ESTIMATOR:
     print('Total BAL mined: {}'.format(mined_BAL.sum()))
 
 
-# In[ ]:
+# In[11]:
 
 
 full_export_bkp = full_export.copy()
 
 
-# In[ ]:
+# In[12]:
 
 
 full_export = (
@@ -380,7 +383,7 @@ full_export['earned'] = full_export['earned'].apply(lambda x: format(x, f'.{18}f
 
 # # Update real time estimates in GBQ
 
-# In[ ]:
+# In[13]:
 
 
 if REALTIME_ESTIMATOR:
@@ -446,7 +449,7 @@ if REALTIME_ESTIMATOR:
 
 # # Gas Reimbursement Program
 
-# In[ ]:
+# In[14]:
 
 
 from src.bal4gas_V1 import compute_bal_for_gas as compute_bal_for_gas_V1
@@ -478,7 +481,7 @@ if not REALTIME_ESTIMATOR:
        indent=4)
 
 
-# In[ ]:
+# In[48]:
 
 
 if not REALTIME_ESTIMATOR:
@@ -509,4 +512,12 @@ if not REALTIME_ESTIMATOR:
     print(f'Liquidity Mining All Networks: {format(_lm_all_networks, f".{CLAIM_PRECISION}f")}')
     print(f'Gas Reimbursement week {WEEK}: {format(_claim-_ethereum, f".{CLAIM_PRECISION}f")}')
     print(f'Claims: {format(_claim, f".{CLAIM_PRECISION}f")}')
+    
+    # check all reports files
+    print('\nReports totals:')
+    checks = {}
+    for f in os.listdir(reports_dir):
+        _sum = pd.read_json(reports_dir+'/'+f, orient='index').sum().values[0]
+        checks[f] = _sum
+    display(pd.DataFrame.from_dict(checks, orient='index', columns=['total']).sort_index())
 

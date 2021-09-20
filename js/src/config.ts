@@ -14,6 +14,14 @@ const liquidityMiningConfig = {
         fleekNamespace: 'balancer-claims-lido',
         offset: 63,
     },
+    'homestead-vita': {
+        reportsDirectory: `../reports/`,
+        reportFilename:
+            '__ethereum_0x81f8f0bb1cb2a06649e51913a151f0e7ef6fa321.json',
+        jsonSnapshotFilename: '_current-vita.json',
+        fleekNamespace: 'balancer-claims-vita',
+        offset: 67,
+    },
     arbitrum: {
         reportsDirectory: `../reports/`,
         reportFilename:

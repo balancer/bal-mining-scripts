@@ -22,6 +22,14 @@ const liquidityMiningConfig = {
         fleekNamespace: 'balancer-claims-vita',
         offset: 67,
     },
+    'homestead-mcdex': {
+        reportsDirectory: `../reports/`,
+        reportFilename:
+            '__ethereum_0x4e352cf164e64adcbad318c3a1e222e9eba4ce42.json',
+        jsonSnapshotFilename: '_current-mcdex.json',
+        fleekNamespace: 'balancer-claims-mcdex',
+        offset: 68,
+    },
     arbitrum: {
         reportsDirectory: `../reports/`,
         reportFilename:

@@ -30,6 +30,14 @@ const liquidityMiningConfig = {
         fleekNamespace: 'balancer-claims-arbitrum',
         offset: 66,
     },
+    'arbitrum-mcdex': {
+        reportsDirectory: `../reports/`,
+        reportFilename:
+            '__arbitrum_0x4e352cf164e64adcbad318c3a1e222e9eba4ce42.json',
+        jsonSnapshotFilename: '_current-mcdex-arbitrum.json',
+        fleekNamespace: 'balancer-claims-mcdex-arbitrum',
+        offset: 68,
+    },
     kovan: {
         reportsDirectory: `../reports-kovan/`,
         reportFilename: '_totals.json',

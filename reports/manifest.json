@@ -2,34 +2,34 @@
     "1": [
         {
             "label": "BAL",
-            "rewarder": "0x",
-            "token": "0x",
+            "rewarder": "0x24A12Fa313F57aF541d447c594072A992c605DCf",
+            "token": "0xba100000625a3754423978a60c9317c58a424e3D",
             "manifest": "https://raw.githubusercontent.com/balancer-labs/bal-mining-scripts/master/reports/_current.json"
         },
         {
             "label": "LIDO",
-            "rewarder": "0x",
-            "token": "0x",
+            "rewarder": "0x909d05F384D0663eD4BE59863815aB43b4f347Ec",
+            "token": "0x5A98FcBEA516Cf06857215779Fd812CA3beF1B32",
             "manifest": "https://raw.githubusercontent.com/balancer-labs/bal-mining-scripts/master/reports/_current-lido.json"
         },
         {
             "label": "VITA",
-            "rewarder": "0x",
-            "token": "0x",
+            "rewarder": "0xe01Ae84DD08119EcEeF9B51adF98D397bda4C184",
+            "token": "0x0ff635Ba8bb54D84D0eff85851E594ddB12d7e76",
             "manifest": "https://raw.githubusercontent.com/balancer-labs/bal-mining-scripts/master/reports/_current-vita.json"
         }
     ],
     "42161": [
         {
             "label": "BAL",
-            "rewarder": "0x",
-            "token": "0x",
+            "rewarder": "0x24A12Fa313F57aF541d447c594072A992c605DCf",
+            "token": "0x040d1EdC9569d4Bab2D15287Dc5A4F10F56a56B8",
             "manifest": "https://raw.githubusercontent.com/balancer-labs/bal-mining-scripts/master/reports/_current-arbitrum.json"
         },
         {
             "label": "MCDEX",
-            "rewarder": "0x",
-            "token": "0x",
+            "rewarder": "0x904b5993fC92979eeEdC19cCC58bED6B7216667c",
+            "token": "0x4e352cF164E64ADCBad318C3a1e222E9EBa4Ce42",
             "manifest": "https://raw.githubusercontent.com/balancer-labs/bal-mining-scripts/master/reports/_current-mcdex-arbitrum.json"
         }
     ]

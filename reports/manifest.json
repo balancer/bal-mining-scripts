@@ -1,0 +1,36 @@
+{
+    "1": [
+        {
+            "label": "BAL",
+            "rewarder": "0x",
+            "token": "0x",
+            "manifest": "https://raw.githubusercontent.com/balancer-labs/bal-mining-scripts/master/reports/_current.json"
+        },
+        {
+            "label": "LIDO",
+            "rewarder": "0x",
+            "token": "0x",
+            "manifest": "https://raw.githubusercontent.com/balancer-labs/bal-mining-scripts/master/reports/_current-lido.json"
+        },
+        {
+            "label": "VITA",
+            "rewarder": "0x",
+            "token": "0x",
+            "manifest": "https://raw.githubusercontent.com/balancer-labs/bal-mining-scripts/master/reports/_current-vita.json"
+        }
+    ],
+    "42161": [
+        {
+            "label": "BAL",
+            "rewarder": "0x",
+            "token": "0x",
+            "manifest": "https://raw.githubusercontent.com/balancer-labs/bal-mining-scripts/master/reports/_current-arbitrum.json"
+        },
+        {
+            "label": "MCDEX",
+            "rewarder": "0x",
+            "token": "0x",
+            "manifest": "https://raw.githubusercontent.com/balancer-labs/bal-mining-scripts/master/reports/_current-mcdex-arbitrum.json"
+        }
+    ]
+}

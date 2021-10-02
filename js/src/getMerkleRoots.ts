@@ -1,4 +1,5 @@
 import { loadTree } from './merkle';
+import { toWei, soliditySha3 } from 'web3-utils';
 const fs = require('fs');
 const path = require('path');
 const glob = require('glob');
@@ -19,6 +20,14 @@ console.log('Merkle roots');
 
 reports.forEach(([week, report]) => {
     const merkleTree = loadTree(report);
-    console.log(`Week ${week}`);
-    console.log(merkleTree.getHexRoot());
+
+    const address = process.env.ADDRESS;
+    if (address && address in report) {
+        const balance = toWei(report[address]);
+        const leaf = soliditySha3(address, balance);
+        console.log(`Week: ${week - 20}`);
+        console.log(`> Balance: ${balance}`);
+        console.log(`> Root: ${merkleTree.getHexRoot()}`);
+        console.log(`> Proof: ${merkleTree.getHexProof(leaf)}`);
+    }
 });

@@ -2,6 +2,7 @@ import { loadTree } from './merkle';
 const fs = require('fs');
 const path = require('path');
 const glob = require('glob');
+const { argv } = require('yargs');
 const { config } = require('./config');
 
 const globCwd = path.resolve(__dirname, '../' + config.reportsDirectory);
@@ -17,8 +18,23 @@ const reports = filenamesOfTotals.map((fileName) => [
 
 console.log('Merkle roots');
 
+const roots = {};
+
 reports.forEach(([week, report]) => {
     const merkleTree = loadTree(report);
     console.log(`Week ${week}`);
-    console.log(merkleTree.getHexRoot());
+    const root = merkleTree.getHexRoot();
+    console.log(root);
+    // homestead started distributing using a merkle strategy 20 weeks in
+    // so weeks prior to this offset should not be included
+    if (config.offset < week) {
+        roots[week - config.offset] = root;
+    }
 });
+
+if (argv.outfile) {
+    const jsonString = JSON.stringify(roots, null, 4);
+    console.log(jsonString);
+
+    fs.writeFileSync(argv.outfile, jsonString);
+}

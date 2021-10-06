@@ -1,0 +1,49 @@
+name: Compute merkle roots
+on:
+    push:
+        branches: merkle-roots-ci
+
+jobs:
+    run:
+        name: Compute merkle roots
+        runs-on: ubuntu-latest
+        steps:
+            - name: Checkout repo
+              uses: actions/checkout@v2
+
+            - name: Set up Node.js
+              uses: actions/setup-node@v1
+              with:
+                  node-version: 14.x
+
+            - name: Install dependencies
+              run: yarn install
+
+            - name: Install dependencies
+              run: yarn build
+
+            - name: Calculate roots for BAL
+              run: NETWORK=homestead yarn merkle-roots --outfile ./reports/_roots.json
+
+            - name: Calculate roots for BAL on arbitrum
+              run: NETWORK=arbitrum yarn merkle-roots --outfile ./reports/_roots-arbitrum.json
+
+            - name: Calculate roots for LDO
+              run: NETWORK=homestead-lido yarn merkle-roots --outfile ./reports/_roots-lido.json
+
+            - name: Calculate roots for VITA
+              run: NETWORK=homestead-vita yarn merkle-roots --outfile ./reports/_roots-vita.json
+
+            - name: Calculate roots for MCB on arbitrum
+              run: NETWORK=arbitrum-mcdex yarn merkle-roots --outfile ./reports/_roots-mcdex-arbitrum.json
+
+            - name: Calculate roots for PICKLE on arbitrum
+              run: NETWORK=arbitrum-pickle yarn merkle-roots --outfile ./reports/_roots-pickle-arbitrum.json
+
+            - name: Commit changes
+              uses: EndBug/add-and-commit@v7
+              with:
+                  author_name: Merkle Root Bot
+                  author_email: no-reply@balancer.finance
+                  message: 'Computed roots for reports'
+                  add: './reports/_roots*.json'

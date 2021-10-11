@@ -5,7 +5,7 @@
 
 
 REALTIME_ESTIMATOR = True
-WEEK = 68
+WEEK = 71
 
 
 # In[2]:
@@ -108,8 +108,8 @@ def get_bpt_supply_gbq(pools_addresses,
     }
 
     bpt_balances_table = {
-        1: 'blockchain-etl.ethereum_balancer.view_token_balances_subset',
-        137: 'blockchain-etl.polygon_balancer.view_bpt_balances',
+        1: 'blockchain-etl.ethereum_balancer.view_liquidity_mining_power',
+        137: 'blockchain-etl.polygon_balancer.view_liquidity_mining_power',
         42161: 'blockchain-etl.arbitrum_balancer.view_V2_bpt_balances'
     }
 
@@ -201,8 +201,8 @@ def v2_liquidity_mining(week,
     }
 
     bpt_balances_table = {
-        1: 'blockchain-etl.ethereum_balancer.view_token_balances_subset',
-        137: 'blockchain-etl.polygon_balancer.view_bpt_balances',
+        1: 'blockchain-etl.ethereum_balancer.view_liquidity_mining_power',
+        137: 'blockchain-etl.polygon_balancer.view_liquidity_mining_power',
         42161: 'blockchain-etl.arbitrum_balancer.view_V2_bpt_balances'
     }
 
@@ -481,7 +481,7 @@ if not REALTIME_ESTIMATOR:
        indent=4)
 
 
-# In[48]:
+# In[15]:
 
 
 if not REALTIME_ESTIMATOR:
@@ -512,6 +512,16 @@ if not REALTIME_ESTIMATOR:
     print(f'Liquidity Mining All Networks: {format(_lm_all_networks, f".{CLAIM_PRECISION}f")}')
     print(f'Gas Reimbursement week {WEEK}: {format(_claim-_ethereum, f".{CLAIM_PRECISION}f")}')
     print(f'Claims: {format(_claim, f".{CLAIM_PRECISION}f")}')
+    
+    # apply threshold to BAL distributed on Polygon
+    polygon = pd.read_json(
+            get_export_filename(networks[137], BAL_addresses[137]), 
+            typ='series', 
+            convert_dates=False)
+    threshold = 0.001
+    filename = reports_dir+'/_polygon_BAL_with_threshold.json'
+    polygon[polygon>threshold].to_json(filename, indent=4)
+    polygon = pd.read_json(filename, typ='series', convert_dates=False).sum()
     
     # check all reports files
     print('\nReports totals:')

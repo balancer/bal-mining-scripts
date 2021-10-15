@@ -5,7 +5,7 @@
     "scripts": {
         "build": "babel ./js/src --out-dir js/lib --extensions '.ts,.tsx'",
         "timestamps": "node js/timestamps.js",
-        "test": "mocha --require babel-polyfill test/*",
+        "test": "mocha --require babel-polyfill js/test/*",
         "ipfs-publish": "node js/publish.js",
         "merkle-roots": "node js/lib/getMerkleRoots.js"
     },

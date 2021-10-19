@@ -54,6 +54,14 @@ const liquidityMiningConfig = {
         fleekNamespace: 'balancer-claims-pickle-arbitrum',
         offset: 69,
     },
+    polygon: {
+        reportsDirectory: `../reports/`,
+        reportFilename:
+            '/__polygon_0x9a71012b13ca4d3d0cdc72a177df3ef03b0e76a3.json',
+        jsonSnapshotFilename: '_current-polygon.json',
+        fleekNamespace: 'balancer-claims-polygon',
+        offset: 71,
+    },
     kovan: {
         reportsDirectory: `../reports-kovan/`,
         reportFilename: '_totals.json',

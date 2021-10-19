@@ -55,6 +55,7 @@ SHARES_INTEGRATOR AS (
   FROM LPS_SHARES a
   INNER JOIN INTERVALS b
   ON a.block_number = b.number
+  AND b.delta_t > 0
   GROUP BY token_address
 ),
 TIME_WEIGHTED_SHARE AS (
@@ -64,6 +65,7 @@ TIME_WEIGHTED_SHARE AS (
   ON a.block_number = b.number
   INNER JOIN SHARES_INTEGRATOR c
   ON a.token_address = c.token_address
+  AND b.delta_t > 0
   GROUP BY address, token_address, share_integral
 ),
 RESULTS AS (

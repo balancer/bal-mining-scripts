@@ -29,6 +29,9 @@ jobs:
             - name: Calculate roots for BAL on arbitrum
               run: NETWORK=arbitrum yarn merkle-roots --outfile ./reports/_roots-arbitrum.json
 
+            - name: Calculate roots for BAL on polygon
+              run: NETWORK=polygon yarn merkle-roots --outfile ./reports/_roots-polygon.json
+
             - name: Calculate roots for LDO
               run: NETWORK=homestead-lido yarn merkle-roots --outfile ./reports/_roots-lido.json
 

@@ -1,3 +1,4 @@
 This file is meant only as a sample distribution and should not be used for anything but testing
 
-its root is 0x173a7c92ff14ee69a50aef015a1ea7e228102259236f05867be170404905539c
+its root is
+0xc477bdc7233fbe6a69ca7732ed40171688e91013794dcb207137a8a2eab84f6f

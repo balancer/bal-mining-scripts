@@ -1,7 +1,8 @@
 name: Compute merkle roots
 on:
     push:
-        branches: merkle-roots-ci
+        branches-ignore:
+            - 'master'
 
 jobs:
     run:

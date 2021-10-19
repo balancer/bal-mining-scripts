@@ -14,6 +14,14 @@ const liquidityMiningConfig = {
         fleekNamespace: 'balancer-claims-lido',
         offset: 63,
     },
+    'homestead-union': {
+        reportsDirectory: `../reports/`,
+        reportFilename:
+            '__ethereum_0x226f7b842e0f0120b7e194d05432b3fd14773a9d.json',
+        jsonSnapshotFilename: '_current-union.json',
+        fleekNamespace: 'balancer-claims-union',
+        offset: 71,
+    },
     'homestead-vita': {
         reportsDirectory: `../reports/`,
         reportFilename:

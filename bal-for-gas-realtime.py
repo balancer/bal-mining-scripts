@@ -55,11 +55,15 @@ tag = 'master'
 if offset>0:
     tag = F'w{WEEK}'
 try:
-    whitelist = pd.read_json(f'https://raw.githubusercontent.com/balancer-labs/assets/{tag}/lists/eligible.json').index.values
+    whitelist = pd.read_json(
+        f'https://raw.githubusercontent.com/balancer-labs/assets/{tag}/generated/bal-for-gas.json', 
+        orient='index').loc['homestead'].values
 except:
     print(f'Tag {tag} not found, resorting to master')
     tag = 'master'
-    whitelist = pd.read_json(f'https://raw.githubusercontent.com/balancer-labs/assets/{tag}/lists/eligible.json').index.values
+    whitelist = pd.read_json(
+        f'https://raw.githubusercontent.com/balancer-labs/assets/{tag}/generated/bal-for-gas.json', 
+        orient='index').loc['homestead'].values
 
 gas_whitelist = pd.Series(whitelist).str.lower().tolist()
 gas_whitelist.append('0xeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee')

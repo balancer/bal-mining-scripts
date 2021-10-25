@@ -12,7 +12,7 @@ interface FleekConfig {
 const fleekConfig: FleekConfig = {
     apiKey: process.env.FLEEK_API_KEY,
     apiSecret: process.env.FLEEK_API_SECRET,
-    bucket: 'balancer-team-bucket',
+    bucket: process.env.FLEEK_BUCKET || 'balancer-team-bucket',
 };
 
 async function getSnapshot(snapshotKey) {

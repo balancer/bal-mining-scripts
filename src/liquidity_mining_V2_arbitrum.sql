@@ -23,12 +23,20 @@ WITH INTERVALS AS (
       IF(week_end > b.timestamp, b.timestamp, week_end),
       IF(week_start < a.timestamp, a.timestamp, week_start),
       SECOND
-    ) AS delta_t
+    ) AS delta_t,
+    -- TODO
+    -- this is a workaround for the "Query exceeded resource limits" error:
+    -- we force the query to scan more data than we need so that 
+    -- the CPU/data ratio is within limits of the on-demand pricing model
+    count(1) as transaction_count
   FROM `{2}` a
   INNER JOIN `{2}` b
   ON a.number+1 = b.number
+  INNER JOIN `nansen-datasets-prod.crypto_arbitrum.transactions` c
+  ON a.number = c.block_number
   WHERE b.timestamp >= week_start
   AND a.timestamp <= week_end
+  GROUP BY 1,2
 ),
 BPT_SUPPLY AS (
   SELECT block_number, token_address, SUM(balance) AS supply

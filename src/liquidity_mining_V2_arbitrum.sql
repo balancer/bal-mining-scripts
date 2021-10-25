@@ -32,7 +32,7 @@ WITH INTERVALS AS (
   FROM `{2}` a
   INNER JOIN `{2}` b
   ON a.number+1 = b.number
-  INNER JOIN `nansen-datasets-prod.crypto_arbitrum.transactions` c
+  LEFT JOIN `nansen-datasets-prod.crypto_arbitrum.transactions` c
   ON a.number = c.block_number
   WHERE b.timestamp >= week_start
   AND a.timestamp <= week_end

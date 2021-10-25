@@ -5,13 +5,12 @@ on:
             - 'master'
 
 jobs:
-    build:
+    ipfs-publish:
         environment: fleek
         env:
             FLEEK_API_KEY: ${{ secrets.FLEEK_API_KEY }}
             FLEEK_API_SECRET: ${{ secrets.FLEEK_API_SECRET }}
             FLEEK_BUCKET: 'balancer-team-bucket'
-    run:
         name: Publish to ipfs
         runs-on: ubuntu-latest
         steps:

@@ -31,7 +31,7 @@ Starting on week 57 of the liquidity mining program (June 28th 2021), pools can 
 ## Weekly distributions
 
 145,000 BAL will be distributed on a weekly basis.  
-Liquidity providers must claim their BAL at [claim.balancer.finance](https://app.balancer.fi/). 
+Liquidity providers must claim their BAL at [app.balancer.fi](https://app.balancer.fi/). 
 
 ## BAL Redirections
 

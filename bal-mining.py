@@ -205,8 +205,13 @@ def v2_liquidity_mining(week,
         137: 'blockchain-etl.polygon_balancer.view_liquidity_mining_power',
         42161: 'blockchain-etl.arbitrum_balancer.view_V2_bpt_balances'
     }
+    
+    if network == 42161:
+        sql_file = 'src/liquidity_mining_V2_arbitrum.sql'
+    else:
+        sql_file = 'src/liquidity_mining_V2.sql'
 
-    with open('src/liquidity_mining_V2.sql','r') as file:
+    with open(sql_file,'r') as file:
         sql = (
             file
             .read()

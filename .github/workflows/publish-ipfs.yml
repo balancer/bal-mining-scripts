@@ -1,0 +1,61 @@
+name: Publish reports to ipfs
+on:
+    push:
+        branches:
+            - 'master'
+
+jobs:
+    ipfs-publish:
+        environment: fleek
+        env:
+            FLEEK_API_KEY: ${{ secrets.FLEEK_API_KEY }}
+            FLEEK_API_SECRET: ${{ secrets.FLEEK_API_SECRET }}
+            FLEEK_BUCKET: 'balancer-team-bucket'
+        name: Publish to ipfs
+        runs-on: ubuntu-latest
+        steps:
+            - name: Checkout repo
+              uses: actions/checkout@v2
+
+            - name: Set up Node.js
+              uses: actions/setup-node@v1
+              with:
+                  node-version: 14.x
+
+            - name: Install dependencies
+              run: yarn install
+
+            - name: Install dependencies
+              run: yarn build
+
+            - name: Publish ipfs reports for BAL
+              run: NETWORK=homestead yarn ipfs-publish
+
+            - name: Publish ipfs reports for BAL on arbitrum
+              run: NETWORK=arbitrum yarn ipfs-publish
+
+            - name: Publish ipfs reports for BAL on polygon
+              run: NETWORK=polygon yarn ipfs-publish
+
+            - name: Publish ipfs reports for LDO
+              run: NETWORK=homestead-lido yarn ipfs-publish
+
+            - name: Publish ipfs reports for UNN
+              run: NETWORK=homestead-union yarn ipfs-publish
+
+            - name: Publish ipfs reports for VITA
+              run: NETWORK=homestead-vita yarn ipfs-publish
+
+            - name: Publish ipfs reports for MCB on arbitrum
+              run: NETWORK=arbitrum-mcdex yarn ipfs-publish
+
+            - name: Publish ipfs reports for PICKLE on arbitrum
+              run: NETWORK=arbitrum-pickle yarn ipfs-publish
+
+            - name: Commit changes
+              uses: EndBug/add-and-commit@v7
+              with:
+                  author_name: Fleek Publish Bot
+                  author_email: no-reply@balancer.finance
+                  message: 'Updating ipfs links'
+                  add: './reports/_current*.json'

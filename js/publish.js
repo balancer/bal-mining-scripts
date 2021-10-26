@@ -9,8 +9,14 @@ const { config } = require('./lib/config');
 
 async function getSnapshotFromFile(config) {
     const snapshotPath = config.reportsDirectory + config.jsonSnapshotFilename;
-    const jsonString = fs.readFileSync(path.resolve(__dirname, snapshotPath));
-    return JSON.parse(jsonString.toString());
+    try {
+        const jsonString = fs.readFileSync(
+            path.resolve(__dirname, snapshotPath)
+        );
+        return JSON.parse(jsonString.toString());
+    } catch (error) {
+        return {};
+    }
 }
 
 // find all totals files in the directory structure (ie. ../../reports/<week*>/_totals.json)

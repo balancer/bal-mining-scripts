@@ -57,5 +57,6 @@ jobs:
               with:
                   author_name: Fleek Publish Bot
                   author_email: no-reply@balancer.finance
+                  branch: 'ipfs-snapshots'
                   message: 'Updating ipfs links'
                   add: './reports/_current*.json'

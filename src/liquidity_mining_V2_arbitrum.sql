@@ -28,11 +28,11 @@ WITH INTERVALS AS (
     -- this is a workaround for the "Query exceeded resource limits" error:
     -- we force the query to scan more data than we need so that 
     -- the CPU/data ratio is within limits of the on-demand pricing model
-    count(1) as transaction_count
+    count(1) as event_count
   FROM `{2}` a
   INNER JOIN `{2}` b
   ON a.number+1 = b.number
-  LEFT JOIN `nansen-datasets-prod.crypto_arbitrum.transactions` c
+  LEFT JOIN `nansen-datasets-prod.crypto_arbitrum.logs` c
   ON a.number = c.block_number
   WHERE b.timestamp >= week_start
   AND a.timestamp <= week_end

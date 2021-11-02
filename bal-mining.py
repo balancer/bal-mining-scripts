@@ -461,6 +461,17 @@ from src.bal4gas_V1 import compute_bal_for_gas as compute_bal_for_gas_V1
 from src.bal4gas_V2 import compute_bal_for_gas as compute_bal_for_gas_V2
 
 if not REALTIME_ESTIMATOR:
+    # get amount spent so far
+    # 80k BAL were allocated to the program starting week 41
+    BUDGET = 80000
+    spent = 0
+    for w in (range(41,WEEK)):
+        week_spent = pd.read_json(
+            f'reports/{w}/_gasReimbursement.json', 
+            typ='series', 
+            convert_dates=False).sum()
+        spent += week_spent
+    
     allowlist = pd.read_json(
         f'https://raw.githubusercontent.com/balancer-labs/assets/master/generated/bal-for-gas.json', 
         orient='index').loc['homestead'].values
@@ -475,6 +486,15 @@ if not REALTIME_ESTIMATOR:
     v2 = compute_bal_for_gas_V2(week_start_timestamp, week_end_timestamp, gas_allowlist, plot=True, verbose=True)
     
     merge = v1.append(v2)
+    # take budget into account
+    budget_left = BUDGET-spent
+    if (merge['bal_reimbursement'].sum() > budget_left):
+        print(f'\nReimbursements exceed budget ({budget_left}), capping...')
+        merge = merge.sort_values('datetime')
+        in_budget = merge.cumsum()['bal_reimbursement'] <= budget_left
+        merge = merge[in_budget]
+        week_spend = merge['bal_reimbursement'].sum()
+        print(f'Capped! {week_spend} BAL')
 
     totals_bal4gas = merge[['address','bal_reimbursement']].groupby('address').sum()['bal_reimbursement']
     totals_bal4gas[totals_bal4gas>=CLAIM_THRESHOLD].apply(       lambda x: format(x, f'.{CLAIM_PRECISION}f')).to_json(reports_dir+'/_gasReimbursement.json',

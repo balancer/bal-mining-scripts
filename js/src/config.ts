@@ -22,6 +22,14 @@ const liquidityMiningConfig = {
         fleekNamespace: 'balancer-claims-union',
         offset: 71,
     },
+    'homestead-bankless': {
+        reportsDirectory: `../reports/`,
+        reportFilename:
+            '__ethereum_0x2d94aa3e47d9d5024503ca8491fce9a2fb4da198.json',
+        jsonSnapshotFilename: '_current-bankless.json',
+        fleekNamespace: 'balancer-claims-bankless',
+        offset: 74,
+    },
     'homestead-vita': {
         reportsDirectory: `../reports/`,
         reportFilename:

@@ -38,6 +38,9 @@ jobs:
             - name: Calculate roots for UNN
               run: NETWORK=homestead-union yarn merkle-roots --outfile ./reports/_roots-union.json
 
+            - name: Calculate roots for BANK
+              run: NETWORK=homestead-bankless yarn merkle-roots --outfile ./reports/_roots-bankless.json
+
             - name: Calculate roots for VITA
               run: NETWORK=homestead-vita yarn merkle-roots --outfile ./reports/_roots-vita.json
 

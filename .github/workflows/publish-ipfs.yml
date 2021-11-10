@@ -43,6 +43,9 @@ jobs:
             - name: Publish ipfs reports for UNN
               run: NETWORK=homestead-union yarn ipfs-publish
 
+            - name: Publish ipfs reports for BANK
+              run: NETWORK=homestead-bankless yarn ipfs-publish
+
             - name: Publish ipfs reports for VITA
               run: NETWORK=homestead-vita yarn ipfs-publish
 

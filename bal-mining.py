@@ -63,7 +63,7 @@ if REALTIME_ESTIMATOR:
 #     claimable_weeks = [20+int(w) for w in claims.keys()]
 #     most_recent_week = max(claimable_weeks)
     # delete the estimates for the most recent published week, since now there's an official value available on IPFS
-#     project_id = os.environ['GCP_PROJECT']
+    project_id = os.environ['GCP_PROJECT']
 #     sql = f'''
 #         DELETE FROM {project_id}.bal_mining_estimates.lp_estimates_multitoken
 #         WHERE week = {most_recent_week}

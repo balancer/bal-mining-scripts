@@ -41,8 +41,17 @@ jobs:
             - name: Calculate roots for BANK
               run: NETWORK=homestead-bankless yarn merkle-roots --outfile ./reports/_roots-bankless.json
 
+            - name: Calculate roots for NOTE
+              run: NETWORK=homestead-note yarn merkle-roots --outfile ./reports/_roots-note.json
+
             - name: Calculate roots for VITA
               run: NETWORK=homestead-vita yarn merkle-roots --outfile ./reports/_roots-vita.json
+
+            - name: Calculate roots for TUSD on polygon
+              run: NETWORK=polygon-tusd yarn merkle-roots --outfile ./reports/_roots-tusd-polygon.json
+
+            - name: Calculate roots for WMATIC on polygon
+              run: NETWORK=polygon-wmatic yarn merkle-roots --outfile ./reports/_roots-wmatic-polygon.json
 
             - name: Calculate roots for MCB on arbitrum
               run: NETWORK=arbitrum-mcdex yarn merkle-roots --outfile ./reports/_roots-mcdex-arbitrum.json

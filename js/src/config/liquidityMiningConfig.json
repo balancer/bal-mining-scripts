@@ -34,6 +34,13 @@
         "fleekNamespace": "balancer-claims-vita",
         "offset": 67
     },
+    "homestead-note": {
+        "reportsDirectory": "../reports/",
+        "reportFilename": "__ethereum_0xcfeaead4947f0705a14ec42ac3d44129e1ef3ed5.json",
+        "jsonSnapshotFilename": "_current-note.json",
+        "fleekNamespace": "balancer-claims-note",
+        "offset": 76
+    },
     "arbitrum": {
         "reportsDirectory": "../reports/",
         "reportFilename": "/__arbitrum_0x040d1edc9569d4bab2d15287dc5a4f10f56a56b8.json",
@@ -61,6 +68,20 @@
         "jsonSnapshotFilename": "_current-polygon.json",
         "fleekNamespace": "balancer-claims-polygon",
         "offset": 71
+    },
+    "polygon-wmatic": {
+        "reportsDirectory": "../reports/",
+        "reportFilename": "/__polygon_0x0d500b1d8e8ef31e21c99d1db9a6444d3adf1270.json",
+        "jsonSnapshotFilename": "_current-polygon-wmatic.json",
+        "fleekNamespace": "balancer-claims-polygon-wmatic",
+        "offset": 76
+    },
+    "polygon-tusd": {
+        "reportsDirectory": "../reports/",
+        "reportFilename": "/__polygon_0x2e1ad108ff1d8c782fcbbb89aad783ac49586756.json",
+        "jsonSnapshotFilename": "_current-polygon-tusd.json",
+        "fleekNamespace": "balancer-claims-polygon-tusd",
+        "offset": 76
     },
     "kovan": {
         "reportsDirectory": "../reports-kovan/",

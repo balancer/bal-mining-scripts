@@ -11,7 +11,7 @@ THIS_WEEK = int(1 + (datetime.utcnow() - WEEK_1_START).days/7)  # this is what w
 PROJECT_ID = os.environ['GCP_PROJECT']        
 
 
-REALTIME_ESTIMATOR = False
+realtime_estimator = False
 WEEK = THIS_WEEK - 1 # by default we want to run the previous week
 
 
@@ -29,7 +29,7 @@ args = parser.parse_args()
 
 if args.rt: # if realtime = True
     WEEK = THIS_WEEK
-    REALTIME_ESTIMATOR = True
+    realtime_estimator = True
     if args.week:
         print('Running realtime estimator, ignoring week parameter')
 elif args.week:
@@ -83,7 +83,7 @@ def get_export_filename(network, token):
 # In[4]:
 
 
-if REALTIME_ESTIMATOR:
+if realtime_estimator:
     warnings.warn('Running realtime estimator')
     
 #     from urllib.request import urlopen
@@ -113,7 +113,7 @@ if REALTIME_ESTIMATOR:
 
 
 # get addresses that redirect
-if REALTIME_ESTIMATOR:
+if realtime_estimator:
     url = 'https://raw.githubusercontent.com/balancer-labs/bal-mining-scripts/master/config/redirect.json'
     jsonurl = urlopen(url)
     redirects = json.loads(jsonurl.read())
@@ -264,7 +264,7 @@ def v2_liquidity_mining(week,
 
     bal_mined_v2 = pools_addresses_and_tokens_earned.mul(BPT_share_df['tw_share'], axis=0)
 
-    if REALTIME_ESTIMATOR:
+    if realtime_estimator:
         bal_mined_v2 *= week_passed
 
     miner_export = bal_mined_v2.groupby('miner').sum()
@@ -279,7 +279,7 @@ def v2_liquidity_mining(week,
         v2_miners['miner'] = v2_miners['miner'].apply(lambda x: redirects.get(x,x))
         miner_export_v2 = v2_miners.groupby('miner').sum()[token]
 
-        if not REALTIME_ESTIMATOR:
+        if not realtime_estimator:
             filename = get_export_filename(network_name, token)
             (
                 miner_export_v2[miner_export_v2>=CLAIM_THRESHOLD]
@@ -325,7 +325,7 @@ for chain in V2_ALLOCATION_THIS_WEEK:
         bal_on_this_chain = 0
     print('BAL to be mined on this chain: {}'.format(bal_on_this_chain))
 
-    if not REALTIME_ESTIMATOR:
+    if not realtime_estimator:
         print('Google BigQuery sanity check - BPT supply:')
         supply_gbq = get_bpt_supply_gbq(df.index, chain['chainId'])
         supply_gbq.set_index('token_address', inplace=True)
@@ -356,7 +356,7 @@ for chain in V2_ALLOCATION_THIS_WEEK:
 # In[10]:
 
 
-if not REALTIME_ESTIMATOR:
+if not realtime_estimator:
     mainnet_BAL = pd.read_json(
         get_export_filename(networks[1], BAL_addresses[1]), 
         typ='series', 
@@ -417,7 +417,7 @@ full_export['earned'] = full_export['earned'].apply(lambda x: format(x, f'.{18}f
 # In[13]:
 
 
-if REALTIME_ESTIMATOR:
+if realtime_estimator:
     # zero previous week's velocity
     sql = f'''
         UPDATE {PROJECT_ID}.bal_mining_estimates.lp_estimates_multitoken
@@ -487,7 +487,7 @@ if REALTIME_ESTIMATOR:
 from src.bal4gas_V1 import compute_bal_for_gas as compute_bal_for_gas_V1
 from src.bal4gas_V2 import compute_bal_for_gas as compute_bal_for_gas_V2
 
-if not REALTIME_ESTIMATOR:
+if not realtime_estimator:
 #     BAL for Gas was discontinued
 #     # get amount spent so far
 #     # 80k BAL were allocated to the program starting week 41
@@ -539,7 +539,7 @@ if not REALTIME_ESTIMATOR:
 # In[15]:
 
 
-if not REALTIME_ESTIMATOR:
+if not realtime_estimator:
     print('Final Check Totals BAL')
     
     

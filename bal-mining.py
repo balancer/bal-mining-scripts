@@ -1,17 +1,40 @@
 import os
 from datetime import datetime
+import argparse
+from google.cloud import bigquery
+from google.cloud import bigquery_storage
+import warnings
+import requests
+import time
+from web3 import Web3
+import pandas as pd
+from urllib.request import urlopen
+import json
 
 WEEK_1_START = '01/06/2020 00:00:00 UTC'
+WEEK_1_START_TIMESTAMP = 1590969600
 WEEK_1_START = datetime.strptime(WEEK_1_START, '%d/%m/%Y %H:%M:%S %Z')
 THIS_WEEK = int(1 + (datetime.utcnow() - WEEK_1_START).days/7)  # this is what week we're actually in
 PROJECT_ID = os.environ['GCP_PROJECT']        
-
+BAL_ADDRESSES = {
+    1: '0xba100000625a3754423978a60c9317c58a424e3d',
+    137: '0x9a71012b13ca4d3d0cdc72a177df3ef03b0e76a3',
+    42161: '0x040d1edc9569d4bab2d15287dc5a4f10f56a56b8'
+}
+NETWORK_IDS = {
+    1: 'ethereum',
+    137: 'polygon',
+    42161: 'arbitrum'
+}
+CLAIM_PRECISION = 12 # leave out of results addresses that mined less than CLAIM_THRESHOLD
+CLAIM_THRESHOLD = 10**(-CLAIM_PRECISION)
 
 realtime_estimator = False
 week_number = THIS_WEEK - 1 # by default we want to run the previous week
 
-
-import argparse
+# Argument Parsing
+# week: int, number of the week to run
+# rf: 1 if running real time estimator (updates the API backend)
 parser = argparse.ArgumentParser()
 parser.add_argument(
     '--week', 
@@ -22,7 +45,6 @@ parser.add_argument(
     help='pass 1 to run realtime estimator; ignores week parameter', 
     type=int)
 args = parser.parse_args()
-
 if args.rt: # if realtime = True
     week_number = THIS_WEEK
     realtime_estimator = True
@@ -35,45 +57,19 @@ elif args.week:
     if week_number == THIS_WEEK:
         print(f'Warning: week {week_number} is not over yet. Did you mean to run the realtime estimator?')
 
-from google.cloud import bigquery
-from google.cloud import bigquery_storage
-import warnings
-import requests
-import time
-from web3 import Web3
-import pandas as pd
-from urllib.request import urlopen
-import json
-import os
-
-# constants
-week_1_start_ts = 1590969600
-week_end_timestamp = week_1_start_ts + week_number * 7 * 24 * 60 * 60
-week_start_timestamp = week_end_timestamp - 7 * 24 * 60 * 60
-BAL_addresses = {
-    1: '0xba100000625a3754423978a60c9317c58a424e3d',
-    137: '0x9a71012b13ca4d3d0cdc72a177df3ef03b0e76a3',
-    42161: '0x040d1edc9569d4bab2d15287dc5a4f10f56a56b8'
-}
-networks = {
-    1: 'ethereum',
-    137: 'polygon',
-    42161: 'arbitrum'
-}
-CLAIM_PRECISION = 12 # leave out of results addresses that mined less than CLAIM_THRESHOLD
-CLAIM_THRESHOLD = 10**(-CLAIM_PRECISION)
+# crete reports directory based on week number
 reports_dir = f'reports/{week_number}'
 if not os.path.exists(reports_dir):
     os.mkdir(reports_dir)
 def get_export_filename(network, token):
     return f'{reports_dir}/__{network}_{token}.json'
 
+# compute initial and final timestamps
+end_timestamp = WEEK_1_START_TIMESTAMP + week_number * 7 * 24 * 60 * 60
+start_timestamp = end_timestamp - 7 * 24 * 60 * 60
 if realtime_estimator:
-    warnings.warn('Running realtime estimator')
-    week_end_timestamp = week_1_start_ts + week_number * 7 * 24 * 60 * 60
-    week_start_timestamp = week_end_timestamp - 7 * 24 * 60 * 60
-    week_end_timestamp = int(datetime.utcnow().timestamp())
-    week_passed = (week_end_timestamp - week_start_timestamp)/(7*24*3600)
+    end_timestamp = int(datetime.utcnow().timestamp())
+    week_passed = (end_timestamp - start_timestamp)/(7*24*3600)
 
 
 # get addresses that redirect
@@ -118,9 +114,8 @@ def get_bpt_supply_gbq(pools_addresses,
         '\',\''.join(pools_addresses),
         bpt_balances_table[network],
         network_blocks_table[network],
-        week_end_timestamp
+        end_timestamp
     )
-#     print(sql)
     
     client = bigquery.Client()
     bqstorageclient = bigquery_storage.BigQueryReadClient()
@@ -170,7 +165,7 @@ def v2_liquidity_mining(week,
                         pools_addresses_and_tokens_earned,
                         network):
     
-    network_name = networks[network]
+    network_name = NETWORK_IDS[network]
 
     network_blocks_table = {
         1: 'bigquery-public-data.crypto_ethereum.blocks',
@@ -265,7 +260,7 @@ for chain in V2_ALLOCATION_THIS_WEEK:
         continue
     df.fillna(0, inplace=True)
     df.index.name = 'pool_address'
-    bal_address = BAL_addresses[chain['chainId']]
+    bal_address = BAL_ADDRESSES[chain['chainId']]
     if bal_address in df.columns:
         bal_on_this_chain = df[bal_address].sum()
     else:
@@ -301,17 +296,17 @@ for chain in V2_ALLOCATION_THIS_WEEK:
 
 if not realtime_estimator:
     mainnet_BAL = pd.read_json(
-        get_export_filename(networks[1], BAL_addresses[1]), 
+        get_export_filename(NETWORK_IDS[1], BAL_ADDRESSES[1]), 
         typ='series', 
         convert_dates=False)
 
     polygon_BAL = pd.read_json(
-        get_export_filename(networks[137], BAL_addresses[137]), 
+        get_export_filename(NETWORK_IDS[137], BAL_ADDRESSES[137]), 
         typ='series', 
         convert_dates=False)
 
     arbitrum_BAL = pd.read_json(
-        get_export_filename(networks[42161], BAL_addresses[42161]), 
+        get_export_filename(NETWORK_IDS[42161], BAL_ADDRESSES[42161]), 
         typ='series', 
         convert_dates=False)
 
@@ -364,20 +359,20 @@ if realtime_estimator:
         prev_estimate_timestamp = prev_estimate.iloc[0]['timestamp']
     except:
         prev_estimate_timestamp = 0
-    if prev_estimate_timestamp < week_start_timestamp:
+    if prev_estimate_timestamp < start_timestamp:
         #previous estimate is last week's; compute velocity between from week_start_timestamp and week_end_timestamp
-        delta_t = (week_end_timestamp - week_start_timestamp)
+        delta_t = (end_timestamp - start_timestamp)
         earned = full_export['earned'].astype(float)
         full_export['velocity'] = (earned/delta_t).apply(lambda x: format(x, f'.{18}f'))
     else:
         #compute velocity based on increase and time passed
-        delta_t = (week_end_timestamp - prev_estimate_timestamp)
+        delta_t = (end_timestamp - prev_estimate_timestamp)
         diff_estimate = full_export.join(prev_estimate, rsuffix='_prev').fillna(0)
         cur_earned = diff_estimate['earned'].astype(float)
         prev_earned = diff_estimate['earned_prev'].astype(float)
         full_export['velocity'] = ((cur_earned-prev_earned)/delta_t).apply(lambda x: format(x, f'.{18}f'))
 
-    full_export['timestamp'] = week_end_timestamp
+    full_export['timestamp'] = end_timestamp
     full_export['week'] = week_number
     full_export.reset_index(inplace=True)
     full_export.to_gbq('bal_mining_estimates.lp_estimates_multitoken_staging', 
@@ -416,17 +411,17 @@ if not realtime_estimator:
     
     
     _ethereum = pd.read_json(
-        get_export_filename(networks[1], BAL_addresses[1]), 
+        get_export_filename(NETWORK_IDS[1], BAL_ADDRESSES[1]), 
         typ='series', 
         convert_dates=False).sum()
 
     _polygon = pd.read_json(
-        get_export_filename(networks[137], BAL_addresses[137]), 
+        get_export_filename(NETWORK_IDS[137], BAL_ADDRESSES[137]), 
         typ='series', 
         convert_dates=False).sum()
     
     _arbitrum = pd.read_json(
-        get_export_filename(networks[42161], BAL_addresses[42161]), 
+        get_export_filename(NETWORK_IDS[42161], BAL_ADDRESSES[42161]), 
         typ='series', 
         convert_dates=False).sum()
     
@@ -445,5 +440,5 @@ if not realtime_estimator:
     for f in os.listdir(reports_dir):
         _sum = pd.read_json(reports_dir+'/'+f, orient='index').sum().values[0]
         checks[f] = _sum
-    display(pd.DataFrame.from_dict(checks, orient='index', columns=['total']).sort_index())
+    print(pd.DataFrame.from_dict(checks, orient='index', columns=['total']).sort_index())
 

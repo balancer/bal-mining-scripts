@@ -94,7 +94,7 @@ if REALTIME_ESTIMATOR:
 #     claimable_weeks = [20+int(w) for w in claims.keys()]
 #     most_recent_week = max(claimable_weeks)
     # delete the estimates for the most recent published week, since now there's an official value available on IPFS
-    project_id = os.environ['GCP_PROJECT']
+    
 #     sql = f'''
 #         DELETE FROM {project_id}.bal_mining_estimates.lp_estimates_multitoken
 #         WHERE week = {most_recent_week}
@@ -425,7 +425,7 @@ full_export['earned'] = full_export['earned'].apply(lambda x: format(x, f'.{18}f
 if REALTIME_ESTIMATOR:
     # zero previous week's velocity
     sql = f'''
-        UPDATE {project_id}.bal_mining_estimates.lp_estimates_multitoken
+        UPDATE {PROJECT_ID}.bal_mining_estimates.lp_estimates_multitoken
         SET velocity = '0'
         WHERE week = {WEEK-1}
     '''

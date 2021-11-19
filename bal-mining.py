@@ -94,7 +94,6 @@ if REALTIME_ESTIMATOR:
 #     claimable_weeks = [20+int(w) for w in claims.keys()]
 #     most_recent_week = max(claimable_weeks)
     # delete the estimates for the most recent published week, since now there's an official value available on IPFS
-    
 #     sql = f'''
 #         DELETE FROM {project_id}.bal_mining_estimates.lp_estimates_multitoken
 #         WHERE week = {most_recent_week}
@@ -104,10 +103,6 @@ if REALTIME_ESTIMATOR:
 #     query.result()
     
     
-    from datetime import datetime
-    week_1_start = '01/06/2020 00:00:00 UTC'
-    week_1_start = datetime.strptime(week_1_start, '%d/%m/%Y %H:%M:%S %Z')
-    WEEK = int(1 + (datetime.utcnow() - week_1_start).days/7)  # this is what week we're actually in
     week_end_timestamp = week_1_start_ts + WEEK * 7 * 24 * 60 * 60
     week_start_timestamp = week_end_timestamp - 7 * 24 * 60 * 60
     week_end_timestamp = int(datetime.utcnow().timestamp())

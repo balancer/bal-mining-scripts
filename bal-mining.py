@@ -2,11 +2,42 @@
 # coding: utf-8
 
 # In[1]:
+import os
+from datetime import datetime
+
+WEEK_1_START = '01/06/2020 00:00:00 UTC'
+WEEK_1_START = datetime.strptime(WEEK_1_START, '%d/%m/%Y %H:%M:%S %Z')
+THIS_WEEK = int(1 + (datetime.utcnow() - WEEK_1_START).days/7)  # this is what week we're actually in
+PROJECT_ID = os.environ['GCP_PROJECT']        
 
 
-REALTIME_ESTIMATOR = True
-WEEK = 75
+REALTIME_ESTIMATOR = False
+WEEK = THIS_WEEK - 1 # by default we want to run the previous week
 
+
+import argparse
+parser = argparse.ArgumentParser()
+parser.add_argument(
+    '--week', 
+    help='the week number to run the script for', 
+    type=int)
+parser.add_argument(
+    '--rt', 
+    help='pass 1 to run realtime estimator; ignores week parameter', 
+    type=int)
+args = parser.parse_args()
+
+if args.rt: # if realtime = True
+    WEEK = THIS_WEEK
+    REALTIME_ESTIMATOR = True
+    if args.week:
+        print('Running realtime estimator, ignoring week parameter')
+elif args.week:
+    WEEK = args.week
+    if WEEK > THIS_WEEK:
+        exit(f'Error: week {WEEK} is in the future, this is week {THIS_WEEK}')
+    if WEEK == THIS_WEEK:
+        print(f'Warning: week {WEEK} is not over yet. Did you mean to run the realtime estimator?')
 
 # In[2]:
 

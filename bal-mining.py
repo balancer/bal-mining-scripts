@@ -12,7 +12,7 @@ PROJECT_ID = os.environ['GCP_PROJECT']
 
 
 realtime_estimator = False
-WEEK = THIS_WEEK - 1 # by default we want to run the previous week
+week_number = THIS_WEEK - 1 # by default we want to run the previous week
 
 
 import argparse
@@ -28,16 +28,16 @@ parser.add_argument(
 args = parser.parse_args()
 
 if args.rt: # if realtime = True
-    WEEK = THIS_WEEK
+    week_number = THIS_WEEK
     realtime_estimator = True
     if args.week:
         print('Running realtime estimator, ignoring week parameter')
 elif args.week:
-    WEEK = args.week
-    if WEEK > THIS_WEEK:
-        exit(f'Error: week {WEEK} is in the future, this is week {THIS_WEEK}')
-    if WEEK == THIS_WEEK:
-        print(f'Warning: week {WEEK} is not over yet. Did you mean to run the realtime estimator?')
+    week_number = args.week
+    if week_number > THIS_WEEK:
+        exit(f'Error: week {week_number} is in the future, this is week {THIS_WEEK}')
+    if week_number == THIS_WEEK:
+        print(f'Warning: week {week_number} is not over yet. Did you mean to run the realtime estimator?')
 
 # In[2]:
 
@@ -59,7 +59,7 @@ import os
 
 # constants
 week_1_start_ts = 1590969600
-week_end_timestamp = week_1_start_ts + WEEK * 7 * 24 * 60 * 60
+week_end_timestamp = week_1_start_ts + week_number * 7 * 24 * 60 * 60
 week_start_timestamp = week_end_timestamp - 7 * 24 * 60 * 60
 BAL_addresses = {
     1: '0xba100000625a3754423978a60c9317c58a424e3d',
@@ -73,7 +73,7 @@ networks = {
 }
 CLAIM_PRECISION = 12 # leave out of results addresses that mined less than CLAIM_THRESHOLD
 CLAIM_THRESHOLD = 10**(-CLAIM_PRECISION)
-reports_dir = f'reports/{WEEK}'
+reports_dir = f'reports/{week_number}'
 if not os.path.exists(reports_dir):
     os.mkdir(reports_dir)
 def get_export_filename(network, token):
@@ -103,7 +103,7 @@ if realtime_estimator:
 #     query.result()
     
     
-    week_end_timestamp = week_1_start_ts + WEEK * 7 * 24 * 60 * 60
+    week_end_timestamp = week_1_start_ts + week_number * 7 * 24 * 60 * 60
     week_start_timestamp = week_end_timestamp - 7 * 24 * 60 * 60
     week_end_timestamp = int(datetime.utcnow().timestamp())
     week_passed = (week_end_timestamp - week_start_timestamp)/(7*24*3600)
@@ -301,7 +301,7 @@ def v2_liquidity_mining(week,
 V2_LM_ALLOCATION_URL = 'https://raw.githubusercontent.com/balancer-labs/frontend-v2/master/src/lib/utils/liquidityMining/MultiTokenLiquidityMining.json'
 jsonurl = urlopen(V2_LM_ALLOCATION_URL)
 try:
-    V2_ALLOCATION_THIS_WEEK = json.loads(jsonurl.read())[f'week_{WEEK}']
+    V2_ALLOCATION_THIS_WEEK = json.loads(jsonurl.read())[f'week_{week_number}']
 except KeyError:
     V2_ALLOCATION_THIS_WEEK = {}
 full_export = pd.DataFrame()
@@ -348,7 +348,7 @@ for chain in V2_ALLOCATION_THIS_WEEK:
         except Exception as e:
             print('   Can\'t read subgraph: ' + e.args[0])
             
-    chain_export = v2_liquidity_mining(WEEK, df, chain['chainId'])
+    chain_export = v2_liquidity_mining(week_number, df, chain['chainId'])
     chain_export['chain_id'] = chain['chainId']
     full_export = full_export.append(chain_export)
 
@@ -422,14 +422,14 @@ if realtime_estimator:
     sql = f'''
         UPDATE {PROJECT_ID}.bal_mining_estimates.lp_estimates_multitoken
         SET velocity = '0'
-        WHERE week = {WEEK-1}
+        WHERE week = {week_number-1}
     '''
     client = bigquery.Client()
     query = client.query(sql)
     query.result();
     
     try:
-        sql = f'select * from bal_mining_estimates.lp_estimates_multitoken WHERE week = {WEEK}'
+        sql = f'select * from bal_mining_estimates.lp_estimates_multitoken WHERE week = {week_number}'
         prev_estimate = pd.read_gbq(sql, 
                         project_id=os.environ['GCP_PROJECT'])
         prev_estimate.set_index(['address','chain_id','token_address'], inplace=True)
@@ -450,7 +450,7 @@ if realtime_estimator:
         full_export['velocity'] = ((cur_earned-prev_earned)/delta_t).apply(lambda x: format(x, f'.{18}f'))
 
     full_export['timestamp'] = week_end_timestamp
-    full_export['week'] = WEEK
+    full_export['week'] = week_number
     full_export.reset_index(inplace=True)
     full_export.to_gbq('bal_mining_estimates.lp_estimates_multitoken_staging', 
                        project_id=os.environ['GCP_PROJECT'], 
@@ -565,7 +565,7 @@ if not realtime_estimator:
     print(f'Liquidity Mining Polygon: {format(_polygon, f".{CLAIM_PRECISION}f")}')
     print(f'Liquidity Mining Arbitrum: {format(_arbitrum, f".{CLAIM_PRECISION}f")}')
     print(f'Liquidity Mining All Networks: {format(_lm_all_networks, f".{CLAIM_PRECISION}f")}')
-    print(f'Gas Reimbursement week {WEEK}: {format(_claim-_ethereum, f".{CLAIM_PRECISION}f")}')
+    print(f'Gas Reimbursement week {week_number}: {format(_claim-_ethereum, f".{CLAIM_PRECISION}f")}')
     print(f'Claims: {format(_claim, f".{CLAIM_PRECISION}f")}')
     
 #     This was done to reduce the number of airdrop recipients.

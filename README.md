@@ -14,19 +14,22 @@ Starting on week 57 of the liquidity mining program (June 28th 2021), pools can 
 * `_totals.json`: total amount of `BAL` to be claimed on Ethereum mainnet (`__ethereum_0xba1...` + `_gasResimbursement.json`)
 
 ## Requirements
-* Python 3 + Jupyter Notebook
+* Python 3
 * A [service account key](https://cloud.google.com/iam/docs/creating-managing-service-account-keys#iam-service-account-keys-create-console) with read access to Google BigQuery
 
 ## Setup
 * Install required packages: `pip install -r requirements.txt`
 * Configure environment variable:
-  * `GOOGLE_APPLICATION_CREDENTIALS`: path to a JSON file that contains a service account key with read access to Google BigQuery
+  * `GOOGLE_APPLICATION_CREDENTIALS`: path to a JSON file that contains a service account key with read access to Google BigQuery and Nansen's Arbitrum data
 
 ## Usage
-1. Start Jupyter Notebook: `jupyter notebook`  
-1. Open the `bal-mining.ipynb` notebook   
-1. Run all cells
-2. Plots are displayed throughout the notebook. JSON reports are stored in the `reports` directory as described above.
+`python3 bal-mining.py`  
+Will run the script for the week before the current one and save reports to `reports/<WEEK>`
+### Optional Parameters
+* `week`: what week number to run, eg `python3 bal-mining.py --week=75`
+* `rt=1`: run realtime estimator, eg `python3 bal-mining.py --rt=1`;
+  *  computes distributions for the current week
+  *  instead of saving reports to disk, writes values to Google BigQuery
 
 ## Weekly distributions
 

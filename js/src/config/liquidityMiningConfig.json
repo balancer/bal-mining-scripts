@@ -72,15 +72,15 @@
     "polygon-wmatic": {
         "reportsDirectory": "../reports/",
         "reportFilename": "/__polygon_0x0d500b1d8e8ef31e21c99d1db9a6444d3adf1270.json",
-        "jsonSnapshotFilename": "_current-polygon-wmatic.json",
-        "fleekNamespace": "balancer-claims-polygon-wmatic",
+        "jsonSnapshotFilename": "_current-wmatic-polygon.json",
+        "fleekNamespace": "balancer-claims-wmatic-polygon",
         "offset": 76
     },
     "polygon-tusd": {
         "reportsDirectory": "../reports/",
         "reportFilename": "/__polygon_0x2e1ad108ff1d8c782fcbbb89aad783ac49586756.json",
-        "jsonSnapshotFilename": "_current-polygon-tusd.json",
-        "fleekNamespace": "balancer-claims-polygon-tusd",
+        "jsonSnapshotFilename": "_current-tusd-polygon.json",
+        "fleekNamespace": "balancer-claims-tusd-polygon",
         "offset": 76
     },
     "kovan": {

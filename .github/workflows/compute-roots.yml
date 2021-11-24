@@ -47,6 +47,9 @@ jobs:
             - name: Calculate roots for VITA
               run: NETWORK=homestead-vita yarn merkle-roots --outfile ./reports/_roots-vita.json
 
+            - name: Calculate roots for NEXO
+              run: NETWORK=homestead-nexo yarn merkle-roots --outfile ./reports/_roots-nexo.json
+
             - name: Calculate roots for TUSD on polygon
               run: NETWORK=polygon-tusd yarn merkle-roots --outfile ./reports/_roots-tusd-polygon.json
 

@@ -41,6 +41,13 @@
         "fleekNamespace": "balancer-claims-note",
         "offset": 76
     },
+    "homestead-nexo": {
+        "reportsDirectory": "../reports/",
+        "reportFilename": "__ethereum_0xb62132e35a6c13ee1ee0f84dc5d40bad8d815206.json",
+        "jsonSnapshotFilename": "_current-nexo.json",
+        "fleekNamespace": "balancer-claims-nexo",
+        "offset": 77
+    },
     "arbitrum": {
         "reportsDirectory": "../reports/",
         "reportFilename": "/__arbitrum_0x040d1edc9569d4bab2d15287dc5a4f10f56a56b8.json",

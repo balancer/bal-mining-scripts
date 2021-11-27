@@ -39,7 +39,8 @@
         "reportFilename": "__ethereum_0xcfeaead4947f0705a14ec42ac3d44129e1ef3ed5.json",
         "jsonSnapshotFilename": "_current-note.json",
         "fleekNamespace": "balancer-claims-note",
-        "offset": 76
+        "offset": 76,
+        "decimals": 10
     },
     "arbitrum": {
         "reportsDirectory": "../reports/",

@@ -21,7 +21,7 @@ console.log('Merkle roots');
 const roots = {};
 
 reports.forEach(([week, report]) => {
-    const merkleTree = loadTree(report);
+    const merkleTree = loadTree(report, config.decimals || 18);
     console.log(`Week ${week}`);
     const root = merkleTree.getHexRoot();
     console.log(root);

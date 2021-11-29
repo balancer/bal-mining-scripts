@@ -40,7 +40,7 @@
         "jsonSnapshotFilename": "_current-note.json",
         "fleekNamespace": "balancer-claims-note",
         "offset": 76,
-        "decimals": 10
+        "decimals": 8
     },
     "arbitrum": {
         "reportsDirectory": "../reports/",

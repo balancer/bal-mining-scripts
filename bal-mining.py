@@ -5,7 +5,7 @@
 
 
 REALTIME_ESTIMATOR = True
-WEEK = 71
+WEEK = 75
 
 
 # In[2]:
@@ -55,22 +55,22 @@ def get_export_filename(network, token):
 if REALTIME_ESTIMATOR:
     warnings.warn('Running realtime estimator')
     
-    from urllib.request import urlopen
-    import json
-    url = 'https://raw.githubusercontent.com/balancer-labs/bal-mining-scripts/master/reports/_current.json'
-    jsonurl = urlopen(url)
-    claims = json.loads(jsonurl.read())
-    claimable_weeks = [20+int(w) for w in claims.keys()]
-    most_recent_week = max(claimable_weeks)
+#     from urllib.request import urlopen
+#     import json
+#     url = 'https://raw.githubusercontent.com/balancer-labs/bal-mining-scripts/master/reports/_current.json'
+#     jsonurl = urlopen(url)
+#     claims = json.loads(jsonurl.read())
+#     claimable_weeks = [20+int(w) for w in claims.keys()]
+#     most_recent_week = max(claimable_weeks)
     # delete the estimates for the most recent published week, since now there's an official value available on IPFS
     project_id = os.environ['GCP_PROJECT']
-    sql = f'''
-        DELETE FROM {project_id}.bal_mining_estimates.lp_estimates_multitoken
-        WHERE week = {most_recent_week}
-    '''
-    client = bigquery.Client()
-    query = client.query(sql)
-    query.result()
+#     sql = f'''
+#         DELETE FROM {project_id}.bal_mining_estimates.lp_estimates_multitoken
+#         WHERE week = {most_recent_week}
+#     '''
+#     client = bigquery.Client()
+#     query = client.query(sql)
+#     query.result()
     
     
     from datetime import datetime
@@ -453,6 +453,7 @@ if REALTIME_ESTIMATOR:
 
 
 # # Gas Reimbursement Program
+# Discontinued
 
 # In[14]:
 
@@ -461,47 +462,50 @@ from src.bal4gas_V1 import compute_bal_for_gas as compute_bal_for_gas_V1
 from src.bal4gas_V2 import compute_bal_for_gas as compute_bal_for_gas_V2
 
 if not REALTIME_ESTIMATOR:
-    # get amount spent so far
-    # 80k BAL were allocated to the program starting week 41
-    BUDGET = 80000
-    spent = 0
-    for w in (range(41,WEEK)):
-        week_spent = pd.read_json(
-            f'reports/{w}/_gasReimbursement.json', 
-            typ='series', 
-            convert_dates=False).sum()
-        spent += week_spent
+#     BAL for Gas was discontinued
+#     # get amount spent so far
+#     # 80k BAL were allocated to the program starting week 41
+#     BUDGET = 80000
+#     spent = 0
+#     for w in (range(41,WEEK)):
+#         week_spent = pd.read_json(
+#             f'reports/{w}/_gasReimbursement.json', 
+#             typ='series', 
+#             convert_dates=False).sum()
+#         spent += week_spent
     
-    allowlist = pd.read_json(
-        f'https://raw.githubusercontent.com/balancer-labs/assets/master/generated/bal-for-gas.json', 
-        orient='index').loc['homestead'].values
-    gas_allowlist = pd.Series(allowlist).str.lower().tolist()
-    gas_allowlist.append('0xeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee')
+#     allowlist = pd.read_json(
+#         f'https://raw.githubusercontent.com/balancer-labs/assets/master/generated/bal-for-gas.json', 
+#         orient='index').loc['homestead'].values
+#     gas_allowlist = pd.Series(allowlist).str.lower().tolist()
+#     gas_allowlist.append('0xeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee')
 
     
-    v1 = compute_bal_for_gas_V1(week_start_timestamp, week_end_timestamp, gas_allowlist, plot=True, verbose=True)
+#     v1 = compute_bal_for_gas_V1(week_start_timestamp, week_end_timestamp, gas_allowlist, plot=True, verbose=True)
 
-    gas_allowlist.remove('0xeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee')
-    gas_allowlist.append('0x0000000000000000000000000000000000000000')
-    v2 = compute_bal_for_gas_V2(week_start_timestamp, week_end_timestamp, gas_allowlist, plot=True, verbose=True)
+#     gas_allowlist.remove('0xeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee')
+#     gas_allowlist.append('0x0000000000000000000000000000000000000000')
+#     v2 = compute_bal_for_gas_V2(week_start_timestamp, week_end_timestamp, gas_allowlist, plot=True, verbose=True)
     
-    merge = v1.append(v2)
-    # take budget into account
-    budget_left = BUDGET-spent
-    if (merge['bal_reimbursement'].sum() > budget_left):
-        print(f'\nReimbursements exceed budget ({budget_left}), capping...')
-        merge = merge.sort_values('datetime')
-        in_budget = merge.cumsum()['bal_reimbursement'] <= budget_left
-        merge = merge[in_budget]
-        week_spend = merge['bal_reimbursement'].sum()
-        print(f'Capped! {week_spend} BAL')
+#     merge = v1.append(v2)
+#     # take budget into account
+#     budget_left = BUDGET-spent
+#     if (merge['bal_reimbursement'].sum() > budget_left):
+#         print(f'\nReimbursements exceed budget ({budget_left}), capping...')
+#         merge = merge.sort_values('datetime')
+#         in_budget = merge.cumsum()['bal_reimbursement'] <= budget_left
+#         merge = merge[in_budget]
+#         week_spend = merge['bal_reimbursement'].sum()
+#         print(f'Capped! {week_spend} BAL')
 
-    totals_bal4gas = merge[['address','bal_reimbursement']].groupby('address').sum()['bal_reimbursement']
-    totals_bal4gas[totals_bal4gas>=CLAIM_THRESHOLD].apply(       lambda x: format(x, f'.{CLAIM_PRECISION}f')).to_json(reports_dir+'/_gasReimbursement.json',
-       indent=4)
+#     totals_bal4gas = merge[['address','bal_reimbursement']].groupby('address').sum()['bal_reimbursement']
+#     totals_bal4gas[totals_bal4gas>=CLAIM_THRESHOLD].apply(\
+#        lambda x: format(x, f'.{CLAIM_PRECISION}f')).to_json(reports_dir+'/_gasReimbursement.json',
+#        indent=4)
 
-    # combine BAL from liquidity mining and gas reimbursements
-    totals = mainnet_BAL.add(totals_bal4gas, fill_value=0)
+    # export totals.json for backwards compatibility with any integrations that 
+    # might expect to find the claimable amount there
+    totals = mainnet_BAL#.add(totals_bal4gas, fill_value=0)
     totals[totals>=CLAIM_THRESHOLD].apply(       lambda x: format(x, f'.{CLAIM_PRECISION}f')).to_json(reports_dir+'/_totals.json',
        indent=4)
 
@@ -538,15 +542,17 @@ if not REALTIME_ESTIMATOR:
     print(f'Gas Reimbursement week {WEEK}: {format(_claim-_ethereum, f".{CLAIM_PRECISION}f")}')
     print(f'Claims: {format(_claim, f".{CLAIM_PRECISION}f")}')
     
-    # apply threshold to BAL distributed on Polygon
-    polygon = pd.read_json(
-            get_export_filename(networks[137], BAL_addresses[137]), 
-            typ='series', 
-            convert_dates=False)
-    threshold = 0.001
-    filename = reports_dir+'/_polygon_BAL_with_threshold.json'
-    polygon[polygon>threshold].to_json(filename, indent=4)
-    polygon = pd.read_json(filename, typ='series', convert_dates=False).sum()
+#     This was done to reduce the number of airdrop recipients.
+#     No longer necessary since the introduction of the merkle orchard
+#     # apply threshold to BAL distributed on Polygon
+#     polygon = pd.read_json(
+#             get_export_filename(networks[137], BAL_addresses[137]), 
+#             typ='series', 
+#             convert_dates=False)
+#     threshold = 0.001
+#     filename = reports_dir+'/_polygon_BAL_with_threshold.json'
+#     polygon[polygon>threshold].to_json(filename, indent=4)
+#     polygon = pd.read_json(filename, typ='series', convert_dates=False).sum()
     
     # check all reports files
     print('\nReports totals:')

@@ -3,11 +3,12 @@
     "version": "1.0.0",
     "main": "index.js",
     "scripts": {
-        "build": "babel ./js/src --out-dir js/lib --extensions '.ts,.tsx'",
+        "build": "babel ./js/src --out-dir js/lib --extensions '.ts,.tsx' --copy-files",
         "timestamps": "node js/timestamps.js",
         "test": "mocha --require babel-polyfill js/test/*",
         "ipfs-publish": "node js/publish.js",
-        "merkle-roots": "node js/lib/getMerkleRoots.js"
+        "merkle-roots": "node js/lib/getMerkleRoots.js",
+        "migrateChannel": "node js/lib/migrateChannel.js"
     },
     "husky": {
         "hooks": {

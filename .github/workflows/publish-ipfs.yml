@@ -49,6 +49,18 @@ jobs:
             - name: Publish ipfs reports for VITA
               run: NETWORK=homestead-vita yarn ipfs-publish
 
+            - name: Publish ipfs reports for NOTE
+              run: NETWORK=homestead-note yarn ipfs-publish
+
+            - name: Publish ipfs reports for NEXO
+              run: NETWORK=homestead-nexo yarn ipfs-publish
+
+            - name: Publish ipfs reports for TUSD on polygon
+              run: NETWORK=polygon-tusd yarn ipfs-publish
+
+            - name: Publish ipfs reports for WMATIC on polygon
+              run: NETWORK=polygon-wmatic yarn ipfs-publish
+
             - name: Publish ipfs reports for MCB on arbitrum
               run: NETWORK=arbitrum-mcdex yarn ipfs-publish
 

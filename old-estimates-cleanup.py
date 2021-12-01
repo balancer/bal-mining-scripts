@@ -43,7 +43,7 @@ def get_tokens_in_orchard(_network):
     _network = str(_network)
     network_config = ORCHARD_CONFIGS[_network]
     for token_config in network_config:
-        result.append(token_config['token'])
+        result.append(token_config['token'].lower())
     return result
 
 def get_past_weeks_estimates_from_gbq():
@@ -105,7 +105,7 @@ for estimate in EXISTING_ESTIMATES:
     token_address = estimate['token_address']
     week = int(estimate['week'])
     print(f'\nFound estimate for {network_id}, {token_address}, {week}')
-    if token_address in get_tokens_in_orchard(network_id):
+    if token_address.lower() in get_tokens_in_orchard(network_id):
         print(f'Token is distributed via MerkleOrchard')
         distribution_id = week_to_distribution_id(week, token_address)
         print(f'Week {week} = id {distribution_id}')

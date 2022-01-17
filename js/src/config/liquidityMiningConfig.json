@@ -1,7 +1,7 @@
 {
     "homestead": {
         "reportsDirectory": "../reports/",
-        "reportFilename": "__ethereum_0xba100000625a3754423978a60c9317c58a424e3d.json",
+        "reportFilename": "_totals.json",
         "jsonSnapshotFilename": "_current.json",
         "fleekNamespace": "balancer-claims",
         "offset": 20

@@ -126,3 +126,12 @@ for chain_id in NETWORKS.keys():
 
 if realtime_estimator:
     update_gbq_api_dataset(full_export, week_number)
+else:
+    reports_dir = f'reports/{week_number}'
+    print('\nReports totals:')
+    checks = {}
+    report_files = os.listdir(reports_dir)
+    report_files.sort()
+    for filename in report_files:
+        _sum = pd.read_json(reports_dir+'/'+filename, orient='index').sum().values[0]
+        print(f'{filename}: {_sum}')

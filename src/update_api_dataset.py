@@ -1,7 +1,6 @@
 from src.constants import PROJECT_ID
 from src.logger import LOGGER
 from google.cloud import bigquery
-import pandas as pd
 
 
 def update_gbq_api_dataset(_full_export, _week_number):
@@ -9,7 +8,7 @@ def update_gbq_api_dataset(_full_export, _week_number):
     prev_week = _week_number - 1
     LOGGER.info(f'Zeroing velocity for week {prev_week}')
     sql = f'''
-        UPDATE {PROJECT_ID}.bal_mining_estimates.lp_estimates_multitoken_bkp
+        UPDATE {PROJECT_ID}.bal_mining_estimates.lp_estimates_multitoken
         SET velocity = '0'
         WHERE week = {prev_week}
     '''
@@ -27,7 +26,7 @@ def update_gbq_api_dataset(_full_export, _week_number):
 
     # merge staging into prod
     sql = '''
-    MERGE bal_mining_estimates.lp_estimates_multitoken_bkp prod
+    MERGE bal_mining_estimates.lp_estimates_multitoken prod
     USING bal_mining_estimates.lp_estimates_multitoken_staging stage
     ON prod.address = stage.address
     AND prod.week = stage.week

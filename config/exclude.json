@@ -3,11 +3,33 @@
         "0x8f4205e1604133d1875a3e771ae7e4f2b0865639": [
             "0x567d220B0169836cBF351DF70A9c517096ec9De7",
             "0x10A19e7eE7d7F8a52822f6817de8ea18204F2e4f"
+        ],
+        "0x06df3b2bbb68adc8b0e302443692037ed9f91b42": [
+            "0x9cff0533972da48ac05a00a375cc1a65e87da7ec",
+            "0x7a32aa9a16a59cb335ffdee3dc94024b7f8a9a47"
+        ],
+        "0x702605f43471183158938c1a3e5f5a359d7b31ba": [
+            "0x359f4fe841f246a095a82cb26f5819e10a91fe0d",
+            "0x001c249c09090d79dc350a286247479f08c7aad7"
         ]
     },
     "137": {
         "0xb204bf10bc3a5435017d3db247f56da601dfe08a": [
             "0x59429282a4e566373a1f2d5f20cf08184b46ee07"
+        ],
+        "0x0d34e5dd4d8f043557145598e4e2dc286b35fd4f": [
+            "0x3ddfa8ec3052539b6c9549f12cea2c295cff5296",
+            "0xe31178580771098eaa7f0f4d349a3573360ff098"
+        ]
+    },
+    "42161": {
+        "0x64541216bafffeec8ea535bb71fbc927831d0595": [
+            "0x7c132bde28ad1e0101d45121757d7c6c2e8a550a",
+            "0x36cc7b13029b5dee4034745fb4f24034f3f2ffc6"
+        ],
+        "0x1533a3278f3f9141d5f820a184ea4b017fce2382": [
+            "0x36cc7b13029b5dee4034745fb4f24034f3f2ffc6",
+            "0xe31178580771098eaa7f0f4d349a3573360ff098"
         ]
     }
 }

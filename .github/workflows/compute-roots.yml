@@ -53,6 +53,9 @@ jobs:
             - name: Calculate roots for TUSD on polygon
               run: NETWORK=polygon-tusd yarn merkle-roots --outfile ./reports/_roots-tusd-polygon.json
 
+            - name: Calculate roots for QI on polygon
+              run: NETWORK=polygon-qi yarn merkle-roots --outfile ./reports/_roots-qi-polygon.json
+
             - name: Calculate roots for WMATIC on polygon
               run: NETWORK=polygon-wmatic yarn merkle-roots --outfile ./reports/_roots-wmatic-polygon.json
 

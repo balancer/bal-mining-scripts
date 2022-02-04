@@ -91,6 +91,13 @@
         "fleekNamespace": "balancer-claims-tusd-polygon",
         "offset": 76
     },
+    "polygon-qi": {
+        "reportsDirectory": "../reports/",
+        "reportFilename": "/__polygon_0x580a84c73811e1839f75d86d75d88cca0c241ff4.json",
+        "jsonSnapshotFilename": "_current-qi-polygon.json",
+        "fleekNamespace": "balancer-claims-qi-polygon",
+        "offset": 86
+    },
     "kovan": {
         "reportsDirectory": "../reports-kovan/",
         "reportFilename": "_totals.json",

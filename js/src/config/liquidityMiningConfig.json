@@ -96,7 +96,7 @@
         "reportFilename": "/__polygon_0xdf7837de1f2fa4631d716cf2502f8b230f1dcc32.json",
         "jsonSnapshotFilename": "_current-telcoin-polygon.json",
         "fleekNamespace": "balancer-claims-telcoin-polygon",
-        "offset": 85
+        "offset": 87
     },
     "kovan": {
         "reportsDirectory": "../reports-kovan/",

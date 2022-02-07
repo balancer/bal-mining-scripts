@@ -118,9 +118,9 @@ for chain_id in NETWORKS.keys():
         results_df['timestamp'] = get_current_lm_week_end_timestamp()
         results_df['week'] = week_number
         results_df['earned'] = results_df['earned'].apply(
-            lambda x: format(x, f'.{CLAIM_PRECISION}f'))
+            lambda x: format(x, f'.{get_claim_precision(token)}f'))
         results_df['velocity'] = results_df['velocity'].apply(
-            lambda x: format(x, f'.{CLAIM_PRECISION}f'))
+            lambda x: format(x, f'.{get_claim_precision(token)}f'))
         results_df['chain_id'] = chain_id
         full_export = full_export.append(results_df)
 

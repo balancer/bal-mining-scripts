@@ -30,12 +30,15 @@ WEB3_PROVIDERS = {
     42161: Web3(Web3.WebsocketProvider(os.environ['ENDPOINT_URL'].replace('mainnet','arbitrum-mainnet')))
 }
 
-def get_token_config(_network, _token_address):
+def get_token_configs(_network, _token_address, _distribution_id):
     _network = str(_network)
     network_config = ORCHARD_CONFIGS[_network]
+    result = []
     for token_config in network_config:
         if (token_config['token'].lower() == _token_address.lower()):
-            return token_config
+            result.append(token_config)
+    if result:
+        return result
     raise Exception('Token not found')
 
 def get_tokens_in_orchard(_network):
@@ -43,7 +46,7 @@ def get_tokens_in_orchard(_network):
     _network = str(_network)
     network_config = ORCHARD_CONFIGS[_network]
     for token_config in network_config:
-        result.append(token_config['token'])
+        result.append(token_config['token'].lower())
     return result
 
 def get_past_weeks_estimates_from_gbq():
@@ -105,44 +108,46 @@ for estimate in EXISTING_ESTIMATES:
     token_address = estimate['token_address']
     week = int(estimate['week'])
     print(f'\nFound estimate for {network_id}, {token_address}, {week}')
-    if token_address in get_tokens_in_orchard(network_id):
+    if token_address.lower() in get_tokens_in_orchard(network_id):
         print(f'Token is distributed via MerkleOrchard')
         distribution_id = week_to_distribution_id(week, token_address)
         print(f'Week {week} = id {distribution_id}')
-        token_config = get_token_config(network_id, token_address)
-        distributor = token_config['distributor']
-        offset = token_config['weekStart']
-        if offset > distribution_id:
-            print(f'Distribution via the MerkleOrchard started on id {offset}')
-            delete_estimate = True
-        else:
-            distribution_created = (
-                has_distribution_been_created(
-                    network_id,
-                    distributor,
-                    token_address,
-                    distribution_id
-                )
-            )
-            if distribution_created:
-                print(f'Distribution for this token/week has been created in the MerkleOrchard')
+        token_configs = get_token_configs(network_id, token_address, distribution_id)
+        for token_config in token_configs:
+            distributor = token_config['distributor']
+            print(f'Distributor:  {distributor}')
+            offset = token_config['weekStart']
+            if offset > distribution_id:
+                print(f'Distribution via the MerkleOrchard started on id {offset}')
                 delete_estimate = True
             else:
-                print(f'Distribution for this token/week not found in the MerkleOrchard')
-        if delete_estimate:
-            try:
-                print(f'Deleting estimate')
-                delete_from_gbq(
-                    network_id,
-                    token_address,
-                    week
+                distribution_created = (
+                    has_distribution_been_created(
+                        network_id,
+                        distributor,
+                        token_address,
+                        distribution_id
+                    )
                 )
-                print(f'Estimates for chain {network_id}, week {week}, {token_address} deleted')
-            except Exception as e:
-                print(f'Exception deleting chain {network_id}, week {week}, {token_address} estimates')
-                print(str(e))
-        else:
-            print(f'Keeping estimate')
+                if distribution_created:
+                    print(f'Distribution for this token/week has been created in the MerkleOrchard')
+                    delete_estimate = True
+                else:
+                    print(f'Distribution for this token/week not found in the MerkleOrchard')
+            if delete_estimate:
+                try:
+                    print(f'Deleting estimate')
+                    delete_from_gbq(
+                        network_id,
+                        token_address,
+                        week
+                    )
+                    print(f'Estimates for chain {network_id}, week {week}, {token_address} deleted')
+                except Exception as e:
+                    print(f'Exception deleting chain {network_id}, week {week}, {token_address} estimates')
+                    print(str(e))
+            else:
+                print(f'Keeping estimate')
     else:
         print(f'Token is not distributed via MerkleOrchard')
         MAINNET_BAL_MANIFEST_URL = 'https://raw.githubusercontent.com/balancer-labs/bal-mining-scripts/master/reports/_current.json'

@@ -61,6 +61,9 @@ jobs:
             - name: Publish ipfs reports for TEL on polygon
               run: NETWORK=polygon-telcoin yarn ipfs-publish
 
+            - name: Publish ipfs reports for QI on polygon
+              run: NETWORK=polygon-qi yarn ipfs-publish
+
             - name: Publish ipfs reports for WMATIC on polygon
               run: NETWORK=polygon-wmatic yarn ipfs-publish
 

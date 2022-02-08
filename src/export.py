@@ -12,8 +12,8 @@ def save_report(_week_number, _chain_id, _token, _data):
     if not os.path.exists(reports_dir):
         os.mkdir(reports_dir)
     filename = f'{reports_dir}/__{network}_{_token}.json'
-    export_data = _data[_data > CLAIM_THRESHOLD]
-    export = export_data.apply(lambda x: format(x, f'.{CLAIM_PRECISION}f'))
+    export_data = _data[_data > get_claim_threshold(_token)]
+    export = export_data.apply(lambda x: format(x, f'.{get_claim_precision(_token)}f'))
     export_json = export.to_json()
     parsed_export = json.loads(export_json)
     with open(filename, "w") as write_file:

@@ -21,13 +21,13 @@ console.log('Merkle roots');
 const roots = {};
 
 reports.forEach(([week, report]) => {
-    const merkleTree = loadTree(report, config.decimals || 18);
-    console.log(`Week ${week}`);
-    const root = merkleTree.getHexRoot();
-    console.log(root);
-    // homestead started distributing using a merkle strategy 20 weeks in
-    // so weeks prior to this offset should not be included
     if (config.offset < week) {
+        const merkleTree = loadTree(report, config.decimals || 18);
+        console.log(`Week ${week}`);
+        const root = merkleTree.getHexRoot();
+        console.log(root);
+        // homestead started distributing using a merkle strategy 20 weeks in
+        // so weeks prior to this offset should not be included
         roots[week - config.offset] = root;
     }
 });

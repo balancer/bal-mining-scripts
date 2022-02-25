@@ -131,11 +131,36 @@ def get_lm_allocations(_chain_id, _week_number=0, _realtime=None):
         _week_number = get_current_lm_week_number()
         week_passed = get_percent_week_passed()
 
-    jsonurl = urlopen(V2_LM_ALLOCATION_URL)
-    try:
-        week_allocation = json.loads(jsonurl.read())[f'week_{_week_number}']
-    except KeyError:
-        week_allocation = {}
+    # mapping of the amount of wsteth to be reimbursed each week
+    # https://dune.xyz/queries/452650
+    # 2022-01-03 00:00   5.228464931786665
+    # 2022-01-10 00:00   5.459192005519417
+    # 2022-01-17 00:00   6.341634432230115
+    # 2022-01-24 00:00   6.1147612189731175
+    # 2022-01-31 00:00   5.216811064017148
+    refunds = {
+        # week_number: wsteh amount
+        84: 5.228464931786665, # the week when protocol level fees were activated (Jan 4)
+        85: 5.459192005519417,
+        86: 6.341634432230115, # the week of the APR-fix on the frontend (Jan 21) https://github.com/balancer-labs/frontend-v2/pull/1325/files
+        87: 6.1147612189731175,
+        88: 5.216811064017148  # + 2 weeks grace period
+    }
+    
+    # construct week_allocation
+    week_allocation = [
+        {
+            "chainId": 1,
+            "pools": {
+                "0x32296969ef14eb0c6d29669c550d4a0449130230000200000000000000000080": [
+                    {
+                        "tokenAddress": "0x7f39C581F595B53c5cb19bD0b3f8dA6c935E2Ca0",
+                        "amount": refunds[_week_number]
+                    }
+                ]
+            }
+        }
+    ]
     for chain_allocation in week_allocation:
         if chain_allocation['chainId'] == _chain_id:
             df = pd.DataFrame()

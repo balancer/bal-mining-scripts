@@ -133,5 +133,6 @@ else:
     report_files = os.listdir(reports_dir)
     report_files.sort()
     for filename in report_files:
-        _sum = pd.read_json(reports_dir+'/'+filename, orient='index').sum().values[0]
-        print(f'{filename}: {_sum}')
+        if '0x7f39C581F595B53c5cb19bD0b3f8dA6c935E2Ca0' in filename:
+            _sum = pd.read_json(reports_dir+'/'+filename, orient='index').sum().values[0]
+            print(f'{filename}: {_sum}')

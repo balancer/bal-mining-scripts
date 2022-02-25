@@ -1,8 +1,6 @@
 import os
 NETWORKS = {
-    1: 'ethereum',
-    137: 'polygon',
-    42161: 'arbitrum'
+    1: 'ethereum'
 }
 CLAIM_PRECISIONS = { # leave out of results addresses that mined less than CLAIM_THRESHOLD
     'default': 8,

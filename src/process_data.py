@@ -155,7 +155,7 @@ def get_lm_allocations(_chain_id, _week_number=0, _realtime=None):
             df = pd.DataFrame()
             for pool, rewards in chain_allocation['pools'].items():
                 for r in rewards:
-                    if r in EXCLUDED_POOLS_TOKENS.get(pool,[]):
+                    if r['tokenAddress'] in EXCLUDED_POOLS_TOKENS.get(pool,[]):
                         continue
                     pool_address = pool[:42].lower()
                     df.loc[pool_address, r['tokenAddress']

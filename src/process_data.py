@@ -123,12 +123,20 @@ def get_lps_share_integral_for_pools(_df, _realtime=None, _exclusions={}):
         ['pool_address', 'lp_address'])
     return lm_shares_df
 
-# This is a workaround to ignore pools added to the JSON 
-# only for the purposes of having reward tokens APR be displayed on the UI
-EXCLUDED_POOLS = [
-    '0xde8c195aa41c11a0c4787372defbbddaa31306d2000200000000000000000181',
-    '0x92762b42a06dcdddc5b7362cfb01e631c4d44b40000200000000000000000182'
-]
+# This is a workaround to ignore reward tokens added to the JSON 
+# only for the purposes of having their APR be displayed on the UI
+EXCLUDED_POOLS_TOKENS = {
+    '0xde8c195aa41c11a0c4787372defbbddaa31306d2000200000000000000000181':
+        [
+            '0x6810e776880C02933D47DB1b9fc05908e5386b96',
+            '0xDEf1CA1fb7FBcDC777520aa7f396b4E015F497aB'
+        ],
+    '0x92762b42a06dcdddc5b7362cfb01e631c4d44b40000200000000000000000182':
+        [
+            '0x6810e776880C02933D47DB1b9fc05908e5386b96',
+            '0xDEf1CA1fb7FBcDC777520aa7f396b4E015F497aB'
+        ]
+}
 
 def get_lm_allocations(_chain_id, _week_number=0, _realtime=None):
     LOGGER.debug('get_lm_allocations')
@@ -146,9 +154,9 @@ def get_lm_allocations(_chain_id, _week_number=0, _realtime=None):
         if chain_allocation['chainId'] == _chain_id:
             df = pd.DataFrame()
             for pool, rewards in chain_allocation['pools'].items():
-                if pool in EXCLUDED_POOLS:
-                    continue
                 for r in rewards:
+                    if r in EXCLUDED_POOLS_TOKENS.get(pool,[]):
+                        continue
                     pool_address = pool[:42].lower()
                     df.loc[pool_address, r['tokenAddress']
                            ] = r['amount'] * week_passed

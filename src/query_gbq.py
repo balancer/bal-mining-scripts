@@ -1,15 +1,16 @@
 from src.logger import LOGGER
-import time
+import os
 from google.cloud import bigquery
 from google.cloud import bigquery_storage
 import pandas as pd
 
+project_id = os.environ['GCP_PROJECT']
 SQL_FILE_PATH = 'src/base_sql.sql'
 TABLES_CONFIGS = {
     1: {
         'blocks': 'bigquery-public-data.crypto_ethereum.blocks',
-        'lm_transfers': 'blockchain-etl.ethereum_balancer.view_LM_transfers',
-        'lm_state': 'blockchain-etl.ethereum_balancer.view_LM_state',
+        'lm_transfers': f'{project_id}.balancer_labs.ethereum_view_LM_transfers',
+        'lm_state': f'{project_id}.balancer_labs.ethereum_view_LM_state',
     },
     137: {
         'blocks': 'public-data-finance.crypto_polygon.blocks',

@@ -44,3 +44,14 @@ def update_gbq_api_dataset(_full_export, _week_number):
     client = bigquery.Client()
     query = client.query(sql)
     query.result()
+
+    LOGGER.info(f'Zeroing velocity for mainnet')
+    sql = f'''
+        UPDATE {PROJECT_ID}.bal_mining_estimates.lp_estimates_multitoken
+        SET velocity = '0'
+        WHERE chain_id = 1
+    '''
+    client = bigquery.Client()
+    query = client.query(sql)
+    query.result()
+    LOGGER.info('Done')

@@ -1,6 +1,6 @@
 import os
 NETWORKS = {
-    1: 'ethereum',
+    # 1: 'ethereum',
     137: 'polygon',
     42161: 'arbitrum'
 }

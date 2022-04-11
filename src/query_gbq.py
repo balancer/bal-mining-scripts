@@ -37,13 +37,16 @@ def query_gbq(_network, _week_number, _pool_list, _excluded_lps_list=[]):
     with open(SQL_FILE_PATH, 'r') as file:
         sql = file.read()
 
+    _days_in_week = '3' if _network == 1 else '7'
+
     sql = sql.format(
         week_number=_week_number,
         pool_addresses="','".join(_pool_list),
         blocks_table=TABLES_CONFIGS[_network]['blocks'],
         lm_transfers_table=TABLES_CONFIGS[_network]['lm_transfers'],
         lm_state_table=TABLES_CONFIGS[_network]['lm_state'],
-        excluded_lps="','".join(_excluded_lps_list)
+        excluded_lps="','".join(_excluded_lps_list),
+        days_in_week=_days_in_week
     )
     client = bigquery.Client()
     bqstorageclient = bigquery_storage.BigQueryReadClient()

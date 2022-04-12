@@ -5,7 +5,7 @@ DECLARE pool_addresses, excluded_lps ARRAY<STRING>;
 SET week_number = {week_number};
 SET week_1_start = TIMESTAMP('2020-06-01 00:00:00+00');
 SET week_start = TIMESTAMP_ADD(week_1_start, INTERVAL ((week_number-1)*7) DAY);
-SET week_end = TIMESTAMP_ADD(week_start, INTERVAL 7 DAY);
+SET week_end = TIMESTAMP_ADD(week_start, INTERVAL {days_in_week} DAY);
 SET pool_addresses = [
   '{pool_addresses}'
 ];

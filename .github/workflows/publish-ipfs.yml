@@ -67,6 +67,9 @@ jobs:
             - name: Publish ipfs reports for QI on polygon
               run: NETWORK=polygon-qi yarn ipfs-publish
 
+            - name: Publish ipfs reports for LDO on polygon
+              run: NETWORK=polygon-ldo yarn ipfs-publish
+
             - name: Publish ipfs reports for WMATIC on polygon
               run: NETWORK=polygon-wmatic yarn ipfs-publish
 

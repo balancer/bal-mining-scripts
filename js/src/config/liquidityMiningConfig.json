@@ -113,6 +113,13 @@
         "fleekNamespace": "balancer-claims-qi-polygon",
         "offset": 86
     },
+    "polygon-ldo": {
+        "reportsDirectory": "../reports/",
+        "reportFilename": "/__polygon_0xC3C7d422809852031b44ab29EEC9F1EfF2A58756.json",
+        "jsonSnapshotFilename": "_current-ldo-polygon.json",
+        "fleekNamespace": "balancer-claims-ldo-polygon",
+        "offset": 96
+    },
     "kovan": {
         "reportsDirectory": "../reports-kovan/",
         "reportFilename": "_totals.json",

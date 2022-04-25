@@ -37,7 +37,7 @@ def query_gbq(_network, _week_number, _pool_list, _excluded_lps_list=[]):
     with open(SQL_FILE_PATH, 'r') as file:
         sql = file.read()
 
-    _days_in_week = '3' if _network == 1 else '7'
+    _days_in_week = '3'
 
     sql = sql.format(
         week_number=_week_number,

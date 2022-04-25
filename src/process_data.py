@@ -7,7 +7,7 @@ from urllib.request import urlopen
 import json
 from src.realtime_utils import get_current_lm_week_number, get_percent_week_passed
 
-V2_LM_ALLOCATION_URL = 'https://raw.githubusercontent.com/balancer-labs/frontend-v2/master/src/lib/utils/liquidityMining/MultiTokenLiquidityMining.json'
+V2_LM_ALLOCATION_URL = 'https://raw.githubusercontent.com/balancer-labs/frontend-v2/89c9ee2e297425865475d91e20a9e8f8d14f59e1/src/lib/utils/liquidityMining/MultiTokenLiquidityMining.json'
 
 
 def compute_LM_power_timeseries(_df):

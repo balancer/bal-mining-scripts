@@ -53,7 +53,6 @@ def get_past_weeks_estimates_from_gbq():
     project_id = os.environ['GCP_PROJECT']
     sql = f'''
         SELECT DISTINCT week, token_address, chain_id FROM {project_id}.bal_mining_estimates.lp_estimates_multitoken
-        WHERE week < (SELECT MAX(week) FROM {project_id}.bal_mining_estimates.lp_estimates_multitoken)
     '''
     client = bigquery.Client()
     estimates = (

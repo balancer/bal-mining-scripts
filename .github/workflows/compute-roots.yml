@@ -32,9 +32,6 @@ jobs:
             - name: Calculate roots for BAL on polygon
               run: NETWORK=polygon yarn merkle-roots --outfile ./reports/_roots-polygon.json
 
-            - name: Calculate roots for UNN
-              run: NETWORK=homestead-union yarn merkle-roots --outfile ./reports/_roots-union.json
-
             - name: Calculate roots for BANK
               run: NETWORK=homestead-bankless yarn merkle-roots --outfile ./reports/_roots-bankless.json
 

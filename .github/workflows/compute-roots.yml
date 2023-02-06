@@ -24,54 +24,48 @@ jobs:
               run: yarn build
 
             - name: Calculate roots for BAL
-              run: NETWORK=homestead yarn merkle-roots --outfile ./reports/_roots.json
+              run: NETWORK=homestead yarn merkle-roots --outfile ./reports/_incident-response/_roots.json
 
             - name: Calculate roots for BAL on arbitrum
-              run: NETWORK=arbitrum yarn merkle-roots --outfile ./reports/_roots-arbitrum.json
+              run: NETWORK=arbitrum yarn merkle-roots --outfile ./reports/_incident-response/_roots-arbitrum.json
 
             - name: Calculate roots for BAL on polygon
-              run: NETWORK=polygon yarn merkle-roots --outfile ./reports/_roots-polygon.json
+              run: NETWORK=polygon yarn merkle-roots --outfile ./reports/_incident-response/_roots-polygon.json
+
+            - name: Calculate roots for LDO
+              run: NETWORK=homestead-lido yarn merkle-roots --outfile ./reports/_incident-response/_roots-lido.json
+
+            - name: Calculate roots for UNN
+              run: NETWORK=homestead-union yarn merkle-roots --outfile ./reports/_incident-response/_roots-union.json
 
             - name: Calculate roots for BANK
-              run: NETWORK=homestead-bankless yarn merkle-roots --outfile ./reports/_roots-bankless.json
+              run: NETWORK=homestead-bankless yarn merkle-roots --outfile ./reports/_incident-response/_roots-bankless.json
 
             - name: Calculate roots for NOTE
-              run: NETWORK=homestead-note yarn merkle-roots --outfile ./reports/_roots-note.json
-
-            - name: Calculate roots for VITA
-              run: NETWORK=homestead-vita yarn merkle-roots --outfile ./reports/_roots-vita.json
-
-            - name: Calculate roots for NEXO
-              run: NETWORK=homestead-nexo yarn merkle-roots --outfile ./reports/_roots-nexo.json
+              run: NETWORK=homestead-note yarn merkle-roots --outfile ./reports/_incident-response/_roots-note.json
 
             - name: Calculate roots for D2D
-              run: NETWORK=homestead-d2d yarn merkle-roots --outfile ./reports/_roots-d2d.json
+              run: NETWORK=homestead-d2d yarn merkle-roots --outfile ./reports/_incident-response/_roots-d2d.json
 
             - name: Calculate roots for TUSD on polygon
-              run: NETWORK=polygon-tusd yarn merkle-roots --outfile ./reports/_roots-tusd-polygon.json
-
-            - name: Calculate roots for TEL on polygon
-              run: NETWORK=polygon-telcoin yarn merkle-roots --outfile ./reports/_roots-telcoin-polygon.json
+              run: NETWORK=polygon-tusd yarn merkle-roots --outfile ./reports/_incident-response/_roots-tusd-polygon.json
 
             - name: Calculate roots for QI on polygon
-              run: NETWORK=polygon-qi yarn merkle-roots --outfile ./reports/_roots-qi-polygon.json
+              run: NETWORK=polygon-qi yarn merkle-roots --outfile ./reports/_incident-response/_roots-qi-polygon.json
 
             - name: Calculate roots for LDO on polygon
-              run: NETWORK=polygon-ldo yarn merkle-roots --outfile ./reports/_roots-ldo-polygon.json
+              run: NETWORK=polygon-ldo yarn merkle-roots --outfile ./reports/_incident-response/_roots-ldo-polygon.json
 
             - name: Calculate roots for WMATIC on polygon
-              run: NETWORK=polygon-wmatic yarn merkle-roots --outfile ./reports/_roots-wmatic-polygon.json
-
-            - name: Calculate roots for MCB on arbitrum
-              run: NETWORK=arbitrum-mcdex yarn merkle-roots --outfile ./reports/_roots-mcdex-arbitrum.json
+              run: NETWORK=polygon-wmatic yarn merkle-roots --outfile ./reports/_incident-response/_roots-wmatic-polygon.json
 
             - name: Calculate roots for PICKLE on arbitrum
-              run: NETWORK=arbitrum-pickle yarn merkle-roots --outfile ./reports/_roots-pickle-arbitrum.json
+              run: NETWORK=arbitrum-pickle yarn merkle-roots --outfile ./reports/_incident-response/_roots-pickle-arbitrum.json
 
             - name: Commit changes
               uses: EndBug/add-and-commit@v7
               with:
                   author_name: Merkle Root Bot
                   author_email: no-reply@balancer.finance
-                  message: 'Computed roots for reports'
-                  add: './reports/_roots*.json'
+                  message: 'Computed roots for reports/_incident-response'
+                  add: './reports/_incident-response/_roots*.json'

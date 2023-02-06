@@ -2,7 +2,7 @@ name: Publish reports to ipfs
 on:
     push:
         branches:
-            - 'master'
+            - 'incident-response'
 
 jobs:
     ipfs-publish:
@@ -86,4 +86,4 @@ jobs:
                   author_email: no-reply@balancer.finance
                   branch: ipfs-publish
                   message: 'Updating ipfs links'
-                  add: './reports/_current*.json'
+                  add: './reports/_incident-response/_current*.json'

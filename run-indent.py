@@ -85,11 +85,6 @@ def save_incident_report(_chain, _token, _data):
     with open(filename, "w") as write_file:
         json.dump(parsed_export, write_file, indent=4)
     print(f"saved to {filename}")
-    if _chain == "ethereum" and _token == "0xba100000625a3754423978a60c9317c58a424e3d":
-        filename = f"{reports_dir}/_totals.json"
-        with open(filename, "w") as write_file:
-            json.dump(parsed_export, write_file, indent=4)
-        print(f"saved to {filename}")
 
 
 # Create DataFrame with config distribution information: chain, token, decimals, offset, filename, snapshot

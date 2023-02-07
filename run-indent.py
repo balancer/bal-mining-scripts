@@ -1,17 +1,13 @@
 import os
 import json
-import numpy as np
 import pandas as pd
 from time import sleep
 from decimal import Decimal
-from google.colab import files
 from urllib.request import urlopen
+from tqdm import tqdm
 
 # Contant URLs from Balancer's GitHub repositories
-BASE_REPORTS_URL = (
-    "https://raw.githubusercontent.com/balancer-labs/bal-mining-scripts/master/reports"
-)
-ORCHARD_CONFIG_URL = "https://raw.githubusercontent.com/balancer-labs/frontend-v2/master/src/services/claim/MultiTokenClaim.json"
+ORCHARD_CONFIG_URL = "https://raw.githubusercontent.com/balancer-labs/frontend-v2/870d008f7062e3082cb446c895a8df61f4bab8ba/src/services/claim/MultiTokenClaim.json"
 MINING_CONFIG_URL = "https://raw.githubusercontent.com/balancer-labs/bal-mining-scripts/9e9f067e48704b476a325d9eaab945675d76c1ac/js/src/config/liquidityMiningConfig.json"
 
 # CSV containing DistributionClaimed events emitted by each MerkleOrchard. Source: https://dune.com/queries/1920221
@@ -66,14 +62,28 @@ def load_json_from_url(_url):
     """Request URL content and returns as JSON"""
     try:
         return json.loads(urlopen(_url).read())
-    except:
+    except Exception as e:
+        print(e)
         print("failed to load:", _url)
         return {}
 
+def load_json_from_path(_path):
+    """Load JSON file as json object"""
+    try:
+        with open(_path) as f:
+            return json.load(f)
+    except Exception as e:
+        print(e)
+        print("failed to load:", _path)
+        return {}
+
+def load_incident_report(_chain, _token):
+    reports_dir = f"reports/_incident-response/1"
+    filename = f"{reports_dir}/__{_chain}_{_token}.json"
+    return load_json_from_path(filename)
 
 def save_incident_report(_chain, _token, _data):
     """Gets DataFrame report and save as JSON"""
-    print(f"saving {_token} report...")
     reports_dir = f"reports/_incident-response/1"
     if not os.path.exists(reports_dir):
         os.mkdir(reports_dir)
@@ -84,10 +94,10 @@ def save_incident_report(_chain, _token, _data):
     parsed_export = json.loads(export_json)
     with open(filename, "w") as write_file:
         json.dump(parsed_export, write_file, indent=4)
-    print(f"saved to {filename}")
 
 
 # Create DataFrame with config distribution information: chain, token, decimals, offset, filename, snapshot
+print("loading LM configs...")
 mining_config_dict = load_json_from_url(MINING_CONFIG_URL)
 mining_config_dict.pop("kovan")
 mining_config_raw = pd.DataFrame.from_dict(mining_config_dict.values())
@@ -104,6 +114,7 @@ mining_config = mining_config_raw.copy()[
     ["chain", "token", "decimals", "offset", "filename", "snapshot"]
 ]
 
+print("loading distributions added to the Orchards...")
 # Load and transform data from all DistributionAdded events emitted before the Balancer DAO recovered the funds
 distributions_added = pd.read_csv(ORCHARD_GIST_URL)
 distributions_added = distributions_added.merge(
@@ -118,7 +129,17 @@ distributions_added["distributed_amount_raw"] = distributions_added[
 distributions_added["distributed_amount"] = distributions_added[
     "distributed_amount_raw"
 ] / (10 ** distributions_added["decimals"])
+# LDO distributions added to the orchard on weeks 97-99 were destined to the new incentives program (veBAL gauges), so we drop those
+distributions_added.drop(
+    distributions_added.index[
+        (
+            (distributions_added['week'] >= 97) &
+            (distributions_added['token'] == '0x5a98fcbea516cf06857215779fd812ca3bef1b32')
+        )
+    ], inplace=True)
 
+
+print("loading distributions claimed from the Orchards...")
 # Load and transformn data from all DistributionClaimed events emitted before the Balancer DAO recovered the funds
 claims = pd.read_csv(CLAIMS_GIST_URL)
 weekly_claims = claims.merge(mining_config, on=["token", "chain"], how="left")
@@ -140,6 +161,7 @@ weekly_claims = weekly_claims[
     ]
 ]
 
+print("loading recovery distributions...")
 # Load data from DistributionClaimed events emitted when Balancer DAO recovered the funds
 recovered_distributions = pd.read_csv(
     RECOVERY_GIST_URL, converters={"claimed_amount": get_decimal_from_value}
@@ -151,13 +173,14 @@ recovered_distributions = (
 )
 
 # Load and transform distributions from mining reports (https://github.com/balancer-labs/bal-mining-scripts/tree/master/reports)
+print("loading distribution reports...")
 
 dfs = []
 
 recovered_tokens = recovered_distributions["token"].to_list()
 recovered_distributors = recovered_distributions["distributor"].to_list()
 
-for idx, row in distributions_added.iterrows():
+for idx, row in tqdm(distributions_added.iterrows()):
     week = row["distribution_id"] + row["offset"]
 
     if (
@@ -173,8 +196,8 @@ for idx, row in distributions_added.iterrows():
         ]["claimer"].values[0]
         df = pd.DataFrame({"distributed_amount": [0], "claimer": [claimer]})
     else:
-        report_url = f"{BASE_REPORTS_URL}/{week}/{row['filename']}"
-        report = load_json_from_url(report_url)
+        report_path = f"reports/{week}/{row['filename']}"
+        report = load_json_from_path(report_path)
 
         df = pd.DataFrame(report.items(), columns=["claimer", "distributed_amount"])
         df["distributed_amount"] = df["distributed_amount"].astype(float)
@@ -191,6 +214,7 @@ for idx, row in distributions_added.iterrows():
 distributions = pd.concat(dfs)
 
 # Calculate remaining amount by claimers
+print("computing unclaimed amounts...")
 
 remaining_claims = distributions.merge(
     weekly_claims,
@@ -204,10 +228,34 @@ remaining_claims["remaining_amount"] = (
     remaining_claims["distributed_amount"] - remaining_claims["claimed_amount"]
 )
 
+recovered_amounts = recovered_distributions.groupby(["chain","token"]).sum()["claimed_amount"]
+recovered_amounts = recovered_amounts.reset_index()
+
 # Create mining reports for chain/token pairs
-for idx, row in recovered_distributions.iterrows():
+print("saving reports...")
+for idx, row in tqdm(recovered_amounts.iterrows()):
     remaining_data = remaining_claims.query(
         f"chain == '{row['chain']}' and token == '{row['token']}'"
     )
     remaining_data = remaining_data.groupby("claimer")["remaining_amount"].sum()
     save_incident_report(row["chain"], row["token"], remaining_data)
+
+# Check reports and recovered amounts
+print("checking reports...")
+for idx, row in tqdm(recovered_amounts.iterrows()):
+    print("\n-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=")
+    print("{}, {} check".format(row["chain"], row["token"]))
+    report = load_incident_report(row["chain"], row["token"])
+    report_amount = sum(map(float, report.values()))
+    recovered_amount = float(row["claimed_amount"])
+    decimals = 8 if (row["token"]=="0xcfeaead4947f0705a14ec42ac3d44129e1ef3ed5") else 18
+    recovered_amount = recovered_amount / (10 ** decimals)
+    if (row["token"] == "0xc3c7d422809852031b44ab29eec9f1eff2a58756"):
+        #5k LDO were seeded in excess by the distributor
+        recovered_amount = recovered_amount - 5000
+    if (row["token"] == "0x43d4a3cd90ddd2f8f4f693170c9c8098163502ad"):
+        #6000*4/7 D2D were seeded in excess by the distributor
+        recovered_amount = recovered_amount - 6000 * 4 / 7
+    print("{:.5f} recovered".format(recovered_amount))
+    print("{:.5f} redistributed".format(report_amount))
+    

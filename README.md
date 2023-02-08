@@ -1,74 +1,97 @@
-<h1 align=center><code>BAL Mining</code></h1>
+<h1 align=center><code>BAL Mining - incident response</code></h1>
 
-Set of scripts to calculate weekly BAL liquidity mining distributions.
+In January 2023, Balancer Labs was notified of a bug in the MerkleOrchard contracts that were used to distribute token incentives before Balancer Protocol migrated to the new ve-tokenomics in 2022. [[1]](https://twitter.com/Balancer/status/1620503172702953475)
 
-On week 26, the process was ported over to Python with the [blockchain-etl](https://github.com/blockchain-etl/) project on Google Bigquery as the source for state data, such as pools' balances, fees, liquidity providers etc. The legacy scripts used up to week 25 can be found in the `js` directory.
+Funds were safely transferred to the Balancer DAO treasury to be later distributed by a patched MerkleOrchard contract.
 
-## [Historical Runs](https://github.com/balancer-labs/bal-mining-scripts/blob/aca467d/README.md#historical-runs)
+This branch was specifically designed to repurpose the liquidity mining infrastructure so as to address the redistribution of said tokens.
 
-## [Reports](https://github.com/balancer-labs/bal-mining-scripts/tree/master/reports)
+For each token recovered from the Merkle Orchard, `run-incident.py` computes the unclaimed distributions belonging to each claimer and aggregates them. The aggregate amounts are output to `reports/_incident-response/1`, in `__<network>_<token>.json` files, containing a list of liquidity providers and the amount of `<token>` left for them to claim.
 
-Starting on week 57 of the liquidity mining program (June 28th 2021), pools can be incentivized with multiple tokens. Each weekly report directory has the following structure:
+At the end, the script checks that the sum of all the amounts in each report is equal to the amounts recovered from the faulty Merkle Orchard.
 
--   `__<network>_<token>.json` files, containing a list of liquidity providers and the amount of `<token>` earned by each for providing liquidity in incentivized Balancer pools on `<network>`
--   `_totalsLiquidityMining.json`: for consistency with the reports provided in previous weeks, contains a list of liquidity providers and `BAL` earned across all networks
--   `_gasResimbursement.json`: results of the _BAL for Gas_ program for the week, if applicable
--   `_totals.json`: total amount of `BAL` to be claimed on Ethereum mainnet (`__ethereum_0xba1...` + `_gasResimbursement.json`)
+```
+-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
+arbitrum, 0x040d1edc9569d4bab2d15287dc5a4f10f56a56b8 check
+17864.43303 recovered
+17864.43303 redistributed
+
+-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
+arbitrum, 0x965772e0e9c84b6f359c8597c891108dcf1c5b1a check
+2265.85941 recovered
+2265.85941 redistributed
+
+-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
+ethereum, 0x226f7b842e0f0120b7e194d05432b3fd14773a9d check
+1190799.41399 recovered
+1190799.41399 redistributed
+
+-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
+ethereum, 0x2d94aa3e47d9d5024503ca8491fce9a2fb4da198 check
+267578.13838 recovered
+267578.13838 redistributed
+
+-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
+ethereum, 0x43d4a3cd90ddd2f8f4f693170c9c8098163502ad check
+14891.48765 recovered
+14891.48765 redistributed
+
+-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
+ethereum, 0x5a98fcbea516cf06857215779fd812ca3bef1b32 check
+287507.81357 recovered
+287507.81357 redistributed
+
+-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
+ethereum, 0xba100000625a3754423978a60c9317c58a424e3d check
+296749.18133 recovered
+296749.18133 redistributed
+
+-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
+ethereum, 0xcfeaead4947f0705a14ec42ac3d44129e1ef3ed5 check
+53281.96362 recovered
+53281.96362 redistributed
+
+-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
+polygon, 0x0d500b1d8e8ef31e21c99d1db9a6444d3adf1270 check
+23488.53485 recovered
+23488.53485 redistributed
+
+-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
+polygon, 0x2e1ad108ff1d8c782fcbbb89aad783ac49586756 check
+43359.51599 recovered
+43359.51598 redistributed
+
+-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
+polygon, 0x580a84c73811e1839f75d86d75d88cca0c241ff4 check
+9067.62018 recovered
+9067.62018 redistributed
+
+-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
+polygon, 0x9a71012b13ca4d3d0cdc72a177df3ef03b0e76a3 check
+33852.28964 recovered
+33852.28964 redistributed
+
+-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
+polygon, 0xc3c7d422809852031b44ab29eec9f1eff2a58756 check
+462.47457 recovered
+462.47457 redistributed
+```
+
+`liquidityMiningConfig.json` and the GitHub workflow files have been updated so that:
+
+1. merkle roots are computed from the incident reports and saved to `reports/_incident-response/_roots-*.json`
+2. incident reports are published to IPFS and manifests are saved to `reports/_incident-response/_current-*.json`
+
+With this, the existing claim UI can be easily repurposed to enable claims of the redistributed funds.
 
 ## Requirements
 
 -   Python 3
--   A [service account key](https://cloud.google.com/iam/docs/creating-managing-service-account-keys#iam-service-account-keys-create-console) with read access to Google BigQuery
 
 ## Setup
 
 -   Install required packages: `pip install -r requirements.txt`
--   Configure environment variable:
-    -   `GOOGLE_APPLICATION_CREDENTIALS`: path to a JSON file that contains a service account key with read access to Google BigQuery
 
 ## Usage
 
-`python3 run.py`
-
-## Weekly distributions
-
-145,000 BAL will be distributed on a weekly basis.  
-Liquidity providers must claim their BAL at [app.balancer.fi](https://app.balancer.fi/), [polygon.balancer.fi](https://polygon.balancer.fi/) or [arbitrum.balancer.fi](https://arbitrum.balancer.fi/).
-
-## Redirections
-
-In case smart contracts which cannot receive tokens are liquidity providers (ie. hold the tokens that represent ownership of the pool), owners of those smart contracts can choose to redirect their liquidity mining incentives to a new address. In order to submit a redirection request, submit a pull request to update `config/redirect.json` using `"fromAddress" : "toAddress"` along with some sort of ownership proof. Please reach out to the Balancer team if you need assistance.
-
-## Opting out
-
-Liquidity providers can choose to opt out of liquidity mining incentives. In order to do so, they must submit a pull request as per the instructions below along with some sort of proof of ownership of the address. Please reach out to the Balancer team if you need assistance.
-
-### Opting out of specific pools
-
-Add your address to the file `config/exclude.json`, which has the following structure;
-
-```
-{
-  "chain_id": {
-    "pool_address": [
-      "liquidity_provider_a",
-      "liquidity_provider_b",
-      ...
-    ],
-    ...
-  },
-  ...
-}
-```
-
-### Opting out of liquidity mining altogether
-
-Add your address to `BASE_LP_EXCLUSION_LIST` in `src/query_gbq.py`
-
-```
-BASE_LP_EXCLUSION_LIST = [
-    '0x0000000000000000000000000000000000000000',
-    '0xba12222222228d8ba445958a75a0704d566bf2c8'.
-    '<insert_address_here>'
-]
-```
+`python3 run-incident.py`

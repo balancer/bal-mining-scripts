@@ -5,6 +5,7 @@ from time import sleep
 from decimal import Decimal
 from urllib.request import urlopen
 from tqdm import tqdm
+from web3 import Web3
 
 # Contant URLs from Balancer's GitHub repositories
 ORCHARD_CONFIG_URL = "https://raw.githubusercontent.com/balancer-labs/frontend-v2/870d008f7062e3082cb446c895a8df61f4bab8ba/src/services/claim/MultiTokenClaim.json"
@@ -227,6 +228,7 @@ remaining_claims["claimed_amount"] = (
 remaining_claims["remaining_amount"] = (
     remaining_claims["distributed_amount"] - remaining_claims["claimed_amount"]
 )
+remaining_claims["claimer"] = remaining_claims["claimer"].apply(Web3.toChecksumAddress)
 
 recovered_amounts = recovered_distributions.groupby(["chain","token"]).sum()["claimed_amount"]
 recovered_amounts = recovered_amounts.reset_index()

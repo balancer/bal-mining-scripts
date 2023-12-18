@@ -1,6 +1,6 @@
 <h1 align=center><code>BAL Mining</code></h1>
 
-Set of scripts to calculate weekly BAL liquidity mining distributions.
+Set of scripts to calculate weekly BAL liquidity mining distributions..
 
 On week 26, the process was ported over to Python with the [blockchain-etl](https://github.com/blockchain-etl/) project on Google Bigquery as the source for state data, such as pools' balances, fees, liquidity providers etc. The legacy scripts used up to week 25 can be found in the `js` directory.
 

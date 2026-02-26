@@ -3,14 +3,12 @@
     "version": "1.0.0",
     "main": "index.js",
     "scripts": {
-        "start": "node index.js",
-        "dev": "npm run build && node index.js",
-        "build": "babel ./src --out-dir lib --extensions '.ts,.tsx'",
-        "sum": "node sum.js",
-        "timestamps": "node timestamps.js",
-        "test": "mocha --require babel-polyfill test/*",
-        "ipfs-publish": "node publish.js",
-        "merkle-roots": "node lib/getMerkleRoots.js"
+        "build": "babel ./js/src --out-dir js/lib --extensions '.ts,.tsx' --copy-files",
+        "timestamps": "node js/timestamps.js",
+        "test": "mocha --require babel-polyfill js/test/*",
+        "ipfs-publish": "node js/publish.js",
+        "merkle-roots": "node js/lib/getMerkleRoots.js",
+        "migrateChannel": "node js/lib/migrateChannel.js"
     },
     "husky": {
         "hooks": {

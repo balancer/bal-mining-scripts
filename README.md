@@ -1,60 +1,74 @@
 <h1 align=center><code>BAL Mining</code></h1>
 
-Set of scripts to calculate weekly BAL liquidity mining distributions
+Set of scripts to calculate weekly BAL liquidity mining distributions..
 
-## Historical Runs
+On week 26, the process was ported over to Python with the [blockchain-etl](https://github.com/blockchain-etl/) project on Google Bigquery as the source for state data, such as pools' balances, fees, liquidity providers etc. The legacy scripts used up to week 25 can be found in the `js` directory.
 
-| Week                           | Start Block | End Block |
-| :----------------------------- | ----------: | --------: |
-| [1](/reports/1/_totals.json)   |    10176690 |  10221761 |
-| [2](/reports/2/_totals.json)   |    10221761 |  10267003 |
-| [3](/reports/3/_totals.json)   |    10267003 |  10312236 |
-| [4](/reports/4/_totals.json)   |    10312236 |  10357402 |
-| [5](/reports/5/_totals.json)   |    10357402 |  10402520 |
-| [6](/reports/6/_totals.json)   |    10402520 |  10447836 |
-| [7](/reports/7/_totals.json)   |    10447836 |  10493044 |
-| [8](/reports/8/_totals.json)   |    10493044 |  10538187 |
-| [9](/reports/9/_totals.json)   |    10538187 |  10583488 |
-| [10](/reports/10/_totals.json) |    10583488 |  10628811 |
-| [11](/reports/11/_totals.json) |    10628811 |  10674230 |
-| [12](/reports/12/_totals.json) |    10674230 |  10719753 |
-| [13](/reports/13/_totals.json) |    10719753 |  10765333 |
-| [14](/reports/14/_totals.json) |    10765333 |  10811169 |
-| [15](/reports/15/_totals.json) |    10811169 |  10856779 |
-| [16](/reports/16/_totals.json) |    10856779 |  10902386 |
-| [17](/reports/17/_totals.json) |    10902386 |  10947679 |
-| [18](/reports/18/_totals.json) |    10947679 |  10992408 |
-| [19](/reports/19/_totals.json) |    10992408 |  11037419 |
-| [20](/reports/20/_totals.json) |    11037419 |  11083026 |
-| [21](/reports/21/_totals.json) |    11083026 |  11128711 |
-| [22](/reports/22/_totals.json) |    11128711 |  11174328 |
-| [23](/reports/23/_totals.json) |    11174328 |  11219938 |
-| [24](/reports/24/_totals.json) |    11219938 |  11265559 |
-| [25](/reports/25/_totals.json) |    11265559 |  11311151 |
+## [Historical Runs](https://github.com/balancer-labs/bal-mining-scripts/blob/aca467d/README.md#historical-runs)
+
+## [Reports](https://github.com/balancer-labs/bal-mining-scripts/tree/master/reports)
+
+Starting on week 57 of the liquidity mining program (June 28th 2021), pools can be incentivized with multiple tokens. Each weekly report directory has the following structure:
+
+-   `__<network>_<token>.json` files, containing a list of liquidity providers and the amount of `<token>` earned by each for providing liquidity in incentivized Balancer pools on `<network>`
+-   `_totalsLiquidityMining.json`: for consistency with the reports provided in previous weeks, contains a list of liquidity providers and `BAL` earned across all networks
+-   `_gasResimbursement.json`: results of the _BAL for Gas_ program for the week, if applicable
+-   `_totals.json`: total amount of `BAL` to be claimed on Ethereum mainnet (`__ethereum_0xba1...` + `_gasResimbursement.json`)
 
 ## Requirements
 
-An archive node is needed to run the scripts because historical balance snapshots are needed. A "starting-point" archive node can also be used that will only archive at x block onwards. Note this still probably requires 750G+ of disk space.
+-   Python 3
+-   A [service account key](https://cloud.google.com/iam/docs/creating-managing-service-account-keys#iam-service-account-keys-create-console) with read access to Google BigQuery
+
+## Setup
+
+-   Install required packages: `pip install -r requirements.txt`
+-   Configure environment variable:
+    -   `GOOGLE_APPLICATION_CREDENTIALS`: path to a JSON file that contains a service account key with read access to Google BigQuery
 
 ## Usage
 
-```
-node index.js --week 1 --startBlock 10176690 --endBlock 10221761
-node index.js --week 2 --startBlock 10221761 --endBlock 10267003
-```
-
-This will run run all historical calculations by block. Using an infura endpoint this may take upwards of 18 hours. For a local archive node, the sync time is roughly 10 minutes. Progress bars with estimates are shown during the sync. Reports will be saved in the folder for the given week specified
-
-```
-node sum.js --week 1 --startBlock 10176690 --endBlock 10221761
-```
-
-After all reports are generated, `sum.js` will create a final tally of user address to BAL received. This is stored in the report week folder at `_totals.json`
+`python3 run.py`
 
 ## Weekly distributions
 
-145,000 BAL will be distributed directly to addresses on a weekly basis. Due to block gas limits, the tx's to batch transfer BAL will need to be split up across blocks. In order to prevent favoring certain accounts, the block hash of the `endBlock` will be the starting point and addresses will be ordered alphabetically for distributions.
+145,000 BAL will be distributed on a weekly basis.  
+Liquidity providers must claim their BAL at [app.balancer.fi](https://app.balancer.fi/), [polygon.balancer.fi](https://polygon.balancer.fi/) or [arbitrum.balancer.fi](https://arbitrum.balancer.fi/).
 
-## BAL Redirections
+## Redirections
 
-In case smart contracts which cannot receive BAL tokens are specified, owners of those smart contracts can choose to redirect BAL tokens to a new address. In order to submit a redirection request, submit a pull request to update `redirect.json` using `"fromAddress" : "toAddress"` along with some sort of ownership proof. Please reach out to the Balancer team if you need assistance.
+In case smart contracts which cannot receive tokens are liquidity providers (ie. hold the tokens that represent ownership of the pool), owners of those smart contracts can choose to redirect their liquidity mining incentives to a new address. In order to submit a redirection request, submit a pull request to update `config/redirect.json` using `"fromAddress" : "toAddress"` along with some sort of ownership proof. Please reach out to the Balancer team if you need assistance.
+
+## Opting out
+
+Liquidity providers can choose to opt out of liquidity mining incentives. In order to do so, they must submit a pull request as per the instructions below along with some sort of proof of ownership of the address. Please reach out to the Balancer team if you need assistance.
+
+### Opting out of specific pools
+
+Add your address to the file `config/exclude.json`, which has the following structure;
+
+```
+{
+  "chain_id": {
+    "pool_address": [
+      "liquidity_provider_a",
+      "liquidity_provider_b",
+      ...
+    ],
+    ...
+  },
+  ...
+}
+```
+
+### Opting out of liquidity mining altogether
+
+Add your address to `BASE_LP_EXCLUSION_LIST` in `src/query_gbq.py`
+
+```
+BASE_LP_EXCLUSION_LIST = [
+    '0x0000000000000000000000000000000000000000',
+    '0xba12222222228d8ba445958a75a0704d566bf2c8'.
+    '<insert_address_here>'
+]
+```
